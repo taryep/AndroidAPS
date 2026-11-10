@@ -297,13 +297,16 @@ private fun Placeable.PlacementScope.placeScaled(line: Placeable, centerX: Float
 }
 
 /**
- * Maps BgRange to the appropriate theme color.
+ * Maps BgRange to the appropriate theme color. Shared by the overview, the dialog status bar and the
+ * graph inspect view, so they always show the same color for the same range.
  */
 @Composable
-private fun BgRange.toColor(): Color = when (this) {
-    BgRange.HIGH     -> AapsTheme.generalColors.bgHigh
-    BgRange.IN_RANGE -> AapsTheme.generalColors.bgInRange
-    BgRange.LOW      -> AapsTheme.generalColors.bgLow
+internal fun BgRange.toColor(): Color = when (this) {
+    BgRange.VERY_HIGH -> AapsTheme.generalColors.bgVeryHigh
+    BgRange.HIGH      -> AapsTheme.generalColors.bgHigh
+    BgRange.IN_RANGE  -> AapsTheme.generalColors.bgInRange
+    BgRange.LOW       -> AapsTheme.generalColors.bgLow
+    BgRange.VERY_LOW  -> AapsTheme.generalColors.bgVeryLow
 }
 
 /**

@@ -147,8 +147,10 @@ class PostCalculationRunner(
             data.overviewData.endTime = data.overviewData.toTime
         }
 
-        val highMarkInUnits = preferences.get(UnitDoubleKey.OverviewHighMark)
+        val veryLowMarkInUnits = preferences.get(UnitDoubleKey.OverviewVeryLowMark)
         val lowMarkInUnits = preferences.get(UnitDoubleKey.OverviewLowMark)
+        val highMarkInUnits = preferences.get(UnitDoubleKey.OverviewHighMark)
+        val veryHighMarkInUnits = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
 
         val predictionDataPoints = apsResult?.predictionsAsGv
             ?.filter { it.value >= 40 }
@@ -157,11 +159,7 @@ class PostCalculationRunner(
                 BgDataPoint(
                     timestamp = gv.timestamp,
                     value = valueInUnits,
-                    range = when {
-                        valueInUnits > highMarkInUnits -> BgRange.HIGH
-                        valueInUnits < lowMarkInUnits  -> BgRange.LOW
-                        else                           -> BgRange.IN_RANGE
-                    },
+                    range = BgRange.of(valueInUnits, veryLowMarkInUnits, lowMarkInUnits, highMarkInUnits, veryHighMarkInUnits),
                     type = when (gv.sourceSensor) {
                         SourceSensor.IOB_PREDICTION   -> BgType.IOB_PREDICTION
                         SourceSensor.COB_PREDICTION   -> BgType.COB_PREDICTION

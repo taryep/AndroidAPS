@@ -219,6 +219,8 @@
     <string name="a11y_high">high</string>
     <string name="a11y_inrange">in range</string>
     <string name="a11y_low">low</string>
+    <string name="a11y_very_high" comment="Screen-reader word said after the glucose value when it is above the very high limit (13.9 mmol/L, 250 mg/dL). Lower case, like a11y_high.">very high</string>
+    <string name="a11y_very_low" comment="Screen-reader word said after the glucose value when it is below the very low limit (3.1 mmol/L, 56 mg/dL). Lower case, like a11y_low.">very low</string>
     <string name="remove_label">Remove</string>
     <string name="activate_profile">Activate profile</string>
     <string name="activate_insulin">Activate insulin</string>

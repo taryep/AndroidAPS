@@ -15,9 +15,34 @@ import app.aaps.core.data.model.TrendArrow
  */
 enum class BgRange {
 
+    VERY_HIGH, // Above the very high mark
     HIGH,      // Above high mark
     IN_RANGE,  // Within target range
-    LOW        // Below low mark
+    LOW,       // Below low mark
+    VERY_LOW;  // Below the very low mark
+
+    companion object {
+
+        /**
+         * Sorts a BG value into a range. The value and all marks are in the user's units.
+         *
+         * The very low and very high marks are checked first, so they win even if the user set the
+         * low or high mark beyond them.
+         *
+         * @param valueInUnits the BG value
+         * @param veryLowMark the user's very low mark
+         * @param lowMark the user's low mark
+         * @param highMark the user's high mark
+         * @param veryHighMark the user's very high mark
+         */
+        fun of(valueInUnits: Double, veryLowMark: Double, lowMark: Double, highMark: Double, veryHighMark: Double): BgRange = when {
+            valueInUnits < veryLowMark  -> VERY_LOW
+            valueInUnits > veryHighMark -> VERY_HIGH
+            valueInUnits > highMark     -> HIGH
+            valueInUnits < lowMark      -> LOW
+            else                        -> IN_RANGE
+        }
+    }
 }
 
 /**

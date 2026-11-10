@@ -68,6 +68,7 @@ import app.aaps.core.ui.compose.navigation.color
 import app.aaps.core.ui.compose.navigation.icon
 import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.compose.overview.chips.toIcon
+import app.aaps.ui.compose.overview.toColor
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.decoration.Decoration
@@ -402,7 +403,7 @@ fun GraphInspectOverlay(
     }
 
     val data = inspect.pill
-    val dotColor = data?.bg?.range?.inspectColor() ?: Color.Unspecified
+    val dotColor = data?.bg?.range?.toColor() ?: Color.Unspecified
     SideEffect { inspect.dotColor = dotColor }
     if (data != null) GraphInspectPill(data = data, modifier = modifier)
 }
@@ -503,14 +504,6 @@ internal fun shownCob(cob: Double?): Int? = cob?.roundToInt()?.takeIf { it > 0 }
 private fun <T> List<T>.nearest(timestamp: Long, time: (T) -> Long): T? =
     minByOrNull { abs(time(it) - timestamp) }?.takeIf { abs(time(it) - timestamp) <= INSPECT_MATCH_MS }
 
-/** BG range to the BG color of the graph. */
-@Composable
-internal fun BgRange.inspectColor(): Color = when (this) {
-    BgRange.HIGH     -> AapsTheme.generalColors.bgHigh
-    BgRange.IN_RANGE -> AapsTheme.generalColors.bgInRange
-    BgRange.LOW      -> AapsTheme.generalColors.bgLow
-}
-
 /** Time, glucose, IOB, COB, basal rate and treatments at the shown reading. */
 @Composable
 fun GraphInspectPill(
@@ -538,7 +531,7 @@ fun GraphInspectPill(
                 PillText(dateUtil.timeString(data.timestamp), MaterialTheme.colorScheme.onSurfaceVariant)
                 data.bg?.let { bg ->
                     val text = if (profileUtil.units == GlucoseUnit.MGDL) decimalFormatter.to0Decimal(bg.value) else decimalFormatter.to1Decimal(bg.value)
-                    PillText(text, bg.range.inspectColor())
+                    PillText(text, bg.range.toColor())
                 }
                 data.iob?.let {
                     PillItem(ElementType.INSULIN.icon(), stringResource(InterfacesStrings.format_insulin_units, it), ElementType.INSULIN.color())

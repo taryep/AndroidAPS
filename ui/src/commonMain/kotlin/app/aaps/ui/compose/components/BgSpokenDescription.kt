@@ -28,9 +28,11 @@ internal fun bgSpokenDescription(
 ): String = buildList {
     add(stringResource(InterfacesStrings.confirmation_line, stringResource(CoreUiStrings.glucose), bgText))
     when (range) {
-        BgRange.HIGH     -> add(stringResource(CoreUiStrings.a11y_high))
-        BgRange.LOW      -> add(stringResource(CoreUiStrings.a11y_low))
-        BgRange.IN_RANGE -> Unit
+        BgRange.VERY_HIGH -> add(stringResource(CoreUiStrings.a11y_very_high))
+        BgRange.HIGH      -> add(stringResource(CoreUiStrings.a11y_high))
+        BgRange.LOW       -> add(stringResource(CoreUiStrings.a11y_low))
+        BgRange.VERY_LOW  -> add(stringResource(CoreUiStrings.a11y_very_low))
+        BgRange.IN_RANGE  -> Unit
     }
     trend?.takeIf { it.isNotBlank() }?.let { add(it) }
     deltaText?.let { add(stringResource(UiStrings.a11y_bg_delta, it)) }

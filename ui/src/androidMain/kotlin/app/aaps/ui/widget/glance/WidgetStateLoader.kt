@@ -1,6 +1,7 @@
 package app.aaps.ui.widget.glance
 
 import androidx.compose.ui.graphics.toArgb
+import app.aaps.core.data.iob.InMemoryGlucoseValue
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.RM
 import app.aaps.core.data.model.TT
@@ -15,6 +16,7 @@ import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
 import app.aaps.core.interfaces.overview.IsfStep
 import app.aaps.core.interfaces.overview.LastBgData
 import app.aaps.core.interfaces.overview.SensitivityOverview
+import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.TextResolver
@@ -23,6 +25,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.TrendCalculator
 import app.aaps.core.keys.BooleanComposedKey
 import app.aaps.core.keys.IntComposedKey
+import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.apsAdjustedTargetMgdl
 import app.aaps.core.objects.extensions.round
@@ -38,6 +41,22 @@ import app.aaps.ui.UiStrings
 import app.aaps.ui.widget.directionToDrawableRes
 import dev.zacsweers.metro.Inject
 import kotlin.math.abs
+
+/**
+ * The color of the BG value on a widget, for the same five ranges as the overview.
+ * Shared by [WidgetStateLoader] and [BgGraphStateLoader]. No reading shows as in range.
+ */
+internal fun widgetBgColor(lastBg: InMemoryGlucoseValue?, profileUtil: ProfileUtil, preferences: Preferences): Int {
+    lastBg ?: return BgGraphColors.WIDGET.inRange
+    val range = BgRange.of(
+        valueInUnits = profileUtil.fromMgdlToUnits(lastBg.recalculated),
+        veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
+        lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
+        highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
+        veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
+    )
+    return BgGraphColors.WIDGET.forRange(range)
+}
 
 @Inject
 class WidgetStateLoader(
@@ -66,11 +85,7 @@ class WidgetStateLoader(
         val lastBg = lastBgData.lastBg()
         val bgText = lastBg?.let { profileUtil.fromMgdlToStringInUnits(it.recalculated) }
             ?: rh.gs(CoreUiStrings.value_unavailable_short)
-        val bgColor = when {
-            lastBgData.isLow()  -> BgGraphColors.WIDGET.low
-            lastBgData.isHigh() -> BgGraphColors.WIDGET.high
-            else                -> BgGraphColors.WIDGET.inRange
-        }
+        val bgColor = widgetBgColor(lastBg, profileUtil, preferences)
         val strikeThrough = !lastBgData.isActualBg()
 
         val trendArrow = trendCalculator.getTrendArrow(iobCobCalculator.ads)

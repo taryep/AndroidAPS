@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French strings of the very low and very high BG marks. Not managed by Crowdin: this file is not in crowdin.yml. -->
+<resources>
+    <string name="pref_title_very_low_mark">Marque Gly très basse</string>
+    <string name="pref_title_very_high_mark">Marque Gly très élevée</string>
+</resources>

@@ -415,6 +415,18 @@ class OverviewDataCacheImpl(
                     updateBgInfoFromDatabase()
                 }
             }
+            scope.launch {
+                preferences.observe(UnitDoubleKey.OverviewVeryHighMark).collect {
+                    aapsLogger.debug(LTag.UI, "Very high mark changed, refreshing BgInfo")
+                    updateBgInfoFromDatabase()
+                }
+            }
+            scope.launch {
+                preferences.observe(UnitDoubleKey.OverviewVeryLowMark).collect {
+                    aapsLogger.debug(LTag.UI, "Very low mark changed, refreshing BgInfo")
+                    updateBgInfoFromDatabase()
+                }
+            }
 
             // =========================================================================
             // Category B reactive graph observers (treatments, RM, TT, basal)
@@ -604,15 +616,15 @@ class OverviewDataCacheImpl(
         }
 
         val bgMgdl = lastGv.recalculated
-        val highMark = preferences.get(UnitDoubleKey.OverviewHighMark)
-        val lowMark = preferences.get(UnitDoubleKey.OverviewLowMark)
         val valueInUnits = profileUtil.fromMgdlToUnits(bgMgdl)
 
-        val bgRange = when {
-            valueInUnits > highMark -> BgRange.HIGH
-            valueInUnits < lowMark  -> BgRange.LOW
-            else                    -> BgRange.IN_RANGE
-        }
+        val bgRange = BgRange.of(
+            valueInUnits = valueInUnits,
+            veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
+            lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
+            highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
+            veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
+        )
 
         val isOutdated = lastGv.timestamp < dateUtil.now() - T.mins(Constants.OLD_BG_MINUTES).msecs()
         val trendArrow = trendCalculator.getTrendArrow(iobCobCalculator.ads)

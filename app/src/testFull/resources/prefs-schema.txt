@@ -504,6 +504,8 @@ use_smb|BooleanKey|true
 use_uam|BooleanKey|true
 used_autosens_on_main_phone|BooleanNonKey|true
 vacuum_in_progress|BooleanNonKey|false
+very_high_mark|UnitDoubleKey|true
+very_low_mark|UnitDoubleKey|true
 virtual_pump_is_suspended|VirtualBooleanNonPreferenceKey|true
 virtual_pump_serial_number|VirtualStringNonPreferenceKey|true
 virtualpump_type|StringKey|true

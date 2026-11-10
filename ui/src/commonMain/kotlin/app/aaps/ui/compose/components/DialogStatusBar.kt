@@ -19,10 +19,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.aaps.core.interfaces.navigation.ElementType
-import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.ui.CoreUiStrings
 import app.aaps.core.ui.compose.AapsSpacing
-import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.LocalAapsScale
 import app.aaps.core.ui.compose.navigation.color
 import app.aaps.core.ui.compose.stringResource
@@ -31,6 +29,7 @@ import app.aaps.core.ui.extensions.directionToIcon
 import app.aaps.ui.compose.overview.chips.CobUiState
 import app.aaps.ui.compose.overview.chips.IobUiState
 import app.aaps.ui.compose.overview.graphs.BgInfoUiState
+import app.aaps.ui.compose.overview.toColor
 
 /**
  * Compact status bar showing BG + trend + delta | IOB | COB.
@@ -161,11 +160,4 @@ private fun Separator() {
             .padding(horizontal = 2.dp)
             .clearAndSetSemantics { }
     )
-}
-
-@Composable
-private fun BgRange.toColor() = when (this) {
-    BgRange.HIGH     -> AapsTheme.generalColors.bgHigh
-    BgRange.IN_RANGE -> AapsTheme.generalColors.bgInRange
-    BgRange.LOW      -> AapsTheme.generalColors.bgLow
 }

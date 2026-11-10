@@ -98,8 +98,10 @@ class BuiltInSearchables(
                 key = "range_settings",
                 title = CoreUiStrings.prefs_range_title,
                 items = listOf(
+                    UnitDoubleKey.OverviewVeryLowMark,
                     UnitDoubleKey.OverviewLowMark,
-                    UnitDoubleKey.OverviewHighMark
+                    UnitDoubleKey.OverviewHighMark,
+                    UnitDoubleKey.OverviewVeryHighMark
                 )
             ),
 

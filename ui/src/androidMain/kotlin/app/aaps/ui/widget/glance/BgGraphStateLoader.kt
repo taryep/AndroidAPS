@@ -85,11 +85,7 @@ class BgGraphStateLoader(
         val lastBg = lastBgData.lastBg()
         val bgText = lastBg?.let { profileUtil.fromMgdlToStringInUnits(it.recalculated) }
             ?: rh.gs(CoreUiStrings.value_unavailable_short)
-        val bgColor = when {
-            lastBgData.isLow()  -> colors.low
-            lastBgData.isHigh() -> colors.high
-            else                -> colors.inRange
-        }
+        val bgColor = widgetBgColor(lastBg, profileUtil, preferences)
         val strikeThrough = !lastBgData.isActualBg()
         val trendArrow = trendCalculator.getTrendArrow(iobCobCalculator.ads)
         val arrowResId = lastBg?.let { (trendArrow ?: TrendArrow.FLAT).directionToDrawableRes() }

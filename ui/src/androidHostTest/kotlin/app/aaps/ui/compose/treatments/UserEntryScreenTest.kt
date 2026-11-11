@@ -110,6 +110,7 @@ class UserEntryScreenTest {
         whenever(rh.gs(any<TextRef>())).thenReturn("Export to CSV")
         // AapsTheme reads the dark mode preference; without it LocalPreferences errors out.
         whenever(preferences.observe(StringKey.GeneralDarkMode)).thenReturn(MutableStateFlow("light"))
+        whenever(preferences.observe(StringKey.GeneralColorblindMode)).thenReturn(MutableStateFlow("off"))
     }
 
     @After

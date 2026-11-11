@@ -63,6 +63,7 @@ class AapsScreenFixture(
     init {
         TextRefIdRegistry.register("ui") { name -> UiStringIds.idOf(name) }
         whenever(preferences.observe(StringKey.GeneralDarkMode)).thenReturn(MutableStateFlow("light"))
+        whenever(preferences.observe(StringKey.GeneralColorblindMode)).thenReturn(MutableStateFlow("off"))
         whenever(config.AAPSCLIENT).thenReturn(false)
         // ProfileUtil.units is non-null in the contract, so nothing guards against a mock's null.
         // The spoken description of the BG graph reads it to decide how many decimals a reading

@@ -106,6 +106,18 @@ enum class StringKey(
         ),
         defaultedBySM = true
     ),
+    GeneralColorblindMode(
+        key = "colorblind_mode",
+        defaultValue = "off",
+        title = KeysStrings.pref_title_colorblind_mode,
+        summary = KeysStrings.pref_summary_colorblind_mode,
+        preferenceType = PreferenceType.LIST,
+        entriesRefs = mapOf(
+            "off" to KeysStrings.pref_colorblind_off,
+            "red_green" to KeysStrings.pref_colorblind_red_green,
+            "blue_yellow" to KeysStrings.pref_colorblind_blue_yellow
+        )
+    ),
 
     AapsDirectoryUri(key = "aaps_directory", defaultValue = "", title = KeysStrings.pref_title_aaps_directory),
 

@@ -13,6 +13,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.TrendCalculator
 import app.aaps.core.keys.BooleanComposedKey
 import app.aaps.core.keys.IntComposedKey
+import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.CoreUiStrings
 import app.aaps.ui.widget.directionToDrawableRes
@@ -79,7 +80,7 @@ class BgGraphStateLoader(
             yMaxUserUnits = yMax
         )
 
-        val colors = BgGraphColors.WIDGET
+        val colors = BgGraphColors.forWidget(preferences.get(StringKey.GeneralColorblindMode))
 
         // Current BG + trend (same logic as WidgetStateLoader)
         val lastBg = lastBgData.lastBg()

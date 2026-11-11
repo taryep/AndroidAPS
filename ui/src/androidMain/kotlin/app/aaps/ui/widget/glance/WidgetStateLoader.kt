@@ -25,6 +25,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.TrendCalculator
 import app.aaps.core.keys.BooleanComposedKey
 import app.aaps.core.keys.IntComposedKey
+import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.apsAdjustedTargetMgdl
@@ -47,7 +48,8 @@ import kotlin.math.abs
  * Shared by [WidgetStateLoader] and [BgGraphStateLoader]. No reading shows as in range.
  */
 internal fun widgetBgColor(lastBg: InMemoryGlucoseValue?, profileUtil: ProfileUtil, preferences: Preferences): Int {
-    lastBg ?: return BgGraphColors.WIDGET.inRange
+    val colors = BgGraphColors.forWidget(preferences.get(StringKey.GeneralColorblindMode))
+    lastBg ?: return colors.inRange
     val range = BgRange.of(
         valueInUnits = profileUtil.fromMgdlToUnits(lastBg.recalculated),
         veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
@@ -55,7 +57,7 @@ internal fun widgetBgColor(lastBg: InMemoryGlucoseValue?, profileUtil: ProfileUt
         highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
         veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
     )
-    return BgGraphColors.WIDGET.forRange(range)
+    return colors.forRange(range)
 }
 
 @Inject

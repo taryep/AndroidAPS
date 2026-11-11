@@ -230,3 +230,60 @@ val DarkGeneralColors = GeneralColors(
  * Accessed via AapsTheme.generalColors in composables.
  */
 internal val LocalGeneralColors = compositionLocalOf { LightGeneralColors }
+
+/**
+ * Colorblind palettes for the BG colors. Only the BG colors change, the rest is copied from the
+ * normal palettes. Chosen with `StringKey.GeneralColorblindMode`.
+ *
+ * Red-green (deuteranopia, protanopia): Okabe-Ito colors. In range is blue, highs go yellow to
+ * orange, lows are red-orange.
+ */
+val RedGreenLightGeneralColors = LightGeneralColors.copy(
+    bgHigh = Color(0xFFE69F00),              // orange
+    bgInRange = Color(0xFF0072B2),           // blue, readable on white
+    bgLow = Color(0xFFD55E00),               // vermillion
+    bgVeryLow = Color(0xFF8B2500),           // dark vermillion
+    bgVeryHigh = Color(0xFFB8860B),          // dark gold
+    bgTargetRangeArea = Color(0x280072B2)    // blue with ~16% alpha
+)
+
+val RedGreenDarkGeneralColors = DarkGeneralColors.copy(
+    bgHigh = Color(0xFFF0E442),              // yellow
+    bgInRange = Color(0xFF56B4E9),           // sky blue
+    bgLow = Color(0xFFFF6A3D),               // bright vermillion
+    bgVeryLow = Color(0xFFC04000),           // dark vermillion
+    bgVeryHigh = Color(0xFFE69F00),          // orange
+    bgTargetRangeArea = Color(0x4056B4E9)    // sky blue with ~25% alpha
+)
+
+/**
+ * Blue-yellow (tritanopia): low is magenta, in range is blue-green, high is yellow or gold.
+ * Text contrast is at least 4.5:1 on the light (#FFFBFE) and dark (#141218) surfaces.
+ */
+val BlueYellowLightGeneralColors = LightGeneralColors.copy(
+    bgHigh = Color(0xFF8A6400),              // dark gold
+    bgInRange = Color(0xFF00796B),           // blue-green
+    bgLow = Color(0xFFC2185B),               // magenta
+    bgVeryLow = Color(0xFF7A0F4D),           // dark magenta
+    bgVeryHigh = Color(0xFF5C4300),          // brown-gold
+    bgTargetRangeArea = Color(0x2800796B)    // blue-green with ~16% alpha
+)
+
+val BlueYellowDarkGeneralColors = DarkGeneralColors.copy(
+    bgHigh = Color(0xFFF5E050),              // yellow
+    bgInRange = Color(0xFF4DD0C0),           // light blue-green
+    bgLow = Color(0xFFFF9AD0),               // light magenta
+    bgVeryLow = Color(0xFFE5399A),           // magenta
+    bgVeryHigh = Color(0xFFD9A600),          // gold
+    bgTargetRangeArea = Color(0x404DD0C0)    // light blue-green with ~25% alpha
+)
+
+/**
+ * The general colors for a colorblind mode and a theme. [colorblindMode] is the value of
+ * `StringKey.GeneralColorblindMode`. An unknown value gives the normal colors.
+ */
+fun generalColorsFor(colorblindMode: String, isDark: Boolean): GeneralColors = when (colorblindMode) {
+    "red_green"   -> if (isDark) RedGreenDarkGeneralColors else RedGreenLightGeneralColors
+    "blue_yellow" -> if (isDark) BlueYellowDarkGeneralColors else BlueYellowLightGeneralColors
+    else          -> if (isDark) DarkGeneralColors else LightGeneralColors
+}

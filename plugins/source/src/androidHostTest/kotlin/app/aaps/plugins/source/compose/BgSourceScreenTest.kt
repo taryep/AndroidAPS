@@ -77,6 +77,7 @@ class BgSourceScreenTest {
         whenever(rh.gs(any<TextRef>())).thenReturn("label")
         whenever(rh.gs(any<TextRef>(), any())).thenReturn("selected")
         whenever(prefs.observe(StringKey.GeneralDarkMode)).thenReturn(MutableStateFlow("light"))
+        whenever(prefs.observe(StringKey.GeneralColorblindMode)).thenReturn(MutableStateFlow("off"))
         whenever(dateUtil.dateString(any())).thenReturn("2024-01-01")
         whenever(dateUtil.dateStringRelative(any(), any())).thenReturn("Today")
         whenever(dateUtil.timeStringWithSeconds(any())).thenReturn("12:00:00")

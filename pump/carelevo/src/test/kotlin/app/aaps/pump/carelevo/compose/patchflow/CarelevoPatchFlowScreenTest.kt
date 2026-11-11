@@ -203,6 +203,7 @@ class CarelevoPatchFlowScreenTest {
 
         // AapsTheme resolves the dark-mode preference; pin it so the colour scheme is deterministic.
         whenever(preferences.observe(StringKey.GeneralDarkMode)).thenReturn(MutableStateFlow("light"))
+        whenever(preferences.observe(StringKey.GeneralColorblindMode)).thenReturn(MutableStateFlow("off"))
         whenever(preferences.get(BooleanKey.GeneralInsulinConcentration)).thenReturn(false)
         whenever(preferences.get(BooleanKey.SiteRotationManagePump)).thenReturn(false)
         whenever(preferences.get(IntKey.SiteRotationUserProfile)).thenReturn(BodyType.MAN.value)

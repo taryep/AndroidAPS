@@ -49,6 +49,7 @@ class GlobalSnackbarHostTest {
 
     private val preferences = mock<Preferences> {
         on { observe(StringKey.GeneralDarkMode) } doReturn MutableStateFlow("light")
+        on { observe(StringKey.GeneralColorblindMode) } doReturn MutableStateFlow("off")
     }
 
     private val presence = FakeSnackbarHostPresence()

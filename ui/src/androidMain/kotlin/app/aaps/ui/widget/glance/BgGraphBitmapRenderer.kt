@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.toArgb
 import app.aaps.core.interfaces.overview.graph.BgDataPoint
 import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.overview.graph.BgType
-import app.aaps.core.ui.compose.DarkGeneralColors
+import app.aaps.core.ui.compose.generalColorsFor
 
 /**
  * Inputs for [BgGraphBitmapRenderer]. All BG values are in user units
@@ -44,16 +44,21 @@ data class BgGraphColors(
          * The colors a widget draws BG in.
          *
          * A widget sits on the launcher over unknown wallpaper, not inside the app, so it does not
-         * follow the app's light and dark themes. It always uses the dark theme BG colors of
-         * [DarkGeneralColors], which are made to be read on a dark background.
+         * follow the app's light and dark themes. It always uses the dark theme BG colors, which are
+         * made to be read on a dark background. They follow the colorblind mode of the app.
+         *
+         * @param colorblindMode the value of `StringKey.GeneralColorblindMode`
          */
-        val WIDGET = BgGraphColors(
-            veryLow = DarkGeneralColors.bgVeryLow.toArgb(),
-            low = DarkGeneralColors.bgLow.toArgb(),
-            inRange = DarkGeneralColors.bgInRange.toArgb(),
-            high = DarkGeneralColors.bgHigh.toArgb(),
-            veryHigh = DarkGeneralColors.bgVeryHigh.toArgb()
-        )
+        fun forWidget(colorblindMode: String): BgGraphColors {
+            val colors = generalColorsFor(colorblindMode, isDark = true)
+            return BgGraphColors(
+                veryLow = colors.bgVeryLow.toArgb(),
+                low = colors.bgLow.toArgb(),
+                inRange = colors.bgInRange.toArgb(),
+                high = colors.bgHigh.toArgb(),
+                veryHigh = colors.bgVeryHigh.toArgb()
+            )
+        }
     }
 }
 

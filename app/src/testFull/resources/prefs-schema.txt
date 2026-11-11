@@ -122,6 +122,7 @@ carelevo_patch_info|CarelevoStringNonKey|false
 carelevo_temp_basal_infusion_info|CarelevoStringNonKey|false
 carelevo_user_setting_info|CarelevoStringNonKey|false
 categorize_uam_as_basal|BooleanKey|true
+colorblind_mode|StringKey|true
 combov2-bt-address-key|ComboStringNonKey|true
 combov2-cp-cipher-key|ComboStringNonKey|true
 combov2-key-response-address-key|ComboIntNonKey|true

@@ -317,6 +317,7 @@ fun AapsTheme(
 ) {
     val preferences = LocalPreferences.current
     val darkModeValue by preferences.observe(StringKey.GeneralDarkMode).collectAsState()
+    val colorblindModeValue by preferences.observe(StringKey.GeneralColorblindMode).collectAsState()
     val uiMode = UiMode.fromString(darkModeValue)
 
     val lightColors = lightColorScheme()
@@ -338,7 +339,7 @@ fun AapsTheme(
     val scheme = if (isDark) darkColors else lightColors
     val profileViewerColors = if (isDark) DarkProfileHelperColors else LightProfileHelperColors
     val treatmentIconColors = if (isDark) DarkElementColors else LightElementColors
-    val generalColors = if (isDark) DarkGeneralColors else LightGeneralColors
+    val generalColors = generalColorsFor(colorblindModeValue, isDark)
     val snackbarColors = if (isDark) DarkSnackbarColors else LightSnackbarColors
 
     // Scale typography up on tablets, as far as the room allows. Orientation-independent.

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French strings of the colorblind mode. Not managed by Crowdin: this file is not in crowdin.yml. -->
+<resources>
+    <string name="pref_title_colorblind_mode">Mode daltonien</string>
+    <string name="pref_summary_colorblind_mode">Change les couleurs de la glycémie pour le daltonisme</string>
+    <string name="pref_colorblind_off">Désactivé</string>
+    <string name="pref_colorblind_red_green">Rouge-vert (deutéranopie, protanopie)</string>
+    <string name="pref_colorblind_blue_yellow">Bleu-jaune (tritanopie)</string>
+</resources>

@@ -184,3 +184,38 @@ fun homeGraphDotRadius(plotWidth: Float, range: HomeGraphRange, maxRadius: Float
     val readingsInWindow = range.hours * 12 / homeGraphDotStep(range)
     return min(maxRadius, 0.42f * plotWidth / readingsInWindow)
 }
+
+/**
+ * One straight part of the target line, in time and mg/dL: a step (same value at both ends) or the
+ * vertical segment of a change (same time at both ends). [current] is true for the step in force now
+ * and for the vertical segment that leads into it.
+ */
+data class TargetLineSegment(val startTime: Long, val startMgdl: Double, val endTime: Long, val endMgdl: Double, val current: Boolean)
+
+/**
+ * The target line of the home graph between [start] and [end] (SPEC 3.6). Each value holds until the next
+ * change, the last one until [now]. At each change a vertical segment joins the old and the new value, as
+ * the stock graph does.
+ *
+ * @param points time and target in mg/dL, in time order, as `buildTargetLine` gives them (it repeats the
+ *   last value at the end of the graph)
+ */
+fun targetLineSegments(points: List<Pair<Long, Double>>, start: Long, end: Long, now: Long): List<TargetLineSegment> {
+    // The step in force: the points from the last change at or before now, with the same value. The
+    // repeated last value is not a change, so it belongs to that step.
+    var firstCurrent = points.indexOfLast { it.first <= now }
+    while (firstCurrent > 0 && points[firstCurrent - 1].second == points[firstCurrent].second) firstCurrent--
+    var lastCurrent = firstCurrent
+    while (firstCurrent >= 0 && lastCurrent + 1 < points.size && points[lastCurrent + 1].second == points[firstCurrent].second) lastCurrent++
+    val segments = mutableListOf<TargetLineSegment>()
+    points.forEachIndexed { i, (time, mgdl) ->
+        val current = firstCurrent >= 0 && i in firstCurrent..lastCurrent
+        val previous = points.getOrNull(i - 1)
+        if (previous != null && previous.second != mgdl && time in start..end)
+            segments += TargetLineSegment(time, previous.second, time, mgdl, current)
+        val from = max(time, start)
+        val to = min(points.getOrNull(i + 1)?.first ?: now, end)
+        if (to > from) segments += TargetLineSegment(from, mgdl, to, mgdl, current)
+    }
+    return segments
+}

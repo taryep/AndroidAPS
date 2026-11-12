@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import app.aaps.core.data.model.durationInMinutes
 import app.aaps.core.data.model.getPassedDurationToTimeInMinutes
 import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.aps.Loop
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.overview.graph.OverviewDataCache
@@ -16,11 +18,14 @@ import app.aaps.core.interfaces.overview.graph.TempTargetDisplayData
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.TextResolver
 import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.convertedToAbsolute
 import app.aaps.core.objects.extensions.convertedToPercent
 import app.aaps.core.objects.extensions.round
 import app.aaps.core.ui.CoreUiStrings
+import app.aaps.core.ui.extensions.displayText
 import app.aaps.ui.UiStrings
+import app.aaps.ui.compose.overview.chips.CobUiState
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -88,7 +93,10 @@ class RedesignHomeViewModel(
     private val persistenceLayer: PersistenceLayer,
     private val iobCobCalculator: IobCobCalculator,
     private val dateUtil: DateUtil,
-    private val rh: TextResolver
+    private val rh: TextResolver,
+    private val loop: Loop,
+    private val config: Config,
+    private val decimalFormatter: DecimalFormatter
 ) : ViewModel() {
 
     // The same 30 s tick as the chips, so the time left moves at the same moment.
@@ -118,6 +126,26 @@ class RedesignHomeViewModel(
             basal = iobCobCalculator.calculateIobFromTempBasalsIncludingConvertedExtended().round().basaliob
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * The carbs for the Glucides tile (SPEC 3.2): the carbs on board without the stock "required" part,
+     * and the carbs required only when the stock chip would show them. The tile writes "13g required"
+     * itself; the stock text already ends with "13 required", so it showed twice. Same trigger as the
+     * COB chip (a new COB graph), plus the tick.
+     */
+    val cob: StateFlow<CobUiState> = combine(overviewDataCache.cobGraphFlow, ticker) { _, _ ->
+        val cobInfo = iobCobCalculator.getCobInfo("RedesignHomeViewModel COB")
+        val lastRun = loop.lastRun
+        val carbsReq = if (config.APS) lastRun?.constraintsProcessed?.carbsReq ?: 0 else 0
+        redesignCob(
+            cobText = cobInfo.displayText(rh, decimalFormatter) ?: rh.gs(CoreUiStrings.value_unavailable_short),
+            cobValue = cobInfo.displayCob ?: 0.0,
+            carbsReq = carbsReq,
+            lastApsRun = lastRun?.lastAPSRun,
+            // Read only when it can matter, as the stock chip does.
+            newestCarbsTime = if (carbsReq > 0) persistenceLayer.getNewestCarbs()?.timestamp ?: 0L else 0L
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CobUiState())
 
     private suspend fun build(profileData: ProfileDisplayData?, targetData: TempTargetDisplayData?, tbrData: TbrDisplayData?, now: Long): RedesignHomeData {
         val profile = profileFunction.getProfile()
@@ -158,3 +186,19 @@ class RedesignHomeViewModel(
         const val TICK_MS = 30_000L
     }
 }
+
+/**
+ * The carbs of the Glucides tile, with the rule of the stock COB chip (`ChipsViewModel.cobUiState`): the
+ * carbs required are shown only when no carbs were entered after the last loop run. Else
+ * [CobUiState.carbsReq] is 0, so the small text, the orange colour and the border go away together.
+ *
+ * @param cobText the carbs on board, without any "required" part
+ * @param lastApsRun time of the last loop run, null when the loop has not run
+ * @param newestCarbsTime time of the newest carbs entry, 0 when there is none
+ */
+internal fun redesignCob(cobText: String, cobValue: Double, carbsReq: Int, lastApsRun: Long?, newestCarbsTime: Long): CobUiState =
+    CobUiState(
+        text = cobText,
+        carbsReq = if (carbsReq > 0 && lastApsRun != null && newestCarbsTime < lastApsRun) carbsReq else 0,
+        cobValue = cobValue
+    )

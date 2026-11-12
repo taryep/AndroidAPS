@@ -25,7 +25,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -41,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -138,78 +139,75 @@ internal fun RedesignPatchPumpPanel(
         border = BorderStroke(1.dp, colors.border),
         modifier = modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().height(HEADER_HEIGHT),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = { showSettings = true }, modifier = Modifier.size(HEADER_HEIGHT)) {
-                    Icon(
-                        imageVector = Icons.Filled.Settings,
-                        contentDescription = stringResource(CoreUiStrings.settings),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = onCollapse, modifier = Modifier.size(HEADER_HEIGHT)) {
-                    Icon(
-                        imageVector = Icons.Filled.ExpandLess,
-                        contentDescription = stringResource(CoreUiStrings.collapse),
-                        tint = colors.textSecondary
-                    )
-                }
+        Column {
+            // The ∧ sits exactly where the ∨ of the closed bar is, so it does not jump when the panel opens.
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                PanelHeaderButton(
+                    icon = Icons.Filled.Settings,
+                    description = stringResource(CoreUiStrings.settings),
+                    color = colors.textSecondary,
+                    onClick = { showSettings = true }
+                )
+                PanelHeaderButton(
+                    icon = Icons.Filled.ExpandLess,
+                    description = stringResource(CoreUiStrings.collapse),
+                    color = colors.textSecondary,
+                    onClick = onCollapse,
+                    modifier = Modifier.testTag(TAG_COLLAPSE)
+                )
             }
-            val rows = buildList<@Composable () -> Unit> {
-                cannulaStatus?.let {
-                    add {
-                        PanelRow(
-                            item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
-                            severity = it.ageStatus, colors = colors,
-                            actionLabel = stringResource(CoreUiStrings.btn_status_cannula_change), onActionClick = actions.onFill,
-                            onRowClick = onPumpClick,
-                            modifier = Modifier.testTag(TAG_PATCH_ROW)
-                        )
+            Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp)) {
+                val rows = buildList<@Composable () -> Unit> {
+                    cannulaStatus?.let {
+                        add {
+                            PanelRow(
+                                item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
+                                severity = it.ageStatus, colors = colors,
+                                actionLabel = stringResource(CoreUiStrings.btn_status_cannula_change), onActionClick = actions.onFill,
+                                onRowClick = onPumpClick,
+                                modifier = Modifier.testTag(TAG_PATCH_ROW)
+                            )
+                        }
+                    }
+                    insulinStatus?.let {
+                        add {
+                            PanelRow(
+                                item = it, value = it.level ?: "-", valueColor = statusLevelToColor(it.levelStatus),
+                                progress = it.levelValue?.let { u -> reservoirFraction(u, it.reservoirReadingLimit) } ?: -1f,
+                                severity = it.levelStatus, colors = colors,
+                                actionLabel = stringResource(CoreUiStrings.btn_status_insulin_fill), onActionClick = actions.onInsulinChange,
+                                modifier = Modifier.testTag(TAG_INSULIN_ROW)
+                            )
+                        }
+                    }
+                    sensorStatus?.let {
+                        add {
+                            PanelRow(
+                                item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
+                                severity = it.ageStatus, colors = colors,
+                                onAddClick = actions.onSensorInsert,
+                                modifier = Modifier.testTag(TAG_SENSOR_ROW)
+                            )
+                        }
+                    }
+                    batteryStatus?.let {
+                        val showLevel = it.level != null && it.expandedLevel
+                        add {
+                            PanelRow(
+                                item = it,
+                                value = if (showLevel) it.level.orEmpty() else it.age,
+                                valueColor = statusLevelToColor(if (showLevel) it.levelStatus else it.ageStatus),
+                                progress = if (showLevel) it.levelPercent else it.agePercent,
+                                severity = if (showLevel) it.levelStatus else it.ageStatus, colors = colors,
+                                actionLabel = stringResource(CoreUiStrings.add), onActionClick = actions.onBatteryChange
+                            )
+                        }
                     }
                 }
-                insulinStatus?.let {
-                    add {
-                        PanelRow(
-                            item = it, value = it.level ?: "-", valueColor = statusLevelToColor(it.levelStatus),
-                            progress = it.levelValue?.let { u -> reservoirFraction(u, it.reservoirReadingLimit) } ?: -1f,
-                            severity = it.levelStatus, colors = colors,
-                            actionLabel = stringResource(CoreUiStrings.btn_status_insulin_fill), onActionClick = actions.onInsulinChange,
-                            modifier = Modifier.testTag(TAG_INSULIN_ROW)
-                        )
-                    }
+                rows.forEachIndexed { index, row ->
+                    if (index > 0) HorizontalDivider(color = colors.border)
+                    row()
                 }
-                sensorStatus?.let {
-                    add {
-                        PanelRow(
-                            item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
-                            severity = it.ageStatus, colors = colors,
-                            onAddClick = actions.onSensorInsert,
-                            modifier = Modifier.testTag(TAG_SENSOR_ROW)
-                        )
-                    }
-                }
-                batteryStatus?.let {
-                    val showLevel = it.level != null && it.expandedLevel
-                    add {
-                        PanelRow(
-                            item = it,
-                            value = if (showLevel) it.level.orEmpty() else it.age,
-                            valueColor = statusLevelToColor(if (showLevel) it.levelStatus else it.ageStatus),
-                            progress = if (showLevel) it.levelPercent else it.agePercent,
-                            severity = if (showLevel) it.levelStatus else it.ageStatus, colors = colors,
-                            actionLabel = stringResource(CoreUiStrings.add), onActionClick = actions.onBatteryChange
-                        )
-                    }
-                }
-            }
-            rows.forEachIndexed { index, row ->
-                if (index > 0) HorizontalDivider(color = colors.border)
-                row()
             }
         }
     }
@@ -359,9 +357,37 @@ internal const val TAG_PATCH_ROW = "redesign_patch_row"
 internal const val TAG_INSULIN_ROW = "redesign_insulin_row"
 internal const val TAG_SENSOR_ROW = "redesign_sensor_row"
 internal const val TAG_ADD_SENSOR = "redesign_add_sensor"
+internal const val TAG_COLLAPSE = "redesign_collapse"
 
 private val PANEL_RADIUS = 16.dp
-private val HEADER_HEIGHT = 36.dp
+/** The touch area of the header buttons: 48 dp, the minimum size for a touch target. */
+private val HEADER_TOUCH_SIZE = 48.dp
 private val ROW_MIN_HEIGHT = 48.dp
 private val VALUE_WIDTH = 88.dp
 private val ADD_BUTTON_SIZE = 28.dp
+
+/**
+ * A header button of the open panel: a 48 dp touch area in the top right corner, with the icon drawn as on the
+ * closed bar (a [CHEVRON_BOX_WIDTH] × [CHEVRON_BOX_HEIGHT] box at the right edge, centred on the height of
+ * the bar). So the ∧ of the open panel is exactly where the ∨ of the closed bar is.
+ */
+@Composable
+private fun PanelHeaderButton(icon: ImageVector, description: String, color: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.TopEnd,
+        modifier = modifier
+            .size(HEADER_TOUCH_SIZE)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description }
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .padding(top = (BAR_HEIGHT - CHEVRON_BOX_HEIGHT) / 2)
+                .width(CHEVRON_BOX_WIDTH)
+                .height(CHEVRON_BOX_HEIGHT)
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(CHEVRON_ICON_SIZE))
+        }
+    }
+}

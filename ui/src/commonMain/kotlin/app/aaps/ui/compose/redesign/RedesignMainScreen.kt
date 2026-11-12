@@ -164,7 +164,9 @@ fun RedesignMainScreen(
     LaunchedEffect(uiState.isDrawerOpen) { if (uiState.isDrawerOpen) onDrawerClosed() }
 
     // Tile values the stock state has not as separate texts (time left, basal rates).
-    val homeData = metroViewModel<RedesignHomeViewModel>().data.collectAsStateWithLifecycle().value
+    val homeViewModel = metroViewModel<RedesignHomeViewModel>()
+    val homeData = homeViewModel.data.collectAsStateWithLifecycle().value
+    val homeCob = homeViewModel.cob.collectAsStateWithLifecycle().value
     // Objectives, pump set-up, permissions and the loop suggestion are listed in the Menu. The BG source warning
     // goes beside the glucose circle (RedesignHomeInputs).
     val loopActionAvailable = loopActionViewModel.uiState.collectAsStateWithLifecycle().value.actionAvailable
@@ -245,6 +247,7 @@ fun RedesignMainScreen(
                     redesign = overview,
                     redesignHome = RedesignHomeInputs(
                         data = homeData,
+                        cob = homeCob,
                         bgSourceName = bgSetupPlugin?.let { plugin -> plugin.pluginDescription.pluginName?.let { stringResource(it) } ?: plugin.name },
                         bgQualityState = bgQualityState,
                         onBgSourceClick = { bgSetupPlugin?.let { onNavigate(NavigationRequest.Plugin(it::class.simpleName.orEmpty())) } },

@@ -172,6 +172,69 @@ class RedesignHomeGraphScaleTest {
         assertEquals(HomeGraphRange.H6, HomeGraphRange.DEFAULT)
     }
 
+    @Test
+    fun aTargetChangeIsJoinedByAVerticalSegmentInTheColourOfTheTargetInForce() {
+        // Profile target 100 until 10:00, temporary target 140 since then; buildTargetLine repeats the
+        // last value at the end of the graph (11:00).
+        val points = listOf(at(6, 0) to 100.0, at(10, 0) to 140.0, at(11, 0) to 140.0)
+        val segments = targetLineSegments(points, start = at(7, 0), end = at(11, 0), now = at(10, 30))
+
+        assertEquals(
+            listOf(
+                TargetLineSegment(at(7, 0), 100.0, at(10, 0), 100.0, current = false),
+                TargetLineSegment(at(10, 0), 100.0, at(10, 0), 140.0, current = true),
+                TargetLineSegment(at(10, 0), 140.0, at(11, 0), 140.0, current = true)
+            ),
+            segments
+        )
+    }
+
+    @Test
+    fun theTargetInForceIsNotTheRepeatedLastValue() {
+        // The repeated last value can lie before now (end of the graph not moved yet): the step that
+        // started at 10:00 is still the one in force, not the repeated point.
+        val points = listOf(at(6, 0) to 100.0, at(10, 0) to 140.0, at(10, 20) to 140.0)
+        val segments = targetLineSegments(points, start = at(7, 0), end = at(11, 0), now = at(10, 30))
+
+        assertEquals(
+            listOf(
+                TargetLineSegment(at(7, 0), 100.0, at(10, 0), 100.0, current = false),
+                TargetLineSegment(at(10, 0), 100.0, at(10, 0), 140.0, current = true),
+                TargetLineSegment(at(10, 0), 140.0, at(10, 20), 140.0, current = true),
+                TargetLineSegment(at(10, 20), 140.0, at(10, 30), 140.0, current = true)
+            ),
+            segments
+        )
+    }
+
+    @Test
+    fun aChangeBeforeTheWindowHasNoVerticalSegmentAndPastChangesAreNotCurrent() {
+        // 120 until 8:00 (before the window), 100 until 10:00, back to 120 since then.
+        val points = listOf(at(6, 0) to 120.0, at(8, 0) to 100.0, at(10, 0) to 120.0, at(12, 0) to 120.0)
+        val segments = targetLineSegments(points, start = at(9, 0), end = at(12, 0), now = at(11, 0))
+
+        assertEquals(
+            listOf(
+                TargetLineSegment(at(9, 0), 100.0, at(10, 0), 100.0, current = false),
+                TargetLineSegment(at(10, 0), 100.0, at(10, 0), 120.0, current = true),
+                TargetLineSegment(at(10, 0), 120.0, at(12, 0), 120.0, current = true)
+            ),
+            segments
+        )
+    }
+
+    @Test
+    fun carbsRequiredFollowTheRuleOfTheStockChip() {
+        // Carbs entered before the last loop run: still required.
+        assertEquals(13, redesignCob("0 g", 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 1_000L).carbsReq)
+        // Carbs entered after the last loop run: no more required, as on the stock chip.
+        assertEquals(0, redesignCob("0 g", 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 3_000L).carbsReq)
+        // The loop has not run: nothing required.
+        assertEquals(0, redesignCob("0 g", 0.0, carbsReq = 13, lastApsRun = null, newestCarbsTime = 0L).carbsReq)
+        // The text is the carbs on board only: the tile adds "13g requis" itself.
+        assertEquals("0 g", redesignCob("0 g", 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 1_000L).text)
+    }
+
     private companion object {
 
         const val HOUR = 3_600_000L

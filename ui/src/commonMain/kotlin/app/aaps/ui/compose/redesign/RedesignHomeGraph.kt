@@ -502,15 +502,16 @@ private class InspectSources(
     val runningModes: RunningModeGraphData
 )
 
-/** The target as a step line: each value holds until the next change, the last one until now. */
+/**
+ * The target as a step line: each value holds until the next change, the last one until now. A vertical
+ * segment joins two values at each change, as on the stock graph.
+ */
 private fun DrawScope.drawTargetLine(points: List<Pair<Long, Double>>, g: PlotGeometry, now: Long, y: (Double) -> Float, color: Color, currentColor: Color?, width: Float) {
-    // The step in force now has the accent colour (a temporary or adjusted target); the past ones stay grey.
-    val currentIndex = points.indexOfLast { it.first <= now }
-    points.forEachIndexed { i, (time, mgdl) ->
-        val until = points.getOrNull(i + 1)?.first ?: now
-        val x0 = g.x(max(time, g.start))
-        val x1 = g.x(minOf(until, g.end))
-        if (x1 > x0) drawLine(if (i == currentIndex && currentColor != null) currentColor else color, Offset(x0, y(mgdl)), Offset(x1, y(mgdl)), width)
+    targetLineSegments(points, g.start, g.end, now).forEach { segment ->
+        // The step in force now, and the vertical segment into it, have the accent colour (a temporary or
+        // adjusted target); the past ones stay grey.
+        val segmentColor = if (segment.current && currentColor != null) currentColor else color
+        drawLine(segmentColor, Offset(g.x(segment.startTime), y(segment.startMgdl)), Offset(g.x(segment.endTime), y(segment.endMgdl)), width)
     }
 }
 

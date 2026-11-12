@@ -119,7 +119,8 @@ fun RedesignHomePage(
 ) {
     val bgInfoState by graphViewModel.bgInfoState.collectAsStateWithLifecycle()
     val iob by chipsViewModel.iobUiState.collectAsStateWithLifecycle()
-    val cob by chipsViewModel.cobUiState.collectAsStateWithLifecycle()
+    val stockCob by chipsViewModel.cobUiState.collectAsStateWithLifecycle()
+    val cob = inputs.cob ?: stockCob
     val sensitivity by chipsViewModel.sensitivityUiState.collectAsStateWithLifecycle()
     val status by statusViewModel.uiState.collectAsStateWithLifecycle()
     var statusExpanded by rememberSaveable { mutableStateOf(false) }

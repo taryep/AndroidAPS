@@ -3,6 +3,7 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.runtime.Immutable
 import app.aaps.core.interfaces.alerts.EatReminderState
 import app.aaps.core.interfaces.bgQualityCheck.BgQualityCheck
+import app.aaps.ui.compose.overview.chips.CobUiState
 
 /**
  * What the redesign home page needs from `MainScreen`, which owns it: the BG source warning, the
@@ -13,6 +14,8 @@ import app.aaps.core.interfaces.bgQualityCheck.BgQualityCheck
 @Immutable
 class RedesignHomeInputs(
     val data: RedesignHomeData = RedesignHomeData(),
+    /** Carbs for the Glucides tile, without the stock "required" text (RedesignHomeViewModel.cob). Null: the stock chip state. */
+    val cob: CobUiState? = null,
     /** Name of the BG source with a data problem, or null when its data is fine. */
     val bgSourceName: String? = null,
     val bgQualityState: BgQualityCheck.State? = null,

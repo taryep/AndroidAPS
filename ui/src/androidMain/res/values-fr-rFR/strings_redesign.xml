@@ -26,7 +26,7 @@
     <string name="redesign_mode_paused_no_time">Pause</string>
     <string name="redesign_mode_disconnected">Déconnectée</string>
     <string name="redesign_mode_disabled">Désactivée</string>
-    <string name="redesign_carbs_required">%1$d requis</string>
+    <string name="redesign_carbs_required">%1$dg requis</string>
     <string name="redesign_sensitivity">Sensibilité</string>
     <string name="redesign_isf">ISF</string>
     <string name="redesign_sensitivity_description">Sensibilité %1$s, ISF du profil %2$s, ISF utilisé %3$s</string>

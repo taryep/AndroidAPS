@@ -143,6 +143,27 @@ class RedesignTilesTest {
 
     private fun tap(text: String) = compose.onNode(hasText(text, substring = true) and hasClickAction(), useUnmergedTree = false).performClick()
 
+    /** How many times [text] is written on the tiles, counting every text node. */
+    private fun timesShown(text: String): Int =
+        compose.onAllNodes(hasText(text, substring = true), useUnmergedTree = true).fetchSemanticsNodes()
+            .flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }
+            .sumOf { it.text.windowed(text.length).count { part -> part == text } }
+
+    @Test
+    fun carbsRequiredIsShownOnceAndGoesAwayWhenCarbsAreEnteredAfterTheLastLoopRun() {
+        val required = RuntimeEnvironment.getApplication().getString(R.string.redesign_carbs_required, 13)
+        assertThat(required).isEqualTo("13g requis")
+
+        // Carbs entered before the last loop run: the loop still asks for 13 g.
+        show(tiles(cob = redesignCob(cobText = "0 g", cobValue = 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 1_000L)))
+        assertThat(timesShown(required)).isEqualTo(1)
+        assertThat(timesShown("requis")).isEqualTo(1)
+
+        // Carbs entered after the last loop run: as on the stock chip, nothing is required any more.
+        show(tiles(cob = redesignCob(cobText = "0 g", cobValue = 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 3_000L)))
+        assertThat(timesShown("requis")).isEqualTo(0)
+    }
+
     @Test
     fun eachTileDoesWhatItsChipDoes() {
         show(tiles())

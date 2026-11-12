@@ -120,12 +120,12 @@ fun RedesignConsumablesBar(
             ) {
                 items.forEach { ConsumableItem(it, colors) }
             }
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.width(44.dp).height(24.dp)) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.width(CHEVRON_BOX_WIDTH).height(CHEVRON_BOX_HEIGHT)) {
                 Icon(
                     imageVector = Icons.Filled.ExpandMore,
                     contentDescription = stringResource(CoreUiStrings.expand),
                     tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(CHEVRON_ICON_SIZE)
                 )
             }
         }
@@ -167,7 +167,12 @@ private fun ConsumableItem(item: StatusItem, colors: RedesignColors) {
     }
 }
 
-private val BAR_HEIGHT = 32.dp
+internal val BAR_HEIGHT = 32.dp
+
+/** The box of the ∨ on the closed bar and of the ∧ on the open patch panel: same place, same size. */
+internal val CHEVRON_BOX_WIDTH = 44.dp
+internal val CHEVRON_BOX_HEIGHT = 24.dp
+internal val CHEVRON_ICON_SIZE = 20.dp
 
 /** The same radius as the open patch panel, so the bar and the card look like one object. */
 private val BAR_RADIUS = 16.dp

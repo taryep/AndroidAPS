@@ -31,7 +31,7 @@
     <string name="redesign_mode_paused_no_time" comment="Loop tile value: the loop is suspended, no end time known">Paused</string>
     <string name="redesign_mode_disconnected" comment="Loop tile value: the pump is disconnected">Disconnected</string>
     <string name="redesign_mode_disabled" comment="Loop tile value: the loop is disabled">Disabled</string>
-    <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: 13 required">%1$d required</string>
+    <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: 13g required">%1$dg required</string>
     <string name="redesign_sensitivity" comment="Label of the sensitivity line on the home page (autosens or dynamic ISF)">Sensitivity</string>
     <string name="redesign_isf" comment="Abbreviation of insulin sensitivity factor, as in the rest of the app">ISF</string>
     <string name="redesign_sensitivity_description" comment="Screen reader text of the sensitivity line. %1$s=sensitivity in percent, %2$s=ISF of the profile, %3$s=ISF used. Example: Sensitivity 80 %, profile ISF 36, ISF used 45 mg/dL">Sensitivity %1$s, profile ISF %2$s, ISF used %3$s</string>

@@ -326,7 +326,7 @@ row 2   │ Loop (round)│   │  133   │   │ Target(round)│
   **Every mode, closed loop included**: **icon only** (about 36 dp, no caption; decided 9 Nov). The
   extra time ("25 min") is kept in the accessible name. Open loop suggestion waiting: blue open-loop
   colours and a count badge (18 dp) "1" at the top right; tap opens the existing sheet to accept it.
-  **Decided 12 Nov (step 6):** open loop with a suggestion waiting (badge): tap = accept the suggestion,
+  **Decided 12 Nov (step 7):** open loop with a suggestion waiting (badge): tap = accept the suggestion,
   long press = running-mode dialog, no chevron. Every other case: a tap opens the existing running-mode
   dialog (what the Boucle tile did). Content description:
   "Boucle : Fermée" (stock text of the state).
@@ -335,7 +335,7 @@ row 2   │ Loop (round)│   │  133   │   │ Target(round)│
   at the bottom right of the icon (right 20 dp, bottom 20 dp inside the cell) with a 3 dp ring in the
   page colour: white number, **colour by type** (decided 9 Nov, replaces the always-red badge; types fixed
   12 Nov: info blue, warning yellow, alert red; the badge takes the colour of the most serious type
-  present). Tap opens the existing `NotificationBottomSheet`. Also decided 12 Nov (step 7): a popup
+  present). Tap opens the existing `NotificationBottomSheet`. Also decided 12 Nov (step 8): a popup
   for serious alerts only (the existing "urgent" notifications), and a message preview for all.
   Hidden when no notifications (the cell stays empty). Content description: "2 notifications" /
   "1 notification".
@@ -433,7 +433,7 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   of the app; no preference). The buttons have a selected state and a spoken name ("6 heures").
 - **Time window**: ends at the **next full hour** (e.g. now 00:55 → window ends 01:00). No zoom, no
   predictions, no other series.
-- **Scroll (decided 10 Nov, step 8):** on 3 h, 6 h, 12 h and 18 h a horizontal drag moves the visible
+- **Scroll (decided 10 Nov, step 3):** on 3 h, 6 h, 12 h and 18 h a horizontal drag moves the visible
   window inside the last 24 hours (24 h shows everything). A change of range always brings the window
   back to now. A new reading does not move a window the user has scrolled back. No "now" button. While
   the finger drags, the value axis does not move; after release it adapts to the visible window, as the
@@ -693,8 +693,8 @@ touches too many upstream files, skip it and tell me.
 ## 9. Phases
 
 **État (12 nov. 2026) : phases 0 à 7, 8a et 8.5 faites. Prochaine : étape 1 du suivi (bugs de l'accueil).**
-Le suivi (document « Suivi AAPS redesign » du projet Claude) remplace le backlog et le plan : 10 étapes
-numérotées, dans l'ordre où on les fait. Les phases ci-dessous 8b et 8c deviennent l'étape 3, la phase 9 l'étape 9 et la phase 10 l'étape 10. En cas de
+Le suivi (`docs/redesign/SUIVI.md`, à lire en entier avant chaque étape) remplace le backlog et le plan : 11 étapes
+numérotées, dans l'ordre où on les fait. Les phases ci-dessous 8b et 8c deviennent l'étape 9, la phase 9 l'étape 10 et la phase 10 l'étape 11. L'option « Noir pur » passe dans les idées pour plus tard. En cas de
 contradiction, le suivi l'emporte sur cette spec.
 (Old phases 5 "Themes" and 6 "Animations" are now phases 9 and 10.)
 
@@ -762,9 +762,8 @@ new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the ph
    colour of the light theme (`LightElementColors.tempBasal` = `#00FFFF`, light cyan, almost unreadable in
    the "Annuler : Basal temp." dialog; seen in the phase 6 test). Proposed: `#0B6A70`, the teal of the Basale tile. Check the light mockups
    (`Accueil, thème clair`, `Menu, thème clair`, `Graphiques, thème clair`, `Paramètres, thème clair`).
-10. **Nice to have, last**: two more animations are planned (step 10 of the tracking document): the BG circle refreshes every minute
-    (age text; value, triangles and colour on each new reading) while the graph stays at 5 min, and the
-    consumables bar opens like a drawer. These two transitions need the 200 ms limit raised.
+10. **Nice to have, last**: the consumables bar opens like a drawer (step 11 of the tracking document; the 200 ms limit is raised
+    for it). The BG circle age text refreshing every minute moved to step 2 (it is a refresh, not an animation).
     Short animations (≤ 200 ms): BG number cross-fade on a new reading,
     trend arc sliding, new dot appearing. They run only when a real new reading arrives from the
     BG source (about once a minute or every 5 min), never on a timer: the mockup makes a new

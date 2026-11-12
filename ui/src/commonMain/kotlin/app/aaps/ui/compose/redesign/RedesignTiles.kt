@@ -206,14 +206,15 @@ fun RedesignTile(
         if (onClick != null) role = Role.Button
     }
     val content: @Composable () -> Unit = {
-        // The icon is as high as the two lines together, on their left.
+        // The icon is as high as the two lines together, on their left. The two lines are centred in the space
+        // right of the icon (step 2, decided 10 Nov).
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 6.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPadding, vertical = 6.dp)
         ) {
             Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(TILE_ICON_SIZE))
             Spacer(Modifier.width(6.dp))
-            Column(verticalArrangement = Arrangement.Center) {
+            Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                 // The time left follows the name after a space, in the accent colour and semi-bold: no separator sign.
                 FittingText(
                     text = buildAnnotatedString {

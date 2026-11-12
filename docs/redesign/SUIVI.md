@@ -10,9 +10,9 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 
 | N° | Étape | Statut |
 |---|---|---|
-| 1 | Accueil : bugs | En cours (code fait, test sur le téléphone) |
-| 1b | Interrupteur nouvelle / ancienne interface | En cours (code fait, test sur le téléphone) |
-| 2 | Accueil : affichage | À faire |
+| 1 | Accueil : bugs | Code fait, à tester |
+| 1b | Interrupteur nouvelle / ancienne interface | Code fait, à tester |
+| 2 | Accueil : affichage | Code fait, à tester |
 | 3 | Accueil : défilement du graphique | À faire |
 | 4 | Feuilles Insuline et Basale : barre du haut | À faire |
 | 5 | Medtrum et barres de progression | À faire |
@@ -40,10 +40,10 @@ Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`
 - [ ] La constante `RedesignFlags.ENABLED` reste l'interrupteur du build (false = jamais de nouvelle interface)
 
 ### 2. Accueil : affichage
-- [ ] Diagnostic
+- [x] Diagnostic : le cercle lit les données regroupées par 5 min (comme AAPS d'origine) ; avec une source à 1 min la valeur ne bougeait que toutes les 5 min. Le texte d'âge se mettait déjà à jour toutes les 30 s
 - [ ] Plus d'accès aux graphiques depuis l'accueil : retirer l'appui sur le graphique et sur le rond de glycémie. La seule entrée est l'icône Graphiques de la barre du bas. L'appui long (ligne d'inspection) reste
 - [ ] Cercle sans flèche de tendance : delta au centre, triangles sur l'anneau. Le nom accessible garde le sens de la tendance
-- [ ] Cercle : le texte d'âge (« il y a 1 min ») se met à jour chaque minute ; la valeur, les triangles et la couleur suivent chaque nouvelle lecture (selon la fréquence de ta source de glycémie). Le graphique reste à 5 min. Jamais d'animation sur une minuterie
+- [ ] Cercle : le texte d'âge (« il y a 1 min ») se met à jour chaque minute ; la valeur, les triangles et la couleur suivent chaque nouvelle lecture (selon la fréquence de ta source de glycémie). Le graphique reste à 5 min. Jamais d'animation sur une minuterie. Fait : le cercle prend la lecture la plus récente de la source quand elle est plus récente que le groupe de 5 min (valeur, couleur, âge) ; le delta et les triangles restent ceux d'AAPS (ils ont besoin des données regroupées)
 - [ ] Tuiles : texte centré à droite de l'icône (l'icône reste à gauche)
 - [ ] Ligne de sensibilité entre le graphique et les tuiles : 6 dp sous le graphique, espace flexible (minimum 12 dp) jusqu'aux tuiles. Vérifier que la page tient sans défiler sur 412 × 891 dp
 - [ ] Valeurs des bolus (au-dessus du triangle) et des glucides (en dessous), échelles 3 h et 6 h seulement, pas de valeur pour les SMB

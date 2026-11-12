@@ -8,21 +8,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import app.aaps.core.data.model.RM
@@ -95,7 +94,7 @@ class RedesignOverviewContentTest {
                     Box(Modifier.requiredSize(412.dp, 891.dp).testTag(SCREEN)) {
                         OverviewScreen(
                             profileName = "Normal", isProfileModified = false, profileProgress = 0f,
-                            tempTargetText = "120–130", tempTargetState = TempTargetChipState.None,
+                            tempTargetText = "120â€“130", tempTargetState = TempTargetChipState.None,
                             tempTargetProgress = 0f, tempTargetReason = null,
                             runningMode = RM.Mode.CLOSED_LOOP, runningModeText = "Closed loop",
                             runningModeRemaining = "", runningModeProgress = 0f,
@@ -131,16 +130,14 @@ class RedesignOverviewContentTest {
     }
 
     @Test
-    fun aTapOnTheGlucoseValueOpensTheGraphs() {
+    fun aTapOnTheGlucoseValueStaysOnHome() {
+        // Step 2 (decided 10 Nov): nothing on Home opens the graphs page; only the bottom bar does.
         show()
-        val openGraphs = string(R.string.redesign_open_graphs)
-        // The glucose circle and the home graph both have this action; the circle comes first.
-        compose.onAllNodes(SemanticsMatcher("open graphs action") { it.config.getOrNull(SemanticsActions.OnClick)?.label == openGraphs })[0]
-            .performSemanticsAction(SemanticsActions.OnClick)
+        compose.onAllNodesWithTag(REDESIGN_BG_CIRCLE_TAG).onFirst().performClick()
         compose.waitForIdle()
 
-        assertThat(state.page).isEqualTo(GRAPHS_PAGE)
-        pane(R.string.redesign_page_graphs).assertIsDisplayed()
+        assertThat(state.page).isNotEqualTo(GRAPHS_PAGE)
+        pane(R.string.redesign_page_home).assertIsDisplayed()
     }
 
     @Test

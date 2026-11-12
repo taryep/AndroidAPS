@@ -93,7 +93,7 @@ class RedesignHomeStock(
 /**
  * Page 1 of the redesign overview (SPEC 3.1 to 3.6), from top to bottom: the scene banner, the circle
  * row (glucose circle with two slots on each side), the consumables bar, on a client the status of
- * the master, the full-width graph card, the 2 × 2 tiles and the sensitivity line.
+ * the master, the full-width graph card, the sensitivity line (when shown) and the 2 × 2 tiles.
  *
  * The page is a column at least as high as the screen. The two flexible gaps (circle row to
  * consumables, graph to tiles) share what is left, each 12 dp at least. The plot height is what
@@ -110,7 +110,6 @@ fun RedesignHomePage(
     onNavigate: (NavigationRequest) -> Unit,
     onIobClick: () -> Unit,
     onBasalClick: () -> Unit,
-    onOpenGraphs: () -> Unit,
     onNotificationsClick: () -> Unit,
     onPumpActivityClick: () -> Unit,
     graphRange: HomeGraphRange,
@@ -199,7 +198,8 @@ fun RedesignHomePage(
                         RedesignLoopSlot(tilesState, stock.commandsAllowed, onNavigate, inputs.onLoopSuggestionClick)
                     }
                 }
-                RedesignBgCircle(bgInfo = bgInfoState.bgInfo, timeAgoText = bgInfoState.timeAgoText, onClick = onOpenGraphs)
+                val circle = inputs.circle ?: bgInfoState
+                RedesignBgCircle(bgInfo = circle.bgInfo, timeAgoText = circle.timeAgoText)
                 Column(Modifier.weight(1f)) {
                     SlotCell { RedesignBellButton(stock.notifications.size, onNotificationsClick) }
                     SlotCell { RedesignTargetSlot(tilesState, stock.commandsAllowed, onNavigate) }
@@ -250,10 +250,16 @@ fun RedesignHomePage(
                     graphViewModel = graphViewModel,
                     range = graphRange,
                     onRangeChange = onGraphRangeChange,
-                    onOpenGraphs = onOpenGraphs,
                     targetAccent = targetAccent,
                     modifier = Modifier.fillMaxWidth().height(plotHeight + GRAPH_CHROME_HEIGHT)
                 )
+            }
+
+            // The sensitivity line sits 6 dp under the graph (step 2, decided 10 Nov; it was under the tiles). The
+            // flexible gap then runs from it to the tiles.
+            if (showSensitivity) {
+                Spacer(Modifier.height(BLOCK_GAP))
+                RedesignSensitivityLine(sensitivity)
             }
 
             FlexibleGap()
@@ -267,10 +273,6 @@ fun RedesignHomePage(
                 onBasalClick = onBasalClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = PAGE_PADDING).widthIn(max = TILES_WIDTH)
             )
-            if (showSensitivity) {
-                Spacer(Modifier.height(BLOCK_GAP))
-                RedesignSensitivityLine(sensitivity)
-            }
             Spacer(Modifier.height(BOTTOM_PADDING))
         }
     }
@@ -293,7 +295,7 @@ private fun ColumnScope.FlexibleGap() {
 fun redesignShowsSensitivity(state: SensitivityUiState): Boolean = state.asText.isNotEmpty() || state.isfFrom.isNotEmpty()
 
 /**
- * One line under the tiles (SPEC 3.4): "⇅ Sensitivity 80 % · ISF 36 → 45". Shown only when the stock
+ * One line between the graph and the tiles (SPEC 3.4): "⇅ Sensitivity 80 % · ISF 36 → 45". Shown only when the stock
  * sensitivity chip would show something; a tap opens the same dialog.
  */
 @Composable

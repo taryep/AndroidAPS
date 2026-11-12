@@ -41,7 +41,6 @@ import app.aaps.ui.compose.overview.chips.ChipsViewModel
 import app.aaps.ui.compose.overview.graphs.GraphViewModel
 import app.aaps.ui.compose.overview.graphs.GraphsSection
 import app.aaps.ui.compose.overview.statusLights.StatusViewModel
-import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.GRAPHS_PAGE
 
 /**
  * The phone overview of the redesign: the home page and the graphs page (SPEC 2, 3 and 4). It has no
@@ -78,7 +77,6 @@ fun RedesignOverview(
                 onNavigate = onNavigate,
                 onIobClick = onIobClick,
                 onBasalClick = onBasalClick,
-                onOpenGraphs = { redesign.page = GRAPHS_PAGE },
                 onNotificationsClick = onNotificationsClick,
                 onPumpActivityClick = onPumpActivityClick,
                 graphRange = redesign.homeGraphRange,

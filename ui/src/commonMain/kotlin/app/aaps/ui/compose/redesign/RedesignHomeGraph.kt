@@ -3,7 +3,6 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +44,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -91,7 +89,8 @@ import kotlin.time.Instant
 /**
  * The simplified glucose graph of the home page (SPEC 3.6): range buttons, one dot per reading on a
  * fixed scale, the coloured lines of the ranges, the running-mode band, and the stock inspect pill on
- * a long press. No scroll, no zoom, no predictions, no treatment markers. A tap does nothing.
+ * a long press, the treatment markers (with their values on 3 h and 6 h). No zoom, no predictions. A
+ * tap does nothing (decided 10 Nov: the graphs page opens only from the bottom bar).
  *
  * It fills the height it is given; the plot gets what is left after the buttons and the hour labels.
  */
@@ -100,7 +99,6 @@ fun RedesignHomeGraph(
     graphViewModel: GraphViewModel,
     range: HomeGraphRange,
     onRangeChange: (HomeGraphRange) -> Unit,
-    onOpenGraphs: () -> Unit,
     targetAccent: Color? = null,
     modifier: Modifier = Modifier
 ) {
@@ -128,7 +126,6 @@ fun RedesignHomeGraph(
                 pill = pill,
                 // The plot is 17 dp in from the card edge: the pill is placed in card coordinates.
                 onPill = { data, x -> pill = data; pillX = x + sidePx },
-                onOpenGraphs = onOpenGraphs,
                 targetAccent = targetAccent,
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = PLOT_SIDE)
             )
@@ -208,7 +205,6 @@ private fun HomeGraphPlot(
     colors: RedesignColors,
     pill: InspectData?,
     onPill: (InspectData?, Float) -> Unit,
-    onOpenGraphs: () -> Unit,
     targetAccent: Color?,
     modifier: Modifier
 ) {
@@ -279,6 +275,7 @@ private fun HomeGraphPlot(
     val thresholdStyle = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
     val greyStyle = TextStyle(fontSize = 11.sp, color = colors.graphLabel, fontFeatureSettings = "tnum")
     val hourStyle = TextStyle(fontSize = 11.sp, color = colors.textSecondary, fontFeatureSettings = "tnum")
+    val treatmentValueStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
     val lineLabels = lines.map { textMeasurer.measure(it.label, thresholdStyle.copy(color = it.textColor)) } +
         listOfNotNull(targetValue?.let { textMeasurer.measure(label(it), thresholdStyle.copy(color = targetAccent ?: colors.textSecondary)) })
     val gradLabels = graduations.map { textMeasurer.measure(label(fromMgdl(it, units)), greyStyle) }
@@ -333,7 +330,6 @@ private fun HomeGraphPlot(
         }
     }
 
-    val openGraphsLabel = stringResource(UiStrings.redesign_open_graphs)
     val description = shown.lastOrNull()?.let { last ->
         stringResource(
             UiStrings.redesign_graph_description,
@@ -347,10 +343,7 @@ private fun HomeGraphPlot(
             .onSizeChanged { size = it }
             .semantics {
                 contentDescription = description
-                onClick(label = openGraphsLabel) { onOpenGraphs(); true }
             }
-            // A tap opens the graphs page. A long press is not a tap: it has its own handler below.
-            .pointerInput(Unit) { detectTapGestures(onLongPress = {}, onTap = { onOpenGraphs() }) }
             .pointerInput(Unit) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = { offset ->
@@ -453,14 +446,32 @@ private fun HomeGraphPlot(
             shown.minByOrNull { abs(it.timestamp - time) }?.takeIf { abs(it.timestamp - time) <= MARKER_MATCH_MS }
                 ?.let { y(toMgdl(it.value, units)) } ?: between
         val gap = MARKER_GAP.toPx()
+        // On 3 h and 6 h the dose is written above a bolus triangle and the grams under a carbs triangle
+        // (step 2, decided 10 Nov). No value for an SMB. The labels come formatted from the stock data.
+        val showValues = range.hours <= TREATMENT_VALUE_MAX_HOURS
+        val markerHeight = MARKER_WIDTH.toPx() * 1.1f
+        val valueGap = TREATMENT_VALUE_GAP.toPx()
         treatments.boluses.filter { it.isValid && it.timestamp in start..end }.forEach { bolus ->
             val x = g.x(bolus.timestamp)
             if (bolus.bolusType == BolusType.SMB) {
                 if (range.hours <= SMB_MAX_HOURS) drawTriangle(Offset(x, readingY(bolus.timestamp) + gap), up = true, width = SMB_MARKER.toPx(), color = elementColors.insulin)
-            } else drawTriangle(Offset(x, readingY(bolus.timestamp) - gap), up = false, width = MARKER_WIDTH.toPx(), color = elementColors.insulin)
+            } else {
+                val tipY = readingY(bolus.timestamp) - gap
+                drawTriangle(Offset(x, tipY), up = false, width = MARKER_WIDTH.toPx(), color = elementColors.insulin)
+                if (showValues) {
+                    val layout = textMeasurer.measure(bolus.label, treatmentValueStyle.copy(color = elementColors.insulin))
+                    drawTreatmentValue(layout, x, top = tipY - markerHeight - valueGap - layout.size.height)
+                }
+            }
         }
         treatments.carbs.filter { it.isValid && it.timestamp in start..end }.forEach { carbs ->
-            drawTriangle(Offset(g.x(carbs.timestamp), readingY(carbs.timestamp) + gap), up = true, width = MARKER_WIDTH.toPx(), color = elementColors.carbs)
+            val x = g.x(carbs.timestamp)
+            val tipY = readingY(carbs.timestamp) + gap
+            drawTriangle(Offset(x, tipY), up = true, width = MARKER_WIDTH.toPx(), color = elementColors.carbs)
+            if (showValues) {
+                val layout = textMeasurer.measure(carbs.label, treatmentValueStyle.copy(color = elementColors.carbs))
+                drawTreatmentValue(layout, x, top = tipY + markerHeight + valueGap)
+            }
         }
 
         // Inspect: dashed line at the shown reading, and a ring on it.
@@ -530,6 +541,13 @@ private fun DrawScope.drawTriangle(tip: Offset, up: Boolean, width: Float, color
     )
 }
 
+/** The value of a treatment, centred on [centreX] with its top at [top], kept inside the canvas. */
+private fun DrawScope.drawTreatmentValue(layout: TextLayoutResult, centreX: Float, top: Float) {
+    val x = (centreX - layout.size.width / 2f).coerceIn(0f, (size.width - layout.size.width).coerceAtLeast(0f))
+    val y = top.coerceIn(0f, (size.height - layout.size.height).coerceAtLeast(0f))
+    drawText(layout, topLeft = Offset(x, y))
+}
+
 /** A label right-aligned on [right], centred on [centreY]. */
 private fun DrawScope.drawLabel(layout: TextLayoutResult, right: Float, centreY: Float) =
     drawText(layout, topLeft = Offset(right - layout.size.width, centreY - layout.size.height / 2f))
@@ -572,6 +590,12 @@ private const val MARKER_MATCH_MS = 15 * 60_000L
 
 /** SMBs are too many beyond this range, so they are left out (manual boluses and carbs stay). */
 private const val SMB_MAX_HOURS = 12
+
+/** Treatment values are written on the 3 h and 6 h ranges only. */
+private const val TREATMENT_VALUE_MAX_HOURS = 6
+
+/** Space between a treatment triangle and its value. */
+private val TREATMENT_VALUE_GAP = 2.dp
 
 /** Least space between two grey graduations. */
 private val GRADUATION_SPACING = 32.dp

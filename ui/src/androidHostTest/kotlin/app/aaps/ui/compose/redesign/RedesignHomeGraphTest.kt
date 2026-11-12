@@ -14,12 +14,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,8 @@ import app.aaps.ui.UiStringIds
 import app.aaps.ui.compose.testing.AapsScreenFixture
 import app.aaps.ui.compose.testing.OverviewViewModelFixture
 import com.google.common.truth.Truth.assertThat
+import java.io.File
+import kotlin.math.sin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,8 +67,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import java.io.File
-import kotlin.math.sin
 
 /**
  * The home graph (SPEC 3.6): pictures of each range and theme, mmol/L and a reading above 280, the
@@ -238,33 +241,19 @@ class RedesignHomeGraphTest {
     }
 
     @Test
-    fun aTapOpensTheGraphsPage() {
+    fun onlyTheRangeButtonsCanBeTapped() {
+        // Step 2 (decided 10 Nov): the plot has no tap action any more; the graphs page opens from the bottom bar.
         withDay()
         show(HomeGraphRange.H6)
-        opened = 0
         compose.onNodeWithTag(GRAPH).performTouchInput { click(Offset(width * 0.5f, height * 0.6f)) }
         compose.waitForIdle()
-        assertThat(opened).isEqualTo(1)
-    }
-
-    @Test
-    fun aLongPressWithoutMovingDoesNotOpenIt() {
-        withDay()
-        show(HomeGraphRange.H6)
-        opened = 0
-        compose.onNodeWithTag(GRAPH).performTouchInput {
-            down(Offset(width * 0.5f, height * 0.6f))
-            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 200)
-            up()
-        }
-        compose.waitForIdle()
-        assertThat(opened).isEqualTo(0)
+        val tappable = compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag(GRAPH))).fetchSemanticsNodes()
+        assertThat(tappable).hasSize(HomeGraphRange.entries.size)
     }
 
     // A test may show several pictures, but content can be set only once: the range is state, the theme a flow.
     private var shownRange by mutableStateOf(HomeGraphRange.DEFAULT)
     private var contentSet = false
-    private var opened = 0
     private var accent by mutableStateOf<Color?>(null)
 
     private fun show(range: HomeGraphRange, dark: Boolean = true) {
@@ -275,7 +264,7 @@ class RedesignHomeGraphTest {
             compose.setContent {
                 screen.Content {
                     Box(Modifier.requiredSize(380.dp, 356.dp).testTag(GRAPH)) {
-                        RedesignHomeGraph(viewModels.graphViewModel, shownRange, { shownRange = it }, onOpenGraphs = { opened++ }, targetAccent = accent)
+                        RedesignHomeGraph(viewModels.graphViewModel, shownRange, { shownRange = it }, targetAccent = accent)
                     }
                 }
             }

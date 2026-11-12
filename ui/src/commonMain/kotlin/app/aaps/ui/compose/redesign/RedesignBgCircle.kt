@@ -1,23 +1,16 @@
 package app.aaps.ui.compose.redesign
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -34,11 +27,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.interfaces.overview.graph.BgInfoData
-import app.aaps.core.ui.compose.stringResource
-import app.aaps.core.ui.extensions.directionToIcon
-import app.aaps.ui.UiStrings
 import app.aaps.ui.compose.components.bgSpokenDescription
 import app.aaps.ui.compose.overview.ArcIndicator
 import app.aaps.ui.compose.overview.toArcIndicator
@@ -52,23 +41,20 @@ const val REDESIGN_BG_CIRCLE_TAG = "redesign_bg_circle"
 
 /**
  * The glucose circle of the home page (SPEC 3.3): the same data and trend arc as the stock
- * `BgInfoSection`, drawn larger. A tap opens the graphs page.
+ * `BgInfoSection`, drawn larger. No tap action (decided 10 Nov): the graphs page opens only from the
+ * bottom bar. No trend arrow beside the delta: the triangles on the ring show the trend, and the spoken
+ * description still says it.
  */
 @Composable
 fun RedesignBgCircle(
     bgInfo: BgInfoData?,
     timeAgoText: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = BG_CIRCLE_SIZE
 ) {
     val colors = redesignColors()
-    val openGraphs = stringResource(UiStrings.redesign_open_graphs)
-    val clickable = Modifier
-        .clip(CircleShape)
-        .clickable(onClickLabel = openGraphs, onClick = onClick)
     if (bgInfo == null) {
-        Box(contentAlignment = Alignment.Center, modifier = modifier.padding(vertical = TRIANGLE_OVERFLOW).size(size).then(clickable)) {
+        Box(contentAlignment = Alignment.Center, modifier = modifier.padding(vertical = TRIANGLE_OVERFLOW).size(size)) {
             Text("---", fontSize = 48.sp, color = colors.textSecondary)
         }
         return
@@ -82,7 +68,7 @@ fun RedesignBgCircle(
         timeAgo = timeAgoText,
         isOutdated = bgInfo.isOutdated
     )
-    // Not clipped: the trend triangles stand out of the ring. Only the touch layer at the end is round.
+    // Not clipped: the trend triangles stand out of the ring.
     // The padding keeps room for them above and below, so the gaps around the row are measured from
     // the tip of a triangle, and the row has the same height whatever the trend.
     Box(
@@ -123,14 +109,7 @@ fun RedesignBgCircle(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             bgInfo.deltaText?.let { delta ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val arrow = bgInfo.trendArrow?.takeIf { it != TrendArrow.NONE }
-                    if (arrow != null) {
-                        Icon(arrow.directionToIcon(), contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(2.dp))
-                    }
-                    Text(delta, style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary, fontFeatureSettings = "tnum"))
-                }
+                Text(delta, style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary, fontFeatureSettings = "tnum"))
             }
             // The ring does not grow with the system font, so the value keeps its size, as in the stock circle.
             RedesignFontScaleCap(1f) {
@@ -149,7 +128,6 @@ fun RedesignBgCircle(
             }
             Text(timeAgoText, style = TextStyle(fontSize = 13.sp, color = colors.textSecondary), maxLines = 1)
         }
-        Box(Modifier.matchParentSize().then(clickable))
     }
 }
 

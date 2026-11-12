@@ -3,6 +3,7 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.durationInMinutes
 import app.aaps.core.data.model.getPassedDurationToTimeInMinutes
 import app.aaps.core.data.time.T
@@ -10,16 +11,20 @@ import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.iob.IobCobCalculator
+import app.aaps.core.interfaces.overview.graph.BgInfoData
+import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.overview.graph.OverviewDataCache
 import app.aaps.core.interfaces.overview.graph.ProfileDisplayData
 import app.aaps.core.interfaces.overview.graph.TbrDisplayData
 import app.aaps.core.interfaces.overview.graph.TbrState
 import app.aaps.core.interfaces.overview.graph.TempTargetDisplayData
 import app.aaps.core.interfaces.profile.ProfileFunction
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.TextResolver
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.keys.BooleanKey
+import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.convertedToAbsolute
 import app.aaps.core.objects.extensions.convertedToPercent
@@ -28,6 +33,7 @@ import app.aaps.core.ui.CoreUiStrings
 import app.aaps.core.ui.extensions.displayText
 import app.aaps.ui.UiStrings
 import app.aaps.ui.compose.overview.chips.CobUiState
+import app.aaps.ui.compose.overview.graphs.BgInfoUiState
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -99,7 +105,8 @@ class RedesignHomeViewModel(
     private val loop: Loop,
     private val config: Config,
     private val decimalFormatter: DecimalFormatter,
-    private val preferences: Preferences
+    private val preferences: Preferences,
+    private val profileUtil: ProfileUtil
 ) : ViewModel() {
 
     // The same 30 s tick as the chips, so the time left moves at the same moment.
@@ -131,6 +138,32 @@ class RedesignHomeViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /**
+     * The glucose circle (step 2): the stock BG info, with the newest reading of the source when it is
+     * newer (see [circleBgInfo]). The age text is made again at every tick (30 s), so it moves each minute;
+     * the value follows each new reading. Null while there is no BG info: the circle shows "---".
+     */
+    val circle: StateFlow<BgInfoUiState?> = combine(overviewDataCache.bgInfoFlow, ticker) { info, now ->
+        info ?: return@combine null
+        val newest = persistenceLayer.getLastGlucoseValue()?.let { gv ->
+            val valueInUnits = profileUtil.fromMgdlToUnits(gv.value)
+            CircleReading(
+                timestamp = gv.timestamp,
+                valueInUnits = valueInUnits,
+                text = profileUtil.fromMgdlToStringInUnits(gv.value),
+                range = BgRange.of(
+                    valueInUnits = valueInUnits,
+                    veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
+                    lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
+                    highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
+                    veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
+                )
+            )
+        }
+        val shown = circleBgInfo(info, newest, now)
+        BgInfoUiState(bgInfo = shown, timeAgoText = dateUtil.minAgo(rh, shown.timestamp))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
      * The carbs for the Glucides tile (SPEC 3.2): the carbs on board without the stock "required" part,
      * and the carbs required only when the stock chip would show them. The tile writes "13g required"
      * itself; the stock text already ends with "13 required", so it showed twice. Same trigger as the
@@ -152,7 +185,7 @@ class RedesignHomeViewModel(
 
     /**
      * Goes back to the classic AAPS interface (Menu of the new interface). `ComposeMainActivity` sees the
-     * setting change and starts again; the way back is Settings › Appearance.
+     * setting change and starts again; the way back is Settings â€º Appearance.
      */
     fun useClassicInterface() = preferences.put(BooleanKey.GeneralRedesign, false)
 
@@ -211,3 +244,20 @@ internal fun redesignCob(cobText: String, cobValue: Double, carbsReq: Int, lastA
         carbsReq = if (carbsReq > 0 && lastApsRun != null && newestCarbsTime < lastApsRun) carbsReq else 0,
         cobValue = cobValue
     )
+
+/** The newest reading of the BG source, ready to show: value and text in the user's units, and its range. */
+class CircleReading(val timestamp: Long, val valueInUnits: Double, val text: String, val range: BgRange)
+
+/**
+ * What the glucose circle shows (step 2). The stock overview reads the bucketed data, which a source that
+ * sends a reading every minute only moves every 5 minutes. So when the source has a newer reading than
+ * [info], the circle shows that reading's value, colour and time. The delta and the trend stay the stock
+ * ones (they need the bucketed data). [BgInfoData.isOutdated] is computed again with [now].
+ */
+internal fun circleBgInfo(info: BgInfoData, newest: CircleReading?, now: Long): BgInfoData {
+    val shown =
+        if (newest != null && newest.timestamp > info.timestamp)
+            info.copy(bgValue = newest.valueInUnits, bgText = newest.text, bgRange = newest.range, timestamp = newest.timestamp)
+        else info
+    return shown.copy(isOutdated = shown.timestamp < now - T.mins(Constants.OLD_BG_MINUTES).msecs())
+}

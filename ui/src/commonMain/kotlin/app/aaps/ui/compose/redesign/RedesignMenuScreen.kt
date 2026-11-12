@@ -2,6 +2,7 @@ package app.aaps.ui.compose.redesign
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,10 +40,13 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
@@ -227,21 +231,7 @@ private fun MenuContent(
             Shortcut(stringResourceOrNull(ElementType.HISTORY_BROWSER.label()).orEmpty(), ElementType.HISTORY_BROWSER.icon()) { go(ElementType.HISTORY_BROWSER) },
             Shortcut(stringResourceOrNull(ElementType.STATISTICS.label()).orEmpty(), ElementType.STATISTICS.icon()) { go(ElementType.STATISTICS) }
         )
-        Column(verticalArrangement = Arrangement.spacedBy(GRID_GAP)) {
-            shortcuts.chunked(3).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(GRID_GAP)) {
-                    row.forEach { shortcut ->
-                        ShortcutTile(
-                            label = shortcut.label,
-                            icon = shortcut.icon,
-                            colors = colors,
-                            onClick = shortcut.onClick,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-        }
+        ShortcutGrid(shortcuts = shortcuts, colors = colors)
 
         // Tools: the rest of the drawer, in the drawer's order.
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -320,9 +310,63 @@ private fun SectionHeading(text: String, colors: RedesignColors) {
     )
 }
 
+/** Largest and smallest label size of the shortcut tiles. */
+private val SHORTCUT_LABEL_MAX = 15.sp
+private val SHORTCUT_LABEL_MIN = 11.sp
+private val SHORTCUT_TILE_PADDING = 14.dp
+
+/**
+ * The shortcut tiles. The labels are on one line and never cut inside a word. All tiles use one label size:
+ * the largest from 15 sp down to 11 sp at which every label fits a tile of one row of three. If none fits
+ * (a large font), the tiles go to a grid of two columns. Same label size and one line make all tiles equally high.
+ */
+@Composable
+private fun ShortcutGrid(shortcuts: List<Shortcut>, colors: RedesignColors) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val labels = shortcuts.map { it.label }
+        // The largest size at which all labels fit in [columns] columns, or null.
+        fun fittingSize(columns: Int): TextUnit? {
+            val tileInner = (maxWidth - GRID_GAP * (columns - 1)) / columns - SHORTCUT_TILE_PADDING * 2
+            val innerPx = with(density) { tileInner.toPx() }
+            var size = SHORTCUT_LABEL_MAX.value
+            while (size >= SHORTCUT_LABEL_MIN.value) {
+                val style = TextStyle(fontSize = size.sp, fontWeight = FontWeight.SemiBold)
+                if (labels.all { measurer.measure(it, style, softWrap = false, maxLines = 1).size.width <= innerPx }) return size.sp
+                size -= 0.5f
+            }
+            return null
+        }
+
+        val oneRowSize = fittingSize(3)
+        val columns = if (oneRowSize != null) shortcuts.size.coerceAtLeast(1) else 2
+        val labelSize = oneRowSize ?: fittingSize(2) ?: SHORTCUT_LABEL_MIN
+        Column(verticalArrangement = Arrangement.spacedBy(GRID_GAP)) {
+            shortcuts.chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(GRID_GAP)) {
+                    row.forEach { shortcut ->
+                        ShortcutTile(
+                            label = shortcut.label,
+                            labelSize = labelSize,
+                            icon = shortcut.icon,
+                            colors = colors,
+                            onClick = shortcut.onClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // An odd last row keeps its tile at the width of the others.
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ShortcutTile(
     label: String,
+    labelSize: TextUnit,
     icon: ImageVector,
     colors: RedesignColors,
     onClick: () -> Unit,
@@ -338,11 +382,18 @@ private fun ShortcutTile(
     ) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+            modifier = Modifier.padding(horizontal = SHORTCUT_TILE_PADDING, vertical = 12.dp)
         ) {
             Icon(imageVector = icon, contentDescription = null, tint = colors.shortcutIcon, modifier = Modifier.size(22.dp))
             Spacer(Modifier.heightIn(min = 6.dp))
-            Text(text = label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+            Text(
+                text = label,
+                fontSize = labelSize,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.textPrimary,
+                maxLines = 1,
+                softWrap = false
+            )
         }
     }
 }

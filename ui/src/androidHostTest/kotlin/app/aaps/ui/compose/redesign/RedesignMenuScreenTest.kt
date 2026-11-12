@@ -3,9 +3,15 @@ package app.aaps.ui.compose.redesign
 import androidx.activity.ComponentActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,6 +22,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.plugin.PluginBase
@@ -63,10 +71,14 @@ class RedesignMenuScreenTest {
     private fun show(
         showExit: Boolean = true,
         isTreatmentsEnabled: Boolean = true,
-        attentionItems: List<RedesignAttentionItem> = emptyList()
+        attentionItems: List<RedesignAttentionItem> = emptyList(),
+        fontScale: Float = 1f
     ) {
         compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
             MaterialTheme {
+                Box(Modifier.requiredSize(412.dp, 891.dp)) {
                 RedesignMenuScreen(
                     versionName = "4.0.0-test",
                     isSimpleMode = false,
@@ -83,6 +95,8 @@ class RedesignMenuScreenTest {
                     bottomPadding = 80.dp,
                     attentionItems = attentionItems
                 )
+                }
+            }
             }
         }
     }
@@ -187,6 +201,51 @@ class RedesignMenuScreenTest {
             whenever(it.pluginDescription).thenReturn(PluginDescription().icon(Icons.Default.Settings))
             whenever(it.name).thenReturn(name)
         }
+
+
+    /** One line of text? A label cut inside a word would have more lines. */
+    private fun lineCount(label: String): Int {
+        val node = compose.onNode(hasText(label), useUnmergedTree = true).fetchSemanticsNode()
+        val results = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+        return results.first().lineCount
+    }
+
+    private fun tileBounds(label: String) = compose.onNode(hasText(label) and hasClickAction(), useUnmergedTree = false).fetchSemanticsNode().boundsInRoot
+
+    private val shortcutLabels get() = listOf(CoreUiR.string.settings, CoreUiR.string.nav_history_browser, CoreUiR.string.statistics).map { string(it) }
+
+    private fun assertOneLineAndEqualTiles(fontScale: Float) {
+        show(fontScale = fontScale)
+        shortcutLabels.forEach { assertThat(lineCount(it)).isEqualTo(1) }
+        assertThat(shortcutLabels.map { tileBounds(it).height }.toSet().size).isEqualTo(1)
+    }
+
+    @Test
+    fun shortcutLabelsAreOneLineAndTilesEquallyHighAtNormalFont() = assertOneLineAndEqualTiles(1f)
+
+    @Test
+    fun shortcutLabelsAreOneLineAndTilesEquallyHighAtALargeFont() = assertOneLineAndEqualTiles(1.5f)
+
+    @Test
+    fun shortcutLabelsAreOneLineAndTilesEquallyHighAtTheLargestFont() = assertOneLineAndEqualTiles(2f)
+
+    @Test
+    fun shortcutsGoToTwoColumnsWhenThreeDoNotFit() {
+        // At twice the font size the labels do not fit a third of the width, even at 11 sp.
+        show(fontScale = 2f)
+        val labels = listOf(CoreUiR.string.settings, CoreUiR.string.nav_history_browser, CoreUiR.string.statistics).map { string(it) }
+        val tiles = labels.map { tileBounds(it) }
+        assertThat(tiles[1].top).isEqualTo(tiles[0].top)
+        assertThat(tiles[2].top).isGreaterThan(tiles[0].top)
+    }
+
+    @Test
+    fun threeShortcutsShareOneRowAtNormalFont() {
+        show()
+        val tops = shortcutLabels.map { tileBounds(it).top }
+        assertThat(tops.toSet().size).isEqualTo(1)
+    }
 
     @Test
     fun editModeIsNotInTheMenu() {

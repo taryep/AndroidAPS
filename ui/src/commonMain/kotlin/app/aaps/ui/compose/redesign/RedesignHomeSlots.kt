@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -228,11 +227,11 @@ fun RedesignSlotButton(
 
 /**
  * The notification button right of the glucose circle (SPEC 3.3): a bell with no background and an
- * 84 dp touch area. The count badge is always red with a white number, whatever the importance.
+ * 84 dp touch area. The count badge takes the colour of the most serious [type] (step 8, decided 12 Nov).
  * Nothing is drawn when there are no notifications.
  */
 @Composable
-fun RedesignBellButton(count: Int, onClick: () -> Unit) {
+fun RedesignBellButton(count: Int, type: RedesignNotificationType = RedesignNotificationType.ALERT, onClick: () -> Unit) {
     if (count <= 0) return
     val colors = redesignColors()
     val description = stringResource(UiStrings.a11y_notifications, count)
@@ -257,8 +256,11 @@ fun RedesignBellButton(count: Int, onClick: () -> Unit) {
                 .size(22.dp + BELL_RING * 2)
                 .background(colors.pageBackground, CircleShape)
         ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(22.dp).background(BELL_BADGE_COLOR, CircleShape)) {
-                Text(count.toString(), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFeatureSettings = "tnum"))
+            // Step 8: the colour of the most serious type (alert red, warning yellow, info blue); the number in the
+            // light or dark colour of the same tint, so it can be read on yellow too.
+            val tint = colors.notificationTint(type)
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(22.dp).background(tint.accent, CircleShape)) {
+                Text(count.toString(), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = tint.background, fontFeatureSettings = "tnum"))
             }
         }
     }
@@ -266,5 +268,4 @@ fun RedesignBellButton(count: Int, onClick: () -> Unit) {
 
 val SLOT_SIZE = 84.dp
 private val BELL_RING = 3.dp
-private val BELL_BADGE_COLOR = Color(0xFFE5484D)
 private const val EAT_TICK_MS = 15_000L

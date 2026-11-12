@@ -18,7 +18,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 5 | Medtrum et barres de progression | En partie : barre Medtrum faite ; ronds et traductions à décider |
 | 6 | Écran d'injection : texte | Code fait, à tester |
 | 7 | Boucle | Code fait, à tester |
-| 8 | Notifications | À faire |
+| 8 | Notifications | Code fait, à tester (pas de popup : voir diagnostic) |
 | 9 | Page Graphiques : mode édition | À faire |
 | 10 | Thème clair | À faire |
 | 11 | Animations | À faire (en dernier) |
@@ -101,7 +101,7 @@ Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin le
 - [ ] Geste : boucle ouverte avec une suggestion en attente → appui = accepter la suggestion, appui long = changer le mode. Sans suggestion en attente → appui = changer le mode. Pas de chevron : le badge ① suffit
 
 ### 8. Notifications
-- [ ] Diagnostic (interface seulement : aucune logique d'alarme, de pompe ou de base touchée ; les données viennent des états existants). Vérifier d'abord comment AAPS affiche déjà les alarmes urgentes (son, écran plein) pour que le popup ne fasse pas doublon
+- [x] Diagnostic (interface seulement : aucune logique d'alarme, de pompe ou de base touchée ; les données viennent des états existants). Vérifier d'abord comment AAPS affiche déjà les alarmes urgentes (son, écran plein) pour que le popup ne fasse pas doublon. Trouvé : le niveau URGENT d'AAPS sonne déjà et prend tout l'écran (`NotificationLevel.URGENT`) : **pas de popup ajouté** (il ferait doublon). Types : URGENT = alerte (rouge) ; IMPORTANT et NORMAL = avertissement (jaune) ; LOW, INFO, ANNOUNCEMENT = info (bleu). Couleurs = teintes rouge / jaune / bleu du redesign, chiffre dans la couleur claire ou foncée de la teinte (un chiffre blanc ne se lit pas sur du jaune). Aperçu : une carte 5 s en haut de l'accueil à l'arrivée d'une notification (pas au lancement), appui = feuille des notifications
 - [ ] Badge coloré selon le type : info bleu, avertissement jaune, alerte rouge. Le badge prend la couleur du type le plus grave présent
 - [ ] Popup pour les alertes graves (pompe déconnectée, etc.), seulement pour les notifications d'importance « urgente » qui existent déjà, et seulement si les alarmes d'origine ne le font pas déjà
 - [ ] Aperçu du message pour toutes les notifications

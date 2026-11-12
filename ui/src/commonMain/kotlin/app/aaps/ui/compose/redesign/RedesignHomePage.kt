@@ -201,7 +201,13 @@ fun RedesignHomePage(
                 val circle = inputs.circle ?: bgInfoState
                 RedesignBgCircle(bgInfo = circle.bgInfo, timeAgoText = circle.timeAgoText)
                 Column(Modifier.weight(1f)) {
-                    SlotCell { RedesignBellButton(stock.notifications.size, onNotificationsClick) }
+                    SlotCell {
+                        RedesignBellButton(
+                            count = stock.notifications.size,
+                            type = redesignMostSeriousType(stock.notifications) ?: RedesignNotificationType.INFO,
+                            onClick = onNotificationsClick
+                        )
+                    }
                     SlotCell { RedesignTargetSlot(tilesState, stock.commandsAllowed, onNavigate) }
                 }
             }
@@ -275,6 +281,14 @@ fun RedesignHomePage(
             )
             Spacer(Modifier.height(BOTTOM_PADDING))
         }
+
+        // Step 8: a short preview of a notification that just arrived, over the top of the page. A tap opens
+        // the notification sheet, like the bell.
+        RedesignNotificationPreview(
+            notifications = stock.notifications,
+            onClick = onNotificationsClick,
+            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = PAGE_PADDING, vertical = TOP_GAP)
+        )
     }
 }
 

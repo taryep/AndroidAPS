@@ -20,7 +20,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 7 | Boucle | Code fait, à tester |
 | 8 | Notifications | Code fait, à tester (pas de popup : voir diagnostic) |
 | 9 | Page Graphiques : mode édition | Code fait, à tester (échelle commune abandonnée) |
-| 10 | Thème clair | À faire |
+| 10 | Thème clair | Code fait, à tester (tour visuel sur le téléphone à faire) |
 | 11 | Animations | À faire (en dernier) |
 
 Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`. Les étapes 1, 2 et 3 touchent le même code (graphique et cercle de l'accueil) et s'enchaînent : l'étape 3 demande que l'étape 2 soit finie.
@@ -112,7 +112,7 @@ Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin le
 - [x] Optionnel : même échelle de glycémie que l'accueil sur la page 2 (seulement par un paramètre par défaut sur `BgGraphCompose`, sinon on abandonne). **Abandonné** : il faut un paramètre sur `BgGraphCompose` et un autre point d'accroche dans `GraphsSection` pour le passer
 
 ### 10. Thème clair
-- [ ] Diagnostic : tour des couleurs de toutes les pages en thème clair
+- [x] Diagnostic : tour des couleurs de toutes les pages en thème clair. Fait dans le code seulement : les couleurs illisibles sur blanc sont la basale temp. (`#00FFFF`) et les couleurs fixes des séries de la page Graphiques (cyan BGI / déviations, jaunes, menthe, vert citron) et des barres de déviation (vert vif, jaune UAM), identiques dans les deux thèmes. Les surfaces du redesign ont déjà leurs valeurs claires (`LightRedesignColors`). Le tour visuel écran par écran reste à faire sur le téléphone (maquettes « thème clair »). La pilule et les contrôles du mode édition restent sombres dans les deux thèmes (couleurs de la SPEC 4.3)
 - [ ] Page Graphiques : basale en cyan clair, point de la légende « Déviations », barres vertes de déviations
 - [ ] Couleur de la basale temporaire (`#00FFFF`, proposition `#0B6A70`)
 - [ ] Surfaces du redesign en thème clair ; vérifier les valeurs de la palette (déjà faite)

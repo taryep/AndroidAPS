@@ -14,6 +14,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -663,7 +664,7 @@ private val COLUMN_SERIES = setOf(SeriesType.DEVIATIONS, SeriesType.STEPS)
 
 /** The line style of one series. */
 private fun lineFor(slot: SeriesSlot, colors: SeriesColors, iobStyles: IobLineStyles, cobStyles: CobLineStyles): LineCartesianLayer.Line = when (slot) {
-    is SeriesSlot.DeviationLine -> createColumnLine(deviationColor(slot.type))
+    is SeriesSlot.DeviationLine -> createColumnLine(deviationColor(slot.type, colors.light))
     SeriesSlot.StepsColumns     -> createColumnLine(colors.steps)
     SeriesSlot.IobLine          -> iobStyles.iobLine
     SeriesSlot.SmallSmb         -> iobStyles.smallSmbLine
@@ -880,7 +881,9 @@ data class SeriesColors(
     val devSlope: Color,
     val heartRate: Color,
     val steps: Color,
-    val activity: Color
+    val activity: Color,
+    /** Light theme: the deviation bars take darker colours (redesign step 10). False keeps the stock colours. */
+    val light: Boolean = false
 ) {
 
     fun colorFor(type: SeriesType): Color = when (type) {
@@ -904,19 +907,23 @@ fun rememberSeriesColors(): SeriesColors {
     val iobColor = AapsTheme.generalColors.iobPrediction
     val cobColor = AapsTheme.generalColors.cobPrediction
     val onSurface = MaterialTheme.colorScheme.onSurface
-    return remember(iobColor, cobColor, onSurface) {
+    // Light theme (redesign step 10): the bright colours below cannot be read on white, so they take a darker
+    // tone of the same hue. The dark theme keeps the stock colours.
+    val light = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    return remember(iobColor, cobColor, onSurface, light) {
         SeriesColors(
             iob = iobColor,                         // #1e88e5 blue (matches @color/iob)
             absIob = iobColor,                      // same blue as IOB
             cob = cobColor,                         // #FB8C00 orange (matches @color/cob)
-            bgi = Color(0xFF00EEEE),                // cyan (matches @color/bgi)
-            deviations = Color(0xFF00EEEE),         // cyan (matches @color/bgi — legacy uses per-type colors)
+            bgi = if (light) Color(0xFF00838F) else Color(0xFF00EEEE),          // cyan (matches @color/bgi)
+            deviations = if (light) Color(0xFF00838F) else Color(0xFF00EEEE),   // cyan (matches @color/bgi — legacy uses per-type colors)
             sensitivity = onSurface,                // #000000 light / #FFFFFF dark (matches @color/ratio)
             varSensitivity = onSurface,             // same as sensitivity
-            devSlope = Color(0xFFFFFF00),            // yellow (matches @color/devSlopePos)
-            heartRate = Color(0xFFFFFF66),           // pale yellow (matches @color/heartRate #FFFFFF66)
-            steps = Color(0xFF66FFB8),              // mint green (matches @color/steps)
-            activity = Color(0xFFD3F166)            // lime green (matches @color/activity)
+            devSlope = if (light) Color(0xFF9A7B00) else Color(0xFFFFFF00),     // yellow (matches @color/devSlopePos)
+            heartRate = if (light) Color(0xFF8A6D00) else Color(0xFFFFFF66),    // pale yellow (matches @color/heartRate #FFFFFF66)
+            steps = if (light) Color(0xFF00875A) else Color(0xFF66FFB8),        // mint green (matches @color/steps)
+            activity = if (light) Color(0xFF5F7F00) else Color(0xFFD3F166),     // lime green (matches @color/activity)
+            light = light
         )
     }
 }
@@ -1133,12 +1140,15 @@ private val DEVIATION_COLOR_NEGATIVE = Color(0xC0FF0000) // red (matches @color/
 private val DEVIATION_COLOR_EQUAL = Color(0x72000000)    // black (matches @color/deviationBlack)
 private val DEVIATION_COLOR_UAM = Color(0xFFC9BD60)      // yellow (matches @color/uam)
 private val DEVIATION_COLOR_CSF = Color(0xC8666666)      // grey (matches @color/deviationGrey)
+private val DEVIATION_COLOR_POSITIVE_LIGHT = Color(0xC02E9D3A) // darker green for the light theme (redesign step 10)
+private val DEVIATION_COLOR_UAM_LIGHT = Color(0xFF8A7A12)      // darker yellow for the light theme (redesign step 10)
 
-private fun deviationColor(type: DeviationType): Color = when (type) {
-    DeviationType.POSITIVE -> DEVIATION_COLOR_POSITIVE
+private fun deviationColor(type: DeviationType, light: Boolean = false): Color = when (type) {
+    // Light theme (redesign step 10): the bright green and the pale yellow cannot be read on white.
+    DeviationType.POSITIVE -> if (light) DEVIATION_COLOR_POSITIVE_LIGHT else DEVIATION_COLOR_POSITIVE
     DeviationType.NEGATIVE -> DEVIATION_COLOR_NEGATIVE
     DeviationType.EQUAL    -> DEVIATION_COLOR_EQUAL
-    DeviationType.UAM      -> DEVIATION_COLOR_UAM
+    DeviationType.UAM      -> if (light) DEVIATION_COLOR_UAM_LIGHT else DEVIATION_COLOR_UAM
     DeviationType.CSF      -> DEVIATION_COLOR_CSF
 }
 

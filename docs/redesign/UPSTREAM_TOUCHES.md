@@ -222,6 +222,16 @@ Move up / down, delete, add and the size are plain changes of `GraphConfig.secon
 `GraphViewModel.updateGraphConfig`: no new stock function. Optional "same BG scale on page 2" is dropped (it needs
 more than one defaulted parameter on `BgGraphCompose`).
 
+## Step 10 - Light theme
+
+These change the stock look in the light theme only (the dark theme keeps every stock value). Not behind the
+redesign switch: they are readability fixes, the same in both interfaces.
+
+| File | Change |
+|---|---|
+| `core/ui/.../navigation/ElementColors.kt` | `LightElementColors.tempBasal` `#00FFFF` → `#0B6A70` (the teal of the Basale tile). |
+| `ui/.../overview/graphs/SecondaryGraphCompose.kt` | `rememberSeriesColors`: in the light theme, darker tones for BGI and deviations (legend dot) `#00838F`, dev slope `#9A7B00`, heart rate `#8A6D00`, steps `#00875A`, activity `#5F7F00`. `SeriesColors` gets `light: Boolean = false`; `deviationColor(type, light)` gives darker positive (green `#2E9D3A`) and UAM (`#8A7A12`) bars in the light theme. Import `luminance`. |
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

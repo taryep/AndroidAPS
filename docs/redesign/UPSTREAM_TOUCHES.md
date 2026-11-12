@@ -210,3 +210,6 @@ reads the setting once in `onCreate` and starts again when it changes, so no scr
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are
   new files, not listed in `crowdin.yml`, so Crowdin never overwrites them.
+- `app/src/main/res/values-fr-rFR/strings_redesign.xml` (step 6) is a new file, not in `crowdin.yml`. It replaces
+  the French `goingtodeliver` of `core/ui` ("Injection de %1$.2f Unités"). The app's resources win over the
+  libraries' at the merge, and a file in `core/ui` could not hold the same name.

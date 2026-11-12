@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  French texts of the fork that replace a Crowdin text of a library module (step 6 of docs/redesign/SUIVI.md).
+  The Crowdin files are never edited: Crowdin writes them again. A fork file in the same module cannot hold the
+  same name (duplicate resource), so the replacement lives here: the app's resources win over the libraries'.
+  Not in crowdin.yml. Each text should also be proposed on Crowdin, so AAPS can get it one day.
+-->
+<resources>
+    <!-- core/ui goingtodeliver, was "%1$.2f U vont être injectées". Pump activity dialog and watch. -->
+    <string name="goingtodeliver">Injection de %1$.2f Unités</string>
+</resources>

@@ -16,7 +16,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 3 | Accueil : défilement du graphique | Code fait, à tester |
 | 4 | Feuilles Insuline et Basale : barre du haut | Code fait, à tester |
 | 5 | Medtrum et barres de progression | En partie : barre Medtrum faite ; ronds et traductions à décider |
-| 6 | Écran d'injection : texte | À faire |
+| 6 | Écran d'injection : texte | Code fait, à tester |
 | 7 | Boucle | À faire |
 | 8 | Notifications | À faire |
 | 9 | Page Graphiques : mode édition | À faire |
@@ -90,7 +90,7 @@ Résultat du diagnostic (12 nov.) :
 | `deactivate_sure` | Êtes-vous sûr de vouloir désactiver le Patch actuel ? | Voulez-vous vraiment désactiver le patch actuel ? |
 
 ### 6. Écran d'injection : texte
-- [ ] Diagnostic : trouver la chaîne source avant de choisir le mécanisme
+- [x] Diagnostic : la chaîne est `goingtodeliver` de `core/ui` (fichier Crowdin), utilisée par la fenêtre d'activité de la pompe et la montre. Une chaîne du fork ne peut pas la remplacer dans le même module (ressource en double) : le remplacement est dans `app/src/main/res/values-fr-rFR/strings_redesign.xml` (les ressources de l'app passent avant celles des modules). À proposer aussi sur Crowdin
 - [ ] « x unités vont être injectées » devient « Injection de x Unités »
 
 Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin les réécrit). Les remplacements vivent dans un fichier du fork, comme `strings_redesign.xml`. Pour qu'une traduction arrive un jour dans AAPS, il faut aussi la proposer sur Crowdin ([mode d'emploi](https://androidaps.readthedocs.io/en/latest/SupportingAaps/Translations.html)).

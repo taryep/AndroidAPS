@@ -8,4 +8,30 @@
 <resources>
     <!-- core/ui goingtodeliver, was "%1$.2f U vont être injectées". Pump activity dialog and watch. -->
     <string name="goingtodeliver">Injection de %1$.2f Unités</string>
+
+    <!-- pump/medtrum, patch change and deactivation screens (step 5 of docs/redesign/SUIVI.md): "patch" in lower
+         case, "Retirez" like the other steps, one question form, no "!!". -->
+    <string name="step_prepare_patch">Activer le nouveau patch</string>
+    <string name="step_prepare_patch_connect">Connexion et remplissage</string>
+    <string name="step_select_insulin">Choisir l\'insuline</string>
+    <string name="step_prime">Amorçage</string>
+    <string name="step_priming">Amorçage en cours…</string>
+    <string name="step_attach">Poser le patch</string>
+    <string name="step_activate">Activation en cours…</string>
+    <string name="step_activate_complete">Activation terminée</string>
+    <string name="step_deactivate">Désactiver le patch</string>
+    <string name="step_deactivating">Désactivation en cours…</string>
+    <string name="step_retry_activation">Reprise de l\'activation</string>
+    <string name="retract_needle">Retirez l\'aiguille. Retirez le patch du corps.</string>
+    <string name="medtrum_deactivate_pump_confirm">Voulez-vous vraiment continuer ? Cette action est irréversible.</string>
+    <string name="deactivate_sure">Voulez-vous vraiment désactiver le patch actuel ?</string>
+    <string name="cancel_sure">Voulez-vous vraiment annuler l\'activation ?</string>
+    <string name="do_not_attach_to_body">Ne posez pas encore le patch sur le corps.</string>
+    <string name="remove_safety_lock">Retirez le verrou de sécurité. Posez la pompe sur le corps. Appuyez sur le bouton de l\'aiguille.</string>
+    <string name="deactivating_pump">Désactivation du patch. Veuillez patienter.</string>
+    <string name="deactivating_error">Échec de la désactivation, appuyez sur <b>Supprimer</b> pour oublier le patch.</string>
+    <string name="activating_complete">Nouveau patch activé. %.2f unités restantes.</string>
+    <string name="patch_begin_activation">Aucun patch actif. Appuyez sur <b>Suivant</b> pour commencer le processus d\'activation.</string>
+    <string name="remove_base_discard_patch">Retirez la base de la pompe et jetez le patch utilisé de façon appropriée.</string>
+    <string name="wait_for_priming">Veuillez patienter jusqu\'à la fin de l\'amorçage.</string>
 </resources>

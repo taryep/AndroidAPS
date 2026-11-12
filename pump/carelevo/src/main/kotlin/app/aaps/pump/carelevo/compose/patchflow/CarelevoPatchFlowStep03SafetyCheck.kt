@@ -231,6 +231,8 @@ private fun CarelevoPatchFlowStep03SafetyCheckContent(
         )
         LinearProgressIndicator(
             progress = { if (showProgressDetails) (progress ?: 0) / 100f else 0f },
+            gapSize = 0.dp,
+            drawStopIndicator = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(10.dp)

@@ -789,7 +789,11 @@ class MedtrumPatchViewModel(
 
     private fun updateWizardPage(step: PatchStep) {
         val page = step.toWizardPage() ?: return // CANCEL keeps current values
-        val index = wizardPages.indexOf(page).coerceAtLeast(0)
+        // Display only (redesign step 5): "Activation complete" is the last screen of the activation; its button
+        // closes the wizard, so the COMPLETE page is never shown. Light the last dot there, not the Activate dot.
+        val index =
+            if (step == PatchStep.ACTIVATE_COMPLETE) wizardPages.lastIndex.coerceAtLeast(0)
+            else wizardPages.indexOf(page).coerceAtLeast(0)
         _wizardPage.value = page
         _totalSteps.value = wizardPages.size
         _currentStepIndex.value = index

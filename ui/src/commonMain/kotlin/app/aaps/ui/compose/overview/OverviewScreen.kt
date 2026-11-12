@@ -317,6 +317,8 @@ fun OverviewScreen(
         ) {
             LinearProgressIndicator(
                 progress = { calcProgress / 100f },
+                gapSize = 0.dp,
+                drawStopIndicator = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)

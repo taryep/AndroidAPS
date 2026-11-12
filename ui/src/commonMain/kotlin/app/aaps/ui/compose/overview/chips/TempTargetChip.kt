@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import app.aaps.core.data.model.TT
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.keys.interfaces.TextRef
@@ -126,6 +127,8 @@ fun TempTargetChip(
             if (progress > 0f) {
                 LinearProgressIndicator(
                     progress = { progress },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()

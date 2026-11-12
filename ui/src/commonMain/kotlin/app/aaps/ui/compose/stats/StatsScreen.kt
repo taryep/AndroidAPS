@@ -193,6 +193,8 @@ private fun CycleTab(state: StatsUiState, viewModel: StatsViewModel) {
                 ) {
                     LinearProgressIndicator(
                         progress = { state.tddCycleProgress },
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)

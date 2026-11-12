@@ -80,6 +80,8 @@ fun SafetyCheckStep(viewModel: EopatchPatchViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
         LinearProgressIndicator(
             progress = { progress / 100f },
+            gapSize = 0.dp,
+            drawStopIndicator = {},
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(8.dp))

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.ui.compose.AapsSpacing
 import app.aaps.core.ui.compose.AapsTheme
@@ -96,6 +97,8 @@ fun ProfileChip(
             if (progress > 0f) {
                 LinearProgressIndicator(
                     progress = { progress },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()

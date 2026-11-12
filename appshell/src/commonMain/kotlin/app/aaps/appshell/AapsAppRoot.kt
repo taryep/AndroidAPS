@@ -334,6 +334,8 @@ private fun SplashScreen(
                 if (progress.total > 0) {
                     LinearProgressIndicator(
                         progress = { progress.current.toFloat() / progress.total },
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 48.dp)

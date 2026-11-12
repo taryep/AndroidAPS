@@ -224,6 +224,8 @@ internal fun ProfileCarouselCard(
             if (isActive && hasDuration && progress < 1f) {
                 LinearProgressIndicator(
                     progress = { progress },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()

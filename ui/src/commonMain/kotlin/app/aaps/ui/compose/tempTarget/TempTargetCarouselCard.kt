@@ -219,6 +219,8 @@ fun TempTargetCarouselCard(
             if (isActiveCard && progress > 0f) {
                 LinearProgressIndicator(
                     progress = { progress },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()

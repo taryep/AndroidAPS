@@ -15,7 +15,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 2 | Accueil : affichage | Code fait, à tester |
 | 3 | Accueil : défilement du graphique | Code fait, à tester |
 | 4 | Feuilles Insuline et Basale : barre du haut | Code fait, à tester |
-| 5 | Medtrum et barres de progression | En partie : barre Medtrum faite ; ronds et traductions à décider |
+| 5 | Medtrum et barres de progression | Code fait, à tester |
 | 6 | Écran d'injection : texte | Code fait, à tester |
 | 7 | Boucle | Code fait, à tester |
 | 8 | Notifications | Code fait, à tester (pas de popup : voir diagnostic) |
@@ -69,7 +69,13 @@ Résultat du diagnostic (12 nov.) :
 
 - **Indicateur à ronds** : le dessin (`StepProgressIndicator`, core/ui) est correct. L'index vient de `MedtrumPatchViewModel.updateWizardPage` : une étape absente de la liste des pages donne `indexOf = -1`, ramené à 0 (premier rond). Exemple trouvé : « Terminé » après une désactivation va à `COMPLETE`, qui n'est pas dans la liste de désactivation (3 pages). Je n'ai pas trouvé de chemin qui reste sur le **3ᵉ** rond : **pas de changement**, il me faut le chemin exact (désactivation seule ? désactivation puis nouveau patch ? reprise d'activation ?). C'est du code du module pompe : je ne le touche pas sans la cause sûre.
 - **Point en fin de barre** : tour de toutes les barres (`LinearProgressIndicator`). Seule notre barre des consommables enlève le point (`drawStopIndicator = {}`). Toutes les autres barres à valeur connue ont le point de Material 3 : écran de démarrage (`AapsAppRoot`), activité de la pompe (`PumpActivityDialog`), objectifs (`ExamBottomSheet`, `NtpProgressDialog`, `ObjectivesScreen`), Carelevo, Combo v2 (vue d'ensemble et appairage), EOPatch, **Medtrum (amorçage)**, historique, puces profil et cible temp., bandeau de l'accueil d'origine, `OverviewScreen`, voyants d'état, cartes profil et cible temp., statistiques. Sans point (barres sans valeur) : `AapsAppRoot` (2ᵉ), `PumpActivityDialog` (2ᵉ), Open Humans. **Changé** : Medtrum amorçage seulement (affichage, `PrimeStep.kt`), comme la barre des consommables. Les autres : à décider.
-- **Traductions** (à valider, rien n'est changé). Attention : une chaîne du fork ne peut pas remplacer une chaîne Crowdin dans le même module (ressource en double). Le remplacement doit vivre dans un module plus haut (par ex. `app/src/main/res/values-fr-rFR/strings_redesign.xml`).
+Décisions (12 nov.) et changements faits (affichage seulement, détail dans `UPSTREAM_TOUCHES.md`) :
+
+- **Ronds** : le bug est dans l'assistant d'**activation** (5 ronds). La liste finit par une page `COMPLETE` jamais affichée : le bouton de « Activation terminée » ferme l'assistant. Le dernier écran restait donc sur le 4ᵉ rond. Correction dans `updateWizardPage` : sur `ACTIVATE_COMPLETE`, le dernier rond s'allume. L'assistant de désactivation (3 ronds) était déjà correct.
+- **Point en fin de barre** : enlevé de **toutes** les barres à valeur connue (nouvelle interface et pages d'origine, 18 barres). Écran d'amorçage Medtrum : le rond qui tourne sous la barre est enlevé, la barre montre déjà la progression.
+- **Traductions** : tableau ci-dessous validé, plus `retract_needle` (« Retirez »), `medtrum_deactivate_pump_confirm` (plus de « !! »), `cancel_sure`, et « patch » en minuscule partout. Les textes sont dans `app/src/main/res/values-fr-rFR/strings_redesign.xml`. À proposer aussi sur Crowdin.
+
+- **Traductions** (tableau d'origine, avant validation). Attention : une chaîne du fork ne peut pas remplacer une chaîne Crowdin dans le même module (ressource en double). Le remplacement doit vivre dans un module plus haut (par ex. `app/src/main/res/values-fr-rFR/strings_redesign.xml`).
 
 | Clé | Actuel | Proposé |
 |---|---|---|

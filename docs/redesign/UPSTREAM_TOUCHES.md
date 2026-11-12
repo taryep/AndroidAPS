@@ -198,13 +198,41 @@ reads the setting once in `onCreate` and starts again when it changes, so no scr
 | `app/.../ComposeMainActivity.kt` | Field `redesignOn = redesignEnabled(preferences)` set in `onCreate`; `CompositionLocalProvider(LocalRedesignEnabled provides redesignOn)` around `MainContent()`; in `observePreferences`, a collector of the key that calls `recreate()` (with `rebuildingForRestart`, so the view models are new) when the value differs from `redesignOn`. Imports. | One value for the whole life of the activity, the same for every screen (main screen, sheets, portrait lock). |
 | `appshell/.../AppNavGraph.kt` | `RedesignFlags.ENABLED` became `LocalRedesignEnabled.current` in the two `topInfo` hooks. | The insulin and basal lines follow the setting. |
 
-## Step 5 - Medtrum priming bar
+## Step 5 - Medtrum and progress bars
+
+Display only, no pump logic. Not behind the redesign switch: these are fixes of the look, the same in both
+interfaces.
+
+### End dot of the progress bars (decided 12 Nov: removed everywhere)
+
+Every `LinearProgressIndicator` that has a value gets `gapSize = 0.dp` and `drawStopIndicator = {}`: a plain bar
+like the consumables bar, without the Material 3 dot at the end. Bars without a value never had a dot and are not
+touched. Files:
+
+- `appshell/.../AapsAppRoot.kt` (start-up), `core/ui/.../pump/PumpActivityDialog.kt`
+- `ui/.../overview/OverviewScreen.kt`, `OverviewBannerCard.kt`, `statusLights/StatusComponents.kt`,
+  `chips/ProfileChip.kt`, `chips/TempTargetChip.kt`
+- `ui/.../profileManagement/ProfileCarouselCard.kt`, `tempTarget/TempTargetCarouselCard.kt`,
+  `history/HistoryScreen.kt`, `stats/StatsScreen.kt`
+- `plugins/constraints/.../objectives/compose/ObjectivesScreen.kt`, `ExamBottomSheet.kt`, `NtpProgressDialog.kt`
+- `pump/eopatch/.../SafetyCheckStep.kt`, `pump/carelevo/.../CarelevoPatchFlowStep03SafetyCheck.kt`,
+  `pump/combov2/.../ComboV2OverviewScreen.kt`, `ComboV2PairWizardScreen.kt`
 
 ### `pump/medtrum/src/main/kotlin/app/aaps/pump/medtrum/compose/steps/PrimeStep.kt`
 
-- The priming `LinearProgressIndicator` gets `gapSize = 0.dp` and `drawStopIndicator = {}`: a plain bar like the
-  consumables bar, without the Material 3 dot at the end. Display only, no pump logic. Not behind the redesign
-  switch: it is a fix of the look, the same in both interfaces.
+- The priming bar has no end dot (as above).
+- The spinner under the priming bar is removed: the bar already shows the progress.
+
+### `pump/medtrum/src/main/kotlin/app/aaps/pump/medtrum/compose/MedtrumPatchViewModel.kt`
+
+- `updateWizardPage`: on `ACTIVATE_COMPLETE` the last dot is lit. The activation list ends with a `COMPLETE` page
+  that is never shown (the button of "Activation complete" closes the wizard), so the last screen stayed on the
+  Activate dot (4 of 5).
+
+### `app/src/main/res/values-fr-rFR/strings_redesign.xml`
+
+- French texts of the Medtrum patch change and deactivation screens (table in `SUIVI.md`, step 5). They replace
+  the Crowdin texts of `pump/medtrum`: the app's resources win over the libraries'.
 
 ## Step 9 - Graphs page edit mode
 

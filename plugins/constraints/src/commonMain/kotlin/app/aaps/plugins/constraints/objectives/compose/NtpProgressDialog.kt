@@ -32,6 +32,8 @@ fun NtpProgressDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 LinearProgressIndicator(
                     progress = { state.percent / 100f },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier.fillMaxWidth()
                 )
             }

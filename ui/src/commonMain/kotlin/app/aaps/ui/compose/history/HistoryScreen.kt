@@ -128,6 +128,8 @@ fun HistoryScreen(
             ) {
                 LinearProgressIndicator(
                     progress = { progress / 100f },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)

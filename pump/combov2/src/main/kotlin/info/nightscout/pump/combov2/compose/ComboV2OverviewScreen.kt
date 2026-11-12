@@ -46,6 +46,8 @@ fun ComboV2OverviewScreen(
                                 )
                                 LinearProgressIndicator(
                                     progress = { state.currentActivityProgress },
+                                    gapSize = 0.dp,
+                                    drawStopIndicator = {},
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 8.dp)

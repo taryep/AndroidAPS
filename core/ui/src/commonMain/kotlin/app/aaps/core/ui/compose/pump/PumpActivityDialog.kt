@@ -204,6 +204,8 @@ private fun BolusProgressSection(
         if (state.percent > 0) {
             LinearProgressIndicator(
                 progress = { state.percent / 100f },
+                gapSize = 0.dp,
+                drawStopIndicator = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(AapsSpacing.medium),

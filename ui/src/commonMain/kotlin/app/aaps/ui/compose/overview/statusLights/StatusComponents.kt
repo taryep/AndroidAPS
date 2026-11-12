@@ -212,6 +212,8 @@ private fun StatusValueWithProgress(
         if (progress >= 0) {
             LinearProgressIndicator(
                 progress = { progress },
+                gapSize = 0.dp,
+                drawStopIndicator = {},
                 modifier = Modifier
                     .width(56.dp)
                     .height(6.dp)

@@ -482,6 +482,8 @@ private fun ActiveObjectiveContent(
                     ) {
                         LinearProgressIndicator(
                             progress = { objective.progress },
+                            gapSize = 0.dp,
+                            drawStopIndicator = {},
                             modifier = Modifier
                                 .weight(1f)
                                 .height(6.dp),

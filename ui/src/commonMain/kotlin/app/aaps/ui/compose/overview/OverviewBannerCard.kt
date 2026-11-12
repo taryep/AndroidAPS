@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import app.aaps.core.ui.compose.AapsSpacing
 
 /**
@@ -75,6 +76,8 @@ fun OverviewBannerCard(
             if (progress != null) {
                 LinearProgressIndicator(
                     progress = { progress },
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = AapsSpacing.medium)

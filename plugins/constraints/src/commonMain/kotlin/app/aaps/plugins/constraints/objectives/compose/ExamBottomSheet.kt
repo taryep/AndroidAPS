@@ -79,6 +79,8 @@ fun ExamBottomSheet(
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
                 progress = { (state.currentTaskIndex + 1).toFloat() / state.totalTasks },
+                gapSize = 0.dp,
+                drawStopIndicator = {},
                 modifier = Modifier.fillMaxWidth(),
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )

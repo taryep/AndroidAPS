@@ -205,6 +205,8 @@ internal fun InProgressSection(
         } else {
             LinearProgressIndicator(
                 progress = { state.overallProgress },
+                gapSize = 0.dp,
+                drawStopIndicator = {},
                 modifier = Modifier.fillMaxWidth()
             )
         }

@@ -1,12 +1,16 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
@@ -62,9 +66,13 @@ fun RedesignOverviewContent(
     // moment with the wrong page (for example under the Menu). Only the buttons change the page (the Graphs item of
     // the bottom bar, Back). Both pages stay composed, so the graphs keep their state and do not load again at each
     // change of page.
+    // Step 11: the page that appears fades in. The other one is hidden at once, so there is never a moment with
+    // both pages, and the switch itself still happens in one frame.
+    val homeAlpha by animateFloatAsState(if (state.page == HOME_PAGE) 1f else 0f, tween(REDESIGN_PAGE_FADE_MS), label = "homePage")
+    val graphsAlpha by animateFloatAsState(if (state.page == GRAPHS_PAGE) 1f else 0f, tween(REDESIGN_PAGE_FADE_MS), label = "graphsPage")
     Box(modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().hiddenWhen(state.page != HOME_PAGE).semantics { paneTitle = homeName }) { homePage() }
-        Box(Modifier.fillMaxSize().hiddenWhen(state.page != GRAPHS_PAGE).semantics { paneTitle = graphsName }) {
+        Box(Modifier.fillMaxSize().hiddenWhen(state.page != HOME_PAGE).graphicsLayer { alpha = homeAlpha }.semantics { paneTitle = homeName }) { homePage() }
+        Box(Modifier.fillMaxSize().hiddenWhen(state.page != GRAPHS_PAGE).graphicsLayer { alpha = graphsAlpha }.semantics { paneTitle = graphsName }) {
             graphsPage(state.editMode)
             // Step 9 (SPEC 4.3): the edit pill floats, centred over the title row (64 dp; the pill is 52 dp).
             if (state.editMode) RedesignEditPill(

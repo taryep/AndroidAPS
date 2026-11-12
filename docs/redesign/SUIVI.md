@@ -21,7 +21,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 8 | Notifications | Code fait, à tester (pas de popup : voir diagnostic) |
 | 9 | Page Graphiques : mode édition | Code fait, à tester (échelle commune abandonnée) |
 | 10 | Thème clair | Code fait, à tester (tour visuel sur le téléphone à faire) |
-| 11 | Animations | À faire (en dernier) |
+| 11 | Animations | Code fait, à tester |
 
 Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`. Les étapes 1, 2 et 3 touchent le même code (graphique et cercle de l'accueil) et s'enchaînent : l'étape 3 demande que l'étape 2 soit finie.
 
@@ -118,7 +118,7 @@ Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin le
 - [ ] Surfaces du redesign en thème clair ; vérifier les valeurs de la palette (déjà faite)
 
 ### 11. Animations
-- [ ] Diagnostic
+- [x] Diagnostic : aucune animation avant. Toutes sont déclenchées par un changement réel (ouverture de la barre, nouvelle lecture, changement de page), jamais par une minuterie ; « Supprimer les animations » d'Android les rend instantanées. Durées dans `RedesignMotion.kt` : tiroir 300 ms, page 250 ms, nouvelle lecture 200 ms (fondu de la valeur, couleur et arc de tendance qui tournent, nouveau point qui apparaît)
 - [ ] Barre des consommables : ouverture en grand de type tiroir
 - [ ] Animations courtes sur chaque nouvelle lecture (fondu de la valeur, arc de tendance, nouveau point), jamais sur une minuterie
 - [ ] Relever la limite de 200 ms pour les transitions de page

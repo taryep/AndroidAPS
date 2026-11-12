@@ -692,7 +692,7 @@ touches too many upstream files, skip it and tell me.
 
 ## 9. Phases
 
-**État (12 nov. 2026) : phases 0 à 7, 8a et 8.5 faites. Prochaine : étape 1 du suivi (bugs de l'accueil).**
+**État (12 nov. 2026) : phases 0 à 7, 8a et 8.5 faites ; étapes 1 à 11 du suivi codées et commitées, ni compilées ni testées (compilation et tests avant le push, puis test sur le téléphone). Le statut de chaque étape et les points à décider sont dans `SUIVI.md`.**
 Le suivi (`docs/redesign/SUIVI.md`, à lire en entier avant chaque étape) remplace le backlog et le plan : 11 étapes
 numérotées, dans l'ordre où on les fait. Les phases ci-dessous 8b et 8c deviennent l'étape 9, la phase 9 l'étape 10 et la phase 10 l'étape 11. L'option « Noir pur » passe dans les idées pour plus tard. En cas de
 contradiction, le suivi l'emporte sur cette spec.

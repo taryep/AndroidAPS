@@ -1,5 +1,9 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -59,7 +64,11 @@ fun RedesignBgCircle(
         }
         return
     }
-    val bgColor = bgInfo.bgRange.toColor()
+    // Step 11: on a new reading the colour and the trend arc move to their new place, and the value cross-fades.
+    // They change only with the reading (never on a timer); at the first frame they start where they are.
+    val bgColor by animateColorAsState(bgInfo.bgRange.toColor(), tween(REDESIGN_READING_MS), label = "bgColor")
+    val arc = bgInfo.trendArrow?.toArcIndicator()
+    val arcAngle by animateFloatAsState(arc?.centerAngle ?: 0f, tween(REDESIGN_READING_MS), label = "trendArc")
     val description = bgSpokenDescription(
         bgText = bgInfo.bgText,
         range = bgInfo.bgRange,
@@ -94,17 +103,17 @@ fun RedesignBgCircle(
                 size = arcSize,
                 style = Stroke(width = stroke)
             )
-            bgInfo.trendArrow?.toArcIndicator()?.let { arc ->
+            arc?.copy(centerAngle = arcAngle)?.let { moving ->
                 drawArc(
                     color = bgColor,
-                    startAngle = arc.centerAngle - arc.sweepAngle / 2,
-                    sweepAngle = arc.sweepAngle,
+                    startAngle = moving.centerAngle - moving.sweepAngle / 2,
+                    sweepAngle = moving.sweepAngle,
                     useCenter = false,
                     topLeft = topLeft,
                     size = arcSize,
                     style = Stroke(width = stroke, cap = StrokeCap.Round)
                 )
-                drawTrendTriangles(arc, bgColor, topLeft, arcSize, stroke)
+                drawTrendTriangles(moving, bgColor, topLeft, arcSize, stroke)
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -113,8 +122,9 @@ fun RedesignBgCircle(
             }
             // The ring does not grow with the system font, so the value keeps its size, as in the stock circle.
             RedesignFontScaleCap(1f) {
+                Crossfade(targetState = bgInfo.bgText, animationSpec = tween(REDESIGN_READING_MS), label = "bgValue") { bgText ->
                 Text(
-                    text = bgInfo.bgText,
+                    text = bgText,
                     style = TextStyle(
                         fontSize = 72.sp,
                         lineHeight = 74.sp,
@@ -125,6 +135,7 @@ fun RedesignBgCircle(
                         textDecoration = if (bgInfo.isOutdated) TextDecoration.LineThrough else TextDecoration.None
                     )
                 )
+                }
             }
             Text(timeAgoText, style = TextStyle(fontSize = 13.sp, color = colors.textSecondary), maxLines = 1)
         }

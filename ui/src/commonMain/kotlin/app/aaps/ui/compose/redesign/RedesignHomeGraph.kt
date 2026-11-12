@@ -1,5 +1,7 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -248,6 +250,18 @@ private fun HomeGraphPlot(
 
     val allSorted = remember(readings) { readings.sortedBy { it.timestamp } }
     val firstShown = remember(allSorted, start) { allSorted.indexOfFirst { it.timestamp >= start }.let { if (it < 0) allSorted.size else it } }
+    // Step 11: the newest dot fades in when a newer reading arrives (never on a timer, not at the first frame).
+    val newestTime = allSorted.lastOrNull()?.timestamp
+    var seenNewest by remember { mutableStateOf<Long?>(null) }
+    val newDot = remember { Animatable(1f) }
+    LaunchedEffect(newestTime) {
+        val before = seenNewest
+        seenNewest = newestTime
+        if (before != null && newestTime != null && newestTime > before) {
+            newDot.snapTo(0f)
+            newDot.animateTo(1f, tween(REDESIGN_READING_MS))
+        }
+    }
     val shown = remember(allSorted, start, end) { allSorted.filter { it.timestamp in start..end } }
     // The axis is 40 to 280 mg/dL and grows on either side only when a reading is outside it. While the
     // finger drags, it stays as it was; after the release it adapts to the visible window (decided 12 Nov).
@@ -466,8 +480,10 @@ private fun HomeGraphPlot(
             val color = rangeColors.getValue(reading.range)
             val fromNewest = allSorted.lastIndex - (firstShown + i)
             if (fromNewest == 0) {
-                drawCircle(colors.graphCard, LAST_DOT.toPx(), centres[i])
-                drawCircle(color, LAST_DOT.toPx(), centres[i], style = Stroke(LAST_DOT_STROKE.toPx()))
+                // Step 11: a new reading fades in; at the first frame it is simply there.
+                val appear = newDot.value
+                drawCircle(colors.graphCard, LAST_DOT.toPx(), centres[i], alpha = appear)
+                drawCircle(color, LAST_DOT.toPx(), centres[i], style = Stroke(LAST_DOT_STROKE.toPx()), alpha = appear)
             } else if (fromNewest % dotStep == 0) drawCircle(color, radius, centres[i])
         }
 
@@ -558,7 +574,7 @@ private fun DrawScope.drawTargetLine(points: List<Pair<Long, Double>>, g: PlotGe
     }
 }
 
-/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 Ã— as high. */
+/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 Ãƒâ€” as high. */
 private fun DrawScope.drawTriangle(tip: Offset, up: Boolean, width: Float, color: Color) {
     val height = width * 1.1f
     val baseY = if (up) tip.y + height else tip.y - height

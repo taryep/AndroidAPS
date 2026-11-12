@@ -133,7 +133,8 @@ class RedesignOverviewPagerTest {
     fun aTapOnTheGlucoseValueOpensTheGraphs() {
         show()
         val openGraphs = string(R.string.redesign_open_graphs)
-        compose.onNode(SemanticsMatcher("open graphs action") { it.config.getOrNull(SemanticsActions.OnClick)?.label == openGraphs })
+        // The glucose circle and the home graph both have this action; the circle comes first.
+        compose.onAllNodes(SemanticsMatcher("open graphs action") { it.config.getOrNull(SemanticsActions.OnClick)?.label == openGraphs })[0]
             .performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
 

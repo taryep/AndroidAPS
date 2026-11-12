@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
@@ -33,6 +35,9 @@ import app.aaps.core.interfaces.notifications.AapsNotification
 import app.aaps.core.interfaces.notifications.NotificationId
 import app.aaps.core.interfaces.notifications.NotificationLevel
 import app.aaps.core.interfaces.overview.graph.BgDataPoint
+import app.aaps.core.interfaces.overview.graph.GraphConfig
+import app.aaps.core.interfaces.overview.graph.SecondaryGraph
+import app.aaps.core.interfaces.overview.graph.SeriesType
 import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.overview.graph.BgType
 import app.aaps.core.interfaces.overview.graph.CobGraphData
@@ -51,6 +56,7 @@ import app.aaps.ui.compose.testing.AapsScreenFixture
 import app.aaps.ui.compose.testing.OverviewViewModelFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -60,6 +66,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -184,6 +191,34 @@ class RedesignHomeChromeScreenshotTest {
         compose.waitForIdle()
         assertThat(iobGraphNameBottom()).isEqualTo(full)
     }
+
+    @Test
+    fun threeGraphsFillThePageWithoutScrolling() {
+        picture("graphs_page_three", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
+        // The page ends where the third graph ends: nothing to scroll to (a few px of rounding at most).
+        assertThat(scrollRangePx()).isAtMost(compose.density.density * 2)
+    }
+
+    @Test
+    fun aFourthGraphFollowsBelowAndIsReachedByScrolling() {
+        val four = GraphConfig(secondaryGraphs = listOf(SecondaryGraph(listOf(SeriesType.COB)), SecondaryGraph(listOf(SeriesType.BGI))))
+        whenever(viewModels.graphConfigRepository.graphConfigFlow).thenReturn(MutableStateFlow(four))
+        picture("graphs_page_four", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
+        // The first three still fill the page, so the fourth is below it and the page scrolls by about its height.
+        assertThat(scrollRangePx()).isGreaterThan(compose.density.density * 80)
+        // And the third graph (its name "GA", just above its bottom line) ends just above the bottom bar:
+        // the screen is 891 dp, the gesture bar 24 dp and the navigation bar about 80 dp.
+        val bottomDp = compose.onNode(hasText("GA"), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom / compose.density.density
+        assertThat(bottomDp).isGreaterThan(891f - 24f - 80f - 45f)
+        assertThat(bottomDp).isLessThan(891f - 24f - 80f)
+    }
+
+    /** How far the graphs page can scroll, in px; 0 when everything fits. */
+    private fun scrollRangePx(): Float {
+        val nodes = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange), useUnmergedTree = true).fetchSemanticsNodes()
+        return nodes.maxOfOrNull { it.config[SemanticsProperties.VerticalScrollAxisRange].maxValue() } ?: 0f
+    }
+
 
     /** Bottom of the "IOB / BAS" name, at the bottom of the IOB graph: it moves when the graphs above it change height. */
     private fun iobGraphNameBottom(): Float =

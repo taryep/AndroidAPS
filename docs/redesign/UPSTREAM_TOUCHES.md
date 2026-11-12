@@ -97,18 +97,23 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
 - **One** new parameter: `redesignLayout: GraphsRedesignLayout? = null`. Null (stock overview,
   history browser) keeps the stock layout exactly. The class lives in `redesign/` and holds
   `fillHeight`, `graphGap`, `topPadding` and `quickLaunchSpace`.
-- **Fill height**: the graphs grow (never shrink) so the section is `fillHeight` high, in the
-  ratio of their saved heights, each at most `GraphConfig.MAX_GRAPH_HEIGHT_DP`. `GraphConfig` is not
-  changed. `fixedPart` (`remember`) = measured height of the section (`onSizeChanged`) minus the
-  graph heights applied, rounded down to whole dp; a change under 1 dp is ignored, so a new measure
-  does not start a loop. `graphScale` = (`fillHeight` − `fixedPart`) / saved graph heights, at
-  least 1, worked out again when `fillHeight` changes. The four `.height(...)` calls (BG, IOB,
-  secondary graphs) go through `graphHeight(saved)`, which returns `saved.dp` when the scale is 1.
+- **Fill height**: the first three graphs (BG, IOB, the first secondary one) grow (never shrink) so
+  they fill `fillHeight`, in the ratio of their saved heights, each at most
+  `GraphConfig.MAX_GRAPH_HEIGHT_DP`, also in edit mode. Later graphs follow below at the same scale
+  and are reached by scrolling. `GraphConfig` is not changed. `fixedPart` = the measured height down
+  to the end of the filled part (the whole section for up to three graphs, the end of the third graph
+  with `onGloballyPositioned` and `localPositionOf` for more) minus the graph heights applied, rounded
+  down to whole dp. It is taken **once per layout**: the `remember` is keyed on `fillHeight`, the
+  graph count, edit mode, gap, top padding, bars height and font size, and only a null value is set,
+  so the measure cannot chase its own result (a first version that updated it on every change did not
+  settle). `graphScale` = (`fillHeight` − `fixedPart`) / saved heights of the first three, at least 1.
+  The four `.height(...)` calls (BG, IOB, secondary graphs) go through `graphHeight(saved)`, which
+  returns `saved.dp` when the scale is 1.
 - **Gap**: `.padding(top = graphGap)` at the end of the modifier chain of the IOB graph and of each
   secondary graph, after the touch modifiers, so a drag in a gap still scrolls the graphs and does
   not swipe the page. Only vertical: the long-press line, the hour lines and the "now" line keep
   their x (each graph places them from the same time, its own scroll and its own left edge).
-- **Top padding**: the section's top padding is `topPadding` instead of 8 dp.
+- **Top and bottom padding**: the section's padding is `topPadding` (instead of 8 dp) and `bottomPadding` (0 dp instead of 8), so the graphs end at the bottom bar.
 - **No QuickLaunch space** (`quickLaunchSpace = false`): no 48 dp spacer at the end, and the
   "Add graph" button is not placed at all while it is hidden (stock keeps it as an invisible
   placeholder).
@@ -135,6 +140,12 @@ Why the activity and not a manifest attribute: the manifest would lock with the 
 tablets too (target SDK 35 obeys it there). Why not Compose code in `MainScreen` (the first try): it
 runs after the first frame, so the app opened in landscape and then turned, and the other screens
 (settings) could turn.
+
+## Phase 4 - Home graph
+
+No upstream file. The graph is new code in `redesign/` and reads `GraphViewModel` as it is. It
+reuses `inspectDataAt` and `GraphInspectPill` (public in `GraphInspect.kt`), `beltColor` (internal in
+`TreatmentBeltGraphCompose.kt`) and `BgRange.toColor` (internal in `BgInfoSection.kt`), all unchanged.
 
 ## Resources
 

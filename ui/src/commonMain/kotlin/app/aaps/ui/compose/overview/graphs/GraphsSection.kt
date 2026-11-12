@@ -44,8 +44,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -155,6 +157,18 @@ private val IOB_GRAPH_PULL_UP = 16.dp
  * labels still do not touch.
  */
 private val GRAPH_OVERLAP = 5.dp
+
+/** Redesign fill height: this many graphs (BG, IOB, the first secondary one) fill the page; later ones follow below. */
+private const val FILL_GRAPH_COUNT = 3
+
+/** The bottom padding of the section's column. */
+private val SECTION_BOTTOM_PADDING = 8.dp
+
+/** Holds the section's layout coordinates for the third graph, which measures its end against them. Not state: no recomposition. */
+private class SectionBox {
+
+    var coordinates: LayoutCoordinates? = null
+}
 
 /**
  * Draws the content [amount] higher and makes it take [amount] less height, so everything below it moves up
@@ -481,35 +495,58 @@ fun GraphsSection(
     // Set by the BG graph, read by every graph
     val inspect = remember { GraphInspectState() }
 
-    // Redesign fill height: the fixed part is everything in this section that is not a graph height
-    // (belt, paddings, gaps, the space at the end). It is measured as the height of the section minus
-    // the graph heights applied, so a new measure gives the same value and does not start a loop.
+    // Redesign fill height. The first FILL_GRAPH_COUNT graphs (BG, IOB, the first secondary one) fill the
+    // page; a graph after them follows below, at the same scale, and is reached by scrolling.
+    // The fixed part is everything above the end of the third graph that is not a graph height (belt,
+    // paddings, gaps), plus the space at the end. It is the measured height minus the graph heights
+    // applied, so a new measure gives the same value and does not start a loop.
     val fillHeight = redesignLayout?.fillHeight
     val graphGap = redesignLayout?.graphGap ?: 0.dp
+    val sectionBottomPadding = redesignLayout?.bottomPadding ?: SECTION_BOTTOM_PADDING
     val density = LocalDensity.current
-    var fixedPart by remember { mutableStateOf<Dp?>(null) }
+    // Measured once per layout: while it is null the graphs have their saved heights, so the measure cannot chase
+    // its own result. It is taken again when something that changes the fixed part changes (rotation, edit mode, a graph
+    // added or removed, the font size). It does not depend on the graph heights.
+    val layoutKey = listOf(fillHeight, activeCount, canEdit, graphGap, redesignLayout?.topPadding, sectionBottomPadding, overlaidBarsHeight, density)
+    var fixedPart by remember(layoutKey) { mutableStateOf<Dp?>(null) }
     val secondaryHeights = graphConfig.secondaryGraphs.take(activeCount).map { it.height }
-    val savedGraphsHeight = (graphConfig.bgHeight + graphConfig.iobHeight + secondaryHeights.sum()).dp
-    val graphScale = fixedPart?.takeIf { fillHeight != null }?.let { fixed -> ((fillHeight!! - fixed) / savedGraphsHeight).coerceAtLeast(1f) } ?: 1f
+    val fillingHeights = (listOf(graphConfig.bgHeight, graphConfig.iobHeight) + secondaryHeights).take(FILL_GRAPH_COUNT)
+    val hasLaterGraphs = secondaryHeights.size + 2 > FILL_GRAPH_COUNT
+    val graphScale = fixedPart?.takeIf { fillHeight != null }?.let { fixed -> ((fillHeight!! - fixed) / fillingHeights.sum().dp).coerceAtLeast(1f) } ?: 1f
     // Grown graphs stay within the maximum of the height slider.
     val graphHeight: (Int) -> Dp = { saved ->
         if (graphScale == 1f) saved.dp else floor(saved * graphScale).coerceAtMost(GraphConfig.MAX_GRAPH_HEIGHT_DP.toFloat()).dp
     }
-    val appliedGraphsHeight = graphHeight(graphConfig.bgHeight) + graphHeight(graphConfig.iobHeight) +
-        secondaryHeights.fold(0.dp) { total, saved -> total + graphHeight(saved) }
+    val appliedFillingHeight = fillingHeights.fold(0.dp) { total, saved -> total + graphHeight(saved) }
+    val sectionBox = remember { SectionBox() }
+    /** Takes the height measured from the top of the section down to where the filled part ends. */
+    fun reportFilledPart(heightPx: Float) {
+        val fixed = floor((with(density) { heightPx.toDp() } - appliedFillingHeight).value).dp
+        if (fixedPart == null) fixedPart = fixed
+    }
     val measuresFixedPart =
         if (fillHeight == null) Modifier
-        else Modifier.onSizeChanged { size ->
-            val fixed = floor((with(density) { size.height.toDp() } - appliedGraphsHeight).value).dp
-            // Less than 1 dp of difference is rounding, not a change.
-            if (fixedPart.let { it == null || abs((fixed - it).value) >= 1f }) fixedPart = fixed
+        else Modifier.onGloballyPositioned { coordinates ->
+            sectionBox.coordinates = coordinates
+            // Up to three graphs: the whole section, with its end space. More: the third graph reports.
+            if (!hasLaterGraphs) reportFilledPart(coordinates.size.height.toFloat())
+        }
+    // With later graphs, the filled part ends at the third graph, and the section's bottom padding and the
+    // bars drawn over its end come after it.
+    val filledPartEnd = with(density) { (sectionBottomPadding + overlaidBarsHeight).toPx() }
+    val reportsThirdGraphEnd =
+        if (fillHeight == null || !hasLaterGraphs) Modifier
+        else Modifier.onGloballyPositioned { third ->
+            // The end of this graph in the section's own coordinates, so a scroll cannot skew it.
+            val section = sectionBox.coordinates?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+            reportFilledPart(section.localPositionOf(third, Offset(0f, third.size.height.toFloat())).y + filledPartEnd)
         }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .then(measuresFixedPart)
-            .padding(start = 16.dp, end = 16.dp, top = redesignLayout?.topPadding ?: 8.dp, bottom = 8.dp)
+            .padding(start = 16.dp, end = 16.dp, top = redesignLayout?.topPadding ?: 8.dp, bottom = sectionBottomPadding)
             .stopsBgFling(bgScrollForwarder)
             .closesInspectPillOnTouch(inspect)
     ) {
@@ -732,6 +769,8 @@ fun GraphsSection(
             val secondary = graphConfig.secondaryGraphs[i]
             Box(
                 modifier = Modifier
+                    // The end of the third graph is where the filled part of the page ends (redesign layout only).
+                    .then(if (i == FILL_GRAPH_COUNT - 3) reportsThirdGraphEnd else Modifier)
                     .pullUp(GRAPH_OVERLAP)
                     .graphInspectTouch(inspect)
                     .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)

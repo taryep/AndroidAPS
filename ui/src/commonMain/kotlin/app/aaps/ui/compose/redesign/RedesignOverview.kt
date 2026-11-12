@@ -56,7 +56,9 @@ fun RedesignOverview(
                 onBasalClick = onBasalClick,
                 onOpenGraphs = { redesign.page = GRAPHS_PAGE },
                 onNotificationsClick = onNotificationsClick,
-                onPumpActivityClick = onPumpActivityClick
+                onPumpActivityClick = onPumpActivityClick,
+                graphRange = redesign.homeGraphRange,
+                onGraphRangeChange = { redesign.homeGraphRange = it }
             )
         },
         graphsPage = { editMode ->
@@ -78,9 +80,9 @@ private fun RedesignGraphsPage(
     val iobUiState by chipsViewModel.iobUiState.collectAsStateWithLifecycle()
     val cobUiState by chipsViewModel.cobUiState.collectAsStateWithLifecycle()
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        // The graphs fill the page. Not in edit mode: there they keep their saved height, so the
-        // height slider matches what the user sees.
-        val layout = GraphsRedesignLayout(fillHeight = if (editMode) null else maxHeight)
+        // The first three graphs fill the page, also in edit mode. The height slider then sets the share
+        // of a graph, not its exact height; graphs after the third follow below and scroll.
+        val layout = GraphsRedesignLayout(fillHeight = maxHeight)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             GraphsSection(
                 graphViewModel = graphViewModel,

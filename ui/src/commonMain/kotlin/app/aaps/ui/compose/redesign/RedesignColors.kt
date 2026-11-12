@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.luminance
  * Surface colours of the redesign screens (SPEC section 7). They are kept here and not in the
  * global theme, so the stock screens do not change.
  *
- * The glucose palette comes in phase 5.
+ * The glucose palette itself is the stock one (`GeneralColors`, phase 0).
  */
 @Immutable
 data class RedesignColors(
@@ -36,12 +36,24 @@ data class RedesignColors(
     val insulin: RedesignTint,
     val carbsActive: RedesignTint,
     val carbsRequired: RedesignTint,
-    val tempBasal: RedesignTint
+    val tempBasal: RedesignTint,
+    /** Home graph card (SPEC 3.6) and its parts. */
+    val graphCard: Color,
+    val graphCardBorder: Color,
+    /** The faint grey axis labels. */
+    val graphLabel: Color,
+    val selectedRange: Color,
+    /** Text of the 250 / 170 / 70 / 56 labels: darker than the lines on light, so 11 sp stays readable. */
+    val thresholdText: RedesignThresholdText
 ) {
 
     /** A tile with nothing special to show. */
     val neutral: RedesignTint get() = RedesignTint(background = surface, border = border, accent = textPrimary)
 }
+
+/** Text colours of the very high, high, low and very low line labels of the home graph. */
+@Immutable
+data class RedesignThresholdText(val veryHigh: Color, val high: Color, val low: Color, val veryLow: Color)
 
 /** Background, border and accent (icon, label) of a tinted tile or slot. */
 @Immutable
@@ -71,7 +83,13 @@ val DarkRedesignColors = RedesignColors(
     insulin = RedesignTint(Color(0xFF0F2530), Color(0xFF1C4352), Color(0xFF7FD6E6)),
     carbsActive = RedesignTint(Color(0xFF251B10), Color(0xFF4A3518), Color(0xFFF7B267)),
     carbsRequired = RedesignTint(Color(0xFF33200E), Color(0xFF8A5A1E), Color(0xFFF7B267)),
-    tempBasal = RedesignTint(Color(0xFF10292C), Color(0xFF1C4247), Color(0xFF8FD3DA))
+    tempBasal = RedesignTint(Color(0xFF10292C), Color(0xFF1C4247), Color(0xFF8FD3DA)),
+    graphCard = Color(0xFF14161B),
+    graphCardBorder = Color(0xFF22252D),
+    graphLabel = Color(0xFF858B98),
+    selectedRange = Color(0xFF262A33),
+    // The dark glucose colours, except 56: its line colour is too dark for text on the dark card.
+    thresholdText = RedesignThresholdText(Color(0xFFE69F00), Color(0xFFF0E442), Color(0xFFFF6A3D), Color(0xFFE2602C))
 )
 
 // Light theme: the same hues as the dark tints, a very light background, a mid border and a dark accent.
@@ -96,7 +114,12 @@ val LightRedesignColors = RedesignColors(
     insulin = RedesignTint(Color(0xFFE6F1F8), Color(0xFFB8D7EA), Color(0xFF0A6388)),
     carbsActive = RedesignTint(Color(0xFFFDF4EA), Color(0xFFF0D3AE), Color(0xFF9A5300)),
     carbsRequired = RedesignTint(Color(0xFFFDEFD8), Color(0xFFE8B160), Color(0xFF8A4A00)),
-    tempBasal = RedesignTint(Color(0xFFE3F4F4), Color(0xFFADDCDD), Color(0xFF0B6A70))
+    tempBasal = RedesignTint(Color(0xFFE3F4F4), Color(0xFFADDCDD), Color(0xFF0B6A70)),
+    graphCard = Color(0xFFFFFFFF),
+    graphCardBorder = Color(0xFFE1E4E9),
+    graphLabel = Color(0xFF6B717D),
+    selectedRange = Color(0xFFEEF0F3),
+    thresholdText = RedesignThresholdText(Color(0xFF8A6508), Color(0xFF9A6A00), Color(0xFFB34C00), Color(0xFF8B2500))
 )
 
 /**

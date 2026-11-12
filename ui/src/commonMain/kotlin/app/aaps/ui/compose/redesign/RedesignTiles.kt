@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -115,7 +116,8 @@ private fun ProfileTile(state: RedesignTilesState, colors: RedesignColors, modif
     // The name already has the percentage in it, e.g. "Normal (90%)", so it is not shown a second time.
     val name = data.profileName.ifEmpty { state.profileName }
     RedesignTile(
-        label = withTimeLeft(label, data.profileTimeLeft),
+        label = label,
+        labelTime = data.profileTimeLeft,
         value = name,
         icon = ElementType.PROFILE_MANAGEMENT.icon(),
         tint = if (state.isProfileModified) colors.profileTemp else colors.neutral,
@@ -136,7 +138,8 @@ private fun TargetTile(state: RedesignTilesState, colors: RedesignColors, modifi
         TempTargetChipState.None     -> colors.neutral
     }
     RedesignTile(
-        label = if (state.tempTargetState == TempTargetChipState.Active) withTimeLeft(label, data.targetTimeLeft) else label,
+        label = label,
+        labelTime = if (state.tempTargetState == TempTargetChipState.Active) data.targetTimeLeft else "",
         value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "—" },
         icon = if (state.tempTargetState == TempTargetChipState.Active) state.tempTargetReason.toIcon() else IcTarget,
         tint = tint,
@@ -154,6 +157,7 @@ private fun LoopTile(state: RedesignTilesState, colors: RedesignColors, modifier
     val loop = stringResource(UiStrings.redesign_tile_loop)
     val remaining = state.runningModeRemaining
     val label: String
+    var labelTime = ""
     val value: String
     val tint: RedesignTint
     when {
@@ -181,7 +185,8 @@ private fun LoopTile(state: RedesignTilesState, colors: RedesignColors, modifier
         }
 
         mode == RM.Mode.DISCONNECTED_PUMP         -> {
-            label = withTimeLeft(stringResource(UiStrings.redesign_tile_pump), remaining)
+            label = stringResource(UiStrings.redesign_tile_pump)
+            labelTime = remaining
             value = stringResource(UiStrings.redesign_mode_disconnected)
             tint = colors.disconnected
         }
@@ -197,6 +202,7 @@ private fun LoopTile(state: RedesignTilesState, colors: RedesignColors, modifier
     }
     RedesignTile(
         label = label,
+        labelTime = labelTime,
         value = value,
         icon = mode?.toIcon() ?: ElementType.RUNNING_MODE.icon(),
         tint = tint,
@@ -251,8 +257,8 @@ private fun BasalTile(state: RedesignTilesState, colors: RedesignColors, modifie
     val data = state.data
     val running = data.tempBasalRunning
     RedesignTile(
-        label = if (running) withTimeLeft(stringResource(UiStrings.redesign_tile_temp_basal), data.tempBasalTimeLeft)
-        else stringResource(UiStrings.redesign_tile_basal),
+        label = if (running) stringResource(UiStrings.redesign_tile_temp_basal) else stringResource(UiStrings.redesign_tile_basal),
+        labelTime = if (running) data.tempBasalTimeLeft else "",
         value = (if (running) data.tempBasalRate else data.basalRate).ifEmpty { "—" },
         small = if (running) data.tempBasalPercent else "",
         icon = state.tbrState.toIcon(),
@@ -262,10 +268,6 @@ private fun BasalTile(state: RedesignTilesState, colors: RedesignColors, modifie
         modifier = modifier
     )
 }
-
-@Composable
-private fun withTimeLeft(label: String, timeLeft: String): String =
-    if (timeLeft.isEmpty()) label else stringResource(UiStrings.redesign_label_with_time, label, timeLeft)
 
 private fun TT.Reason?.toIcon(): ImageVector = when (this) {
     TT.Reason.EATING_SOON  -> IcTtEatingSoon
@@ -289,6 +291,7 @@ fun RedesignTile(
     tint: RedesignTint,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    labelTime: String = "",
     small: String = "",
     tinted: Boolean = false,
     strongBorder: Boolean = false,
@@ -311,8 +314,15 @@ fun RedesignTile(
             Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(TILE_ICON_SIZE))
             Spacer(Modifier.width(6.dp))
             Column(verticalArrangement = Arrangement.Center) {
+                // The time left follows the name after a space, in the accent colour and semi-bold: no separator sign.
                 FittingText(
-                    text = label,
+                    text = buildAnnotatedString {
+                        append(label)
+                        if (labelTime.isNotEmpty()) {
+                            append(" ")
+                            withStyle(SpanStyle(color = tint.accent, fontWeight = FontWeight.SemiBold)) { append(labelTime) }
+                        }
+                    },
                     style = TextStyle(fontSize = 11.sp, color = if (tinted) tint.accent else colors.textSecondary),
                     minSize = 9
                 )
@@ -347,7 +357,7 @@ fun RedesignTile(
 
 /** One line that gets smaller (down to [minSize] sp) before it ends with "…". */
 @Composable
-private fun FittingText(text: String, style: TextStyle, minSize: Int) {
+private fun FittingText(text: AnnotatedString, style: TextStyle, minSize: Int) {
     BasicText(
         text = text,
         style = style,

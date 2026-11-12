@@ -23,7 +23,13 @@ class RedesignOverviewState : ViewModel() {
     /** True while the Menu screen is open over the overview. The Menu handles Back then. */
     var menuOpen by mutableStateOf(false)
 
-    /** Menu > "Edit screen": the graphs page, in edit mode. */
+    /**
+     * Range of the home graph. Kept over a rotation and while other screens are open, not over a new
+     * start of the app (SPEC 3.6: saved state, no preference).
+     */
+    var homeGraphRange by mutableStateOf(HomeGraphRange.DEFAULT)
+
+    /** Menu > "Edit mode": the graphs page, in edit mode. */
     fun editScreen() {
         editMode = true
         page = GRAPHS_PAGE

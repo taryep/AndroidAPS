@@ -25,7 +25,6 @@
     <string name="redesign_tile_basal" comment="Tile label: the basal rate of the profile">Basal</string>
     <string name="redesign_tile_temp_basal" comment="Tile label while a temporary basal rate runs. Very short">Temp.</string>
     <string name="redesign_tile_pump" comment="Tile label while the pump is disconnected, and caption of the pump activity button">Pump</string>
-    <string name="redesign_label_with_time" comment="Tile label with the time left. %1$s=label, %2$s=time left. Example: Profile · 9 min">%1$s · %2$s</string>
     <string name="redesign_mode_closed" comment="Loop tile value: closed loop">Closed</string>
     <string name="redesign_mode_open" comment="Loop tile value: open loop">Open</string>
     <string name="redesign_mode_lgs" comment="Loop tile value: low glucose suspend mode">LGS</string>
@@ -35,7 +34,7 @@
     <string name="redesign_mode_disabled" comment="Loop tile value: the loop is disabled">Disabled</string>
     <string name="redesign_tile_open_loop" comment="Loop tile label in open loop when the loop suggests a change that waits to be accepted">Open loop</string>
     <string name="redesign_loop_suggestion_value" comment="Loop tile value under the label Open loop: one suggestion of the loop waits to be accepted">1 suggestion</string>
-    <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: · 13 required">· %1$d required</string>
+    <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: 13 required">%1$d required</string>
     <string name="redesign_sensitivity" comment="Label of the sensitivity line on the home page (autosens or dynamic ISF)">Sensitivity</string>
     <string name="redesign_isf" comment="Abbreviation of insulin sensitivity factor, as in the rest of the app">ISF</string>
     <string name="redesign_sensitivity_description" comment="Screen reader text of the sensitivity line. %1$s=sensitivity in percent, %2$s=ISF of the profile, %3$s=ISF used. Example: Sensitivity 80 %, profile ISF 36, ISF used 45 mg/dL">Sensitivity %1$s, profile ISF %2$s, ISF used %3$s</string>
@@ -48,4 +47,10 @@
     <string name="redesign_meal_now" comment="Eat reminder button when the time to eat has come. Very short">Now</string>
     <string name="redesign_meal_description" comment="Screen reader text of the eat reminder button. %1$s=minutes left or Now. Example: Meal reminder: 12 min. Open">Meal reminder: %1$s. Open</string>
     <string name="redesign_pump_activity_description" comment="Screen reader text of the pump activity button">Pump activity. Open</string>
+    <string name="redesign_graph_range" comment="Button over the home glucose graph: how many hours it shows. Very short. %1$d=hours. Example: 6 h">%1$d h</string>
+    <string name="redesign_graph_range_description" comment="Screen reader name of a range button of the home glucose graph. %1$d=hours, always 3 or more. Example: 6 hours">%1$d hours</string>
+    <string name="redesign_graph_ranges" comment="Screen reader name of the row of range buttons (3 h, 6 h, 12 h…) over the home glucose graph">Time shown</string>
+    <string name="redesign_graph_hour" comment="Hour label under the home glucose graph. Very short. %1$d=hour of the day, 0 to 23. Example: 19h">%1$dh</string>
+    <string name="redesign_graph_description" comment="Screen reader text of the home glucose graph. %1$s=time shown, %2$s=last glucose value with unit. Example: Glucose over the last 6 hours, now 133 mg/dL. Long press to read a value">Glucose over the last %1$s, now %2$s. Long press to read a value</string>
+    <string name="redesign_graph_description_no_value" comment="Screen reader text of the home glucose graph when it has no reading. %1$s=time shown. Example: Glucose over the last 6 hours. No reading">Glucose over the last %1$s. No reading</string>
 </resources>

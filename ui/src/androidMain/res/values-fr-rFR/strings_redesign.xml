@@ -20,7 +20,6 @@
     <string name="redesign_tile_basal">Basale</string>
     <string name="redesign_tile_temp_basal">Temp.</string>
     <string name="redesign_tile_pump">Pompe</string>
-    <string name="redesign_label_with_time">%1$s · %2$s</string>
     <string name="redesign_mode_closed">Fermée</string>
     <string name="redesign_mode_open">Ouverte</string>
     <string name="redesign_mode_lgs">LGS</string>
@@ -30,7 +29,7 @@
     <string name="redesign_mode_disabled">Désactivée</string>
     <string name="redesign_tile_open_loop">Boucle ouverte</string>
     <string name="redesign_loop_suggestion_value">1 proposition</string>
-    <string name="redesign_carbs_required">· %1$d requis</string>
+    <string name="redesign_carbs_required">%1$d requis</string>
     <string name="redesign_sensitivity">Sensibilité</string>
     <string name="redesign_isf">ISF</string>
     <string name="redesign_sensitivity_description">Sensibilité %1$s, ISF du profil %2$s, ISF utilisé %3$s</string>
@@ -42,4 +41,10 @@
     <string name="redesign_meal_now">Maintenant</string>
     <string name="redesign_meal_description">Rappel repas : %1$s. Ouvrir</string>
     <string name="redesign_pump_activity_description">Activité de la pompe. Ouvrir</string>
+    <string name="redesign_graph_range">%1$d h</string>
+    <string name="redesign_graph_range_description">%1$d heures</string>
+    <string name="redesign_graph_ranges">Durée affichée</string>
+    <string name="redesign_graph_hour">%1$dh</string>
+    <string name="redesign_graph_description">Glycémie sur les dernières %1$s, actuellement %2$s. Appui long pour lire une valeur</string>
+    <string name="redesign_graph_description_no_value">Glycémie sur les dernières %1$s. Aucune valeur</string>
 </resources>

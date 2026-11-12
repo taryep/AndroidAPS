@@ -14,7 +14,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 1b | Interrupteur nouvelle / ancienne interface | Code fait, à tester |
 | 2 | Accueil : affichage | Code fait, à tester |
 | 3 | Accueil : défilement du graphique | Code fait, à tester |
-| 4 | Feuilles Insuline et Basale : barre du haut | À faire |
+| 4 | Feuilles Insuline et Basale : barre du haut | Code fait, à tester |
 | 5 | Medtrum et barres de progression | À faire |
 | 6 | Écran d'injection : texte | À faire |
 | 7 | Boucle | À faire |
@@ -56,7 +56,7 @@ Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`
 - [ ] Gestes : le glissement fait défiler, l'appui long inspecte ; vérifier que l'un ne déclenche pas l'autre
 
 ### 4. Feuilles Insuline et Basale : barre du haut
-- [ ] Diagnostic : comparer à `sheet-insulin.png` et `sheet-basal.png` (pastille « IOB » ou « TBR » suivie d'une ligne, dans un cadre arrondi ; pour Insuline une seconde ligne glycémie, IOB, COB ; pour Basale le bouton « Annuler la basale temp. » juste dessous)
+- [x] Diagnostic : comparer à `sheet-insulin.png` et `sheet-basal.png` (pastille « IOB » ou « TBR » suivie d'une ligne, dans un cadre arrondi ; pour Insuline une seconde ligne glycémie, IOB, COB ; pour Basale le bouton « Annuler la basale temp. » juste dessous). Trouvé : ligne en bloc gris sans pastille, texte centré, les trois valeurs en couleur ; sur Insuline elle était sous la ligne glycémie / IOB / COB (la maquette la met au-dessus) ; bouton Annuler sans couleur ni croix. En français la pastille IOB est « IA » (texte d'origine traduit)
 - [ ] Correction, par le paramètre `topInfo` déjà en place (pas de nouveau point d'accroche si possible)
 
 ### 5. Medtrum et barres de progression

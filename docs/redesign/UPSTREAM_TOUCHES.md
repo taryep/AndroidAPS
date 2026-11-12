@@ -148,7 +148,7 @@ the same rounding as `ChipsViewModel.showIobInfo`) and `tempBasalLine` (the data
 
 - New last parameter `topInfo: (@Composable () -> Unit)? = null` on `InsulinDialogScreen` and on
   `InsulinDialogContent`; the screen passes it on.
-- `topInfo?.invoke()` right under `DialogStatusBar`. Null (stock) draws nothing.
+- `topInfo?.invoke()` right above `DialogStatusBar` (step 4: the mockup has the IOB line first; it was under it). Null (stock) draws nothing.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/tempBasalDialog/TempBasalDialogScreen.kt`
 

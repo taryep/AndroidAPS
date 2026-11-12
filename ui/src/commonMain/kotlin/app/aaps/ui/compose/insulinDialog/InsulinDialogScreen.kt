@@ -305,9 +305,10 @@ internal fun InsulinDialogContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Redesign (SPEC 3.2.2, step 4): the IOB line comes first, above the status bar. Null in stock.
+            topInfo?.invoke()
             // --- Status Bar ---
             DialogStatusBar(bgInfo = bgInfo, iob = iob, cob = cob)
-            topInfo?.invoke()
 
             // --- Card 1: Switches ---
             Card(

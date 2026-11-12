@@ -121,6 +121,8 @@ class RedesignTileActionsTest {
     fun iobLineWithANegativeBasalPart() {
         compose.setContent { MaterialTheme { RedesignIobLineContent(RedesignIobParts(bolus = 1.5, basal = -1.3)) } }
         compose.onNodeWithText("Bolus 1,50 U + Basale -1,30 U = 0,20 U").assertIsDisplayed()
+        // Step 4: the stock "IOB" text as a badge before the line, as in sheet-insulin.png ("IA" in French).
+        compose.onNodeWithText(string(CoreUiR.string.iob)).assertIsDisplayed()
     }
 
     @Test
@@ -131,6 +133,8 @@ class RedesignTileActionsTest {
         val data = RedesignHomeData(basalRate = "0,85 U/h", tempBasalRunning = true, tempBasalLine = line)
         compose.setContent { MaterialTheme { RedesignTbrLineContent(data, showCancel = true, onCancelClick = { cancels++ }) } }
         compose.onNodeWithText(line).assertIsDisplayed()
+        // Step 4: the "TBR" badge before the line, as in sheet-basal.png.
+        compose.onNodeWithText(string(R.string.redesign_badge_tbr)).assertIsDisplayed()
         compose.onNodeWithContentDescription(string(R.string.redesign_cancel_temp_basal_description)).performClick()
         assertThat(cancels).isEqualTo(1)
     }

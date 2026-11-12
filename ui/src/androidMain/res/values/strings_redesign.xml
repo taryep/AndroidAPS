@@ -65,6 +65,7 @@
     <string name="redesign_profile_basal" comment="One line over the temp basal screen when no temporary basal runs. %1$s=basal rate with unit. Example: Profile basal 0.85 U/h">Profile basal %1$s</string>
     <string name="redesign_cancel_temp_basal" comment="Button over the temp basal screen while a temporary basal runs. Short">Cancel temp basal</string>
     <string name="redesign_cancel_temp_basal_description" comment="Screen reader name of the Cancel temp basal button">Cancel the running temporary basal</string>
+    <string name="redesign_badge_tbr" comment="Short badge before the running temporary basal on the temp basal screen. TBR = temporary basal rate. Keep it 3 to 4 letters">TBR</string>
     <string name="redesign_classic_interface_title">Go back to the classic interface?</string>
     <string name="redesign_classic_interface_message">The screen restarts in the classic AAPS interface. To come back: Settings › Appearance › New interface.</string>
 </resources>

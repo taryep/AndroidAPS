@@ -1,11 +1,24 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -17,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -24,7 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +47,7 @@ import app.aaps.core.interfaces.InterfacesStrings
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.interfaces.ClientRole
+import app.aaps.core.ui.CoreUiStrings
 import app.aaps.core.ui.compose.LocalClientRole
 import app.aaps.core.ui.compose.dialogs.ElementConfirmationDialog
 import app.aaps.core.ui.compose.metroViewModel
@@ -66,8 +81,8 @@ internal fun redesignTileTaps(
 )
 
 /**
- * The same rules as the stock sheets: Treatments › Insulin needs a master or a paired client and the
- * role for insulin. Manage › Temp basal (or its Cancel item while one runs) also needs a pump that can
+ * The same rules as the stock sheets: Treatments â€º Insulin needs a master or a paired client and the
+ * role for insulin. Manage â€º Temp basal (or its Cancel item while one runs) also needs a pump that can
  * set a temp basal now: [tempBasalOffered], from [ManageUiState].
  */
 internal fun redesignTileRules(masterOrPairedClient: Boolean, role: ClientRole, tempBasalOffered: Boolean): Pair<Boolean, Boolean> =
@@ -110,11 +125,14 @@ internal fun RedesignIobLineContent(parts: RedesignIobParts) {
     val bolus = stringResource(InterfacesStrings.format_insulin_units, parts.bolus)
     val basal = stringResource(InterfacesStrings.format_insulin_units, parts.basal)
     val total = stringResource(InterfacesStrings.format_insulin_units, parts.total)
-    // The insulin colour, as for "IOB" in the bar above.
+    // As in the mockup (sheet-insulin.png): the two parts in semi-bold, the total in the insulin colour.
     val insulin = ElementType.INSULIN.color()
+    val strong = SpanStyle(fontWeight = FontWeight.SemiBold)
     RedesignInfoLine(
+        badge = stringResource(CoreUiStrings.iob),
+        accent = insulin,
         text = stringResource(UiStrings.redesign_iob_line, bolus, basal, total),
-        values = listOf(bolus to insulin, basal to insulin, total to insulin)
+        values = listOf(bolus to strong, basal to strong, total to strong.copy(color = insulin))
     )
 }
 
@@ -168,70 +186,103 @@ fun RedesignTbrLine(
 internal fun RedesignTbrLineContent(data: RedesignHomeData, showCancel: Boolean, onCancelClick: () -> Unit) {
     // Our teal of the Basal tile: the stock temp basal colour is a light cyan that cannot be read on a
     // light background (to fix in phase 9).
-    val basal = redesignColors().tempBasal.accent
+    val colors = redesignColors()
+    val basal = colors.tempBasal.accent
+    val rate = SpanStyle(color = basal, fontWeight = FontWeight.SemiBold)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when {
+            // As in the mockup (sheet-basal.png): badge "TBR", the rate in the basal colour, the rest plain.
             data.tempBasalRunning && data.tempBasalLine.isNotEmpty() ->
-                RedesignInfoLine(data.tempBasalLine, listOf(data.tempBasalRate to basal))
+                RedesignInfoLine(stringResource(UiStrings.redesign_badge_tbr), basal, data.tempBasalLine, listOf(data.tempBasalRate to rate))
 
             data.basalRate.isNotEmpty()                              ->
-                RedesignInfoLine(stringResource(UiStrings.redesign_profile_basal, data.basalRate), listOf(data.basalRate to basal))
+                RedesignInfoLine(stringResource(CoreUiStrings.basal), basal, stringResource(UiStrings.redesign_profile_basal, data.basalRate), listOf(data.basalRate to rate))
         }
         if (showCancel) {
+            // Outlined in the danger colour, with a cross, as in the mockup.
             val description = stringResource(UiStrings.redesign_cancel_temp_basal_description)
             OutlinedButton(
                 onClick = onCancelClick,
+                border = BorderStroke(1.dp, colors.danger),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.danger),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .semantics { contentDescription = description }
             ) {
-                Text(stringResource(UiStrings.redesign_cancel_temp_basal))
+                Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(UiStrings.redesign_cancel_temp_basal), fontWeight = FontWeight.SemiBold)
             }
         }
     }
 }
 
 /**
- * A single line in the look of the BG / IOB / COB bar above it (`DialogStatusBar`): light block, small
- * text, labels in grey and the [values] in their colour. It gets smaller down to 11 sp, then ends with
- * "…" (SPEC 3.2.2).
+ * A single line in a rounded card with a border, as in the mockups (sheet-insulin.png, sheet-basal.png):
+ * a small [badge] ("IOB", "TBR") in the [accent] colour, then the [text], left-aligned, with the [values]
+ * in their style. It gets smaller down to 11 sp, then ends with "â€¦" (SPEC 3.2.2).
  *
- * [text] is the whole translated line. The values are only found in it to colour them; the text is
+ * [text] is the whole translated line. The values are only found in it to style them; the text is
  * never cut or joined, so a translation may put them in any order.
  */
 @Composable
-private fun RedesignInfoLine(text: String, values: List<Pair<String, Color>>) {
-    val style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+private fun RedesignInfoLine(badge: String, accent: Color, text: String, values: List<Pair<String, SpanStyle>>) {
+    val colors = redesignColors()
+    val style = MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary, fontFeatureSettings = "tnum")
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = MaterialTheme.shapes.small,
+        color = colors.surface,
+        shape = RoundedCornerShape(INFO_LINE_RADIUS),
+        border = BorderStroke(1.dp, colors.border),
         modifier = Modifier.fillMaxWidth()
     ) {
-        BasicText(
-            text = coloredValues(text, values),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            style = style,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = badge,
+                color = accent,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                modifier = Modifier
+                    .background(accent.copy(alpha = 0.12f), RoundedCornerShape(BADGE_RADIUS))
+                    .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(BADGE_RADIUS))
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            )
+            BasicText(
+                text = styledValues(text, values),
+                modifier = Modifier.weight(1f),
+                style = style,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize)
+            )
+        }
     }
 }
 
+private val INFO_LINE_RADIUS = 16.dp
+private val BADGE_RADIUS = 8.dp
+
 /** [text] with each of [values] in its colour, where it is found. Two equal values get one place each. */
-internal fun coloredValues(text: String, values: List<Pair<String, Color>>): AnnotatedString {
+internal fun coloredValues(text: String, values: List<Pair<String, Color>>): AnnotatedString =
+    styledValues(text, values.map { (value, color) -> value to SpanStyle(color = color) })
+
+/** [text] with each of [values] in its style, where it is found. Two equal values get one place each. */
+internal fun styledValues(text: String, values: List<Pair<String, SpanStyle>>): AnnotatedString {
     val used = mutableListOf<IntRange>()
     return buildAnnotatedString {
         append(text)
-        for ((value, color) in values) {
+        for ((value, spanStyle) in values) {
             if (value.isEmpty()) continue
             var start = text.indexOf(value)
             while (start >= 0 && used.any { start in it || start + value.length - 1 in it }) start = text.indexOf(value, start + 1)
             if (start < 0) continue
             used += start until start + value.length
-            addStyle(SpanStyle(color = color), start, start + value.length)
+            addStyle(spanStyle, start, start + value.length)
         }
     }
 }

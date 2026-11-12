@@ -193,24 +193,29 @@ class RedesignHomeChromeScreenshotTest {
     }
 
     @Test
-    fun threeGraphsFillThePageWithoutScrolling() {
-        picture("graphs_page_three", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
-        // The page ends where the third graph ends: nothing to scroll to (a few px of rounding at most).
+    fun grandSmallSmallFillsThePageWithoutScrolling() {
+        val config = GraphConfig(bgHeight = 250, secondaryGraphs = listOf(SecondaryGraph(listOf(SeriesType.COB))))
+        whenever(viewModels.graphConfigRepository.graphConfigFlow).thenReturn(MutableStateFlow(config))
+        picture("graphs_page_gps", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
+        // The page ends where the last graph ends: nothing to scroll to (a few px of rounding at most).
         assertThat(scrollRangePx()).isAtMost(compose.density.density * 2)
     }
 
     @Test
-    fun aFourthGraphFollowsBelowAndIsReachedByScrolling() {
+    fun fourSmallGraphsFillThePageWithoutScrolling() {
         val four = GraphConfig(secondaryGraphs = listOf(SecondaryGraph(listOf(SeriesType.COB)), SecondaryGraph(listOf(SeriesType.BGI))))
         whenever(viewModels.graphConfigRepository.graphConfigFlow).thenReturn(MutableStateFlow(four))
         picture("graphs_page_four", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
-        // The first three still fill the page, so the fourth is below it and the page scrolls by about its height.
-        assertThat(scrollRangePx()).isGreaterThan(compose.density.density * 80)
-        // And the third graph (its name "GA", just above its bottom line) ends just above the bottom bar:
-        // the screen is 891 dp, the gesture bar 24 dp and the navigation bar about 80 dp.
-        val bottomDp = compose.onNode(hasText("GA"), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom / compose.density.density
-        assertThat(bottomDp).isGreaterThan(891f - 24f - 80f - 45f)
-        assertThat(bottomDp).isLessThan(891f - 24f - 80f)
+        assertThat(scrollRangePx()).isAtMost(compose.density.density * 2)
+    }
+
+    @Test
+    fun moreThanFourUnitsScrollByTheExtra() {
+        // Grand + three Small = 5 units: one Small graph and its gap are below the page.
+        val config = GraphConfig(bgHeight = 250, secondaryGraphs = listOf(SecondaryGraph(listOf(SeriesType.COB)), SecondaryGraph(listOf(SeriesType.BGI))))
+        whenever(viewModels.graphConfigRepository.graphConfigFlow).thenReturn(MutableStateFlow(config))
+        picture("graphs_page_five_units", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
+        assertThat(scrollRangePx()).isGreaterThan(compose.density.density * 100)
     }
 
     /** How far the graphs page can scroll, in px; 0 when everything fits. */
@@ -220,9 +225,9 @@ class RedesignHomeChromeScreenshotTest {
     }
 
 
-    /** Bottom of the "IOB / BAS" name, at the bottom of the IOB graph: it moves when the graphs above it change height. */
+    /** Bottom of the "BAS" legend, at the top of the IOB graph: it moves when the graphs above it change height. */
     private fun iobGraphNameBottom(): Float =
-        compose.onNode(hasText("/ BAS", substring = true), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
+        compose.onNode(hasText("BAS"), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
 
     private fun picture(
         name: String,

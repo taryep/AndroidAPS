@@ -75,7 +75,6 @@ import app.aaps.ui.search.SearchUiState
  * @param isTreatmentsEnabled same rule as the drawer: the treatments list needs a loaded profile
  * @param showExit false on iOS, where the app may not close itself
  * @param onClose closes this screen (Back)
- * @param onEditScreenClick shows the graphs page in edit mode; null hides the shortcut (simple mode)
  * @param bottomPadding room to leave at the bottom for the bottom bar and the gesture bar. The top
  *   and the sides follow the safe drawing insets here.
  */
@@ -95,8 +94,7 @@ fun RedesignMenuScreen(
     onClose: () -> Unit,
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
-    attentionItems: List<RedesignAttentionItem> = emptyList(),
-    onEditScreenClick: (() -> Unit)? = null
+    attentionItems: List<RedesignAttentionItem> = emptyList()
 ) {
     val colors = redesignColors()
     val focusManager = LocalFocusManager.current
@@ -146,7 +144,8 @@ fun RedesignMenuScreen(
                 isActive = searchUiState.isSearchActive,
                 onQueryChange = onSearchQueryChange,
                 onClearClick = onSearchClear,
-                onActiveChange = onSearchActiveChange
+                onActiveChange = onSearchActiveChange,
+                placeholder = stringResource(UiStrings.redesign_search_placeholder)
             )
 
             if (searchUiState.isSearchActive) {
@@ -171,7 +170,6 @@ fun RedesignMenuScreen(
                     isTreatmentsEnabled = isTreatmentsEnabled,
                     showExit = showExit,
                     attentionItems = attentionItems,
-                    onEditScreenClick = onEditScreenClick,
                     onNavigate = onNavigate,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -190,7 +188,6 @@ private fun MenuContent(
     isTreatmentsEnabled: Boolean,
     showExit: Boolean,
     attentionItems: List<RedesignAttentionItem>,
-    onEditScreenClick: (() -> Unit)?,
     onNavigate: (NavigationRequest) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -223,18 +220,16 @@ private fun MenuContent(
             }
         }
 
-        // Large shortcuts, two per row.
+        // Large shortcuts, one row of three.
         // In simple mode the gear is shown crossed, as it was in the old top bar. The action is the same.
         val settingsIcon = if (isSimpleMode) IcSettingsOff else ElementType.SETTINGS.icon()
         val shortcuts = listOfNotNull(
             Shortcut(stringResourceOrNull(ElementType.SETTINGS.label()).orEmpty(), settingsIcon) { go(ElementType.SETTINGS) },
-            // Hidden in simple mode, where the graphs are preset.
-            onEditScreenClick?.let { Shortcut(stringResource(UiStrings.redesign_edit_mode), Icons.Default.Edit, it) },
             Shortcut(stringResourceOrNull(ElementType.HISTORY_BROWSER.label()).orEmpty(), ElementType.HISTORY_BROWSER.icon()) { go(ElementType.HISTORY_BROWSER) },
             Shortcut(stringResourceOrNull(ElementType.STATISTICS.label()).orEmpty(), ElementType.STATISTICS.icon()) { go(ElementType.STATISTICS) }
         )
         Column(verticalArrangement = Arrangement.spacedBy(GRID_GAP)) {
-            shortcuts.chunked(2).forEach { row ->
+            shortcuts.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(GRID_GAP)) {
                     row.forEach { shortcut ->
                         ShortcutTile(
@@ -245,8 +240,6 @@ private fun MenuContent(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    // An odd last row keeps the tile at half width.
-                    if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         }

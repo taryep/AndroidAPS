@@ -14,6 +14,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -239,6 +240,24 @@ class RedesignOverviewPagerTest {
         compose.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         compose.waitForIdle()
         assertThat(state.editMode).isFalse()
+    }
+
+    @Test
+    fun theTitleRowHasAnEditButtonThatStartsTheEditMode() {
+        state.page = GRAPHS_PAGE
+        show()
+        compose.onNode(hasText(string(R.string.redesign_graphs_title))).assertIsDisplayed()
+        compose.onNode(hasContentDescription(string(R.string.redesign_edit_graphs))).performClick()
+        compose.waitForIdle()
+        assertThat(state.editMode).isTrue()
+        compose.onNode(hasText(editModeLabel)).assertIsDisplayed()
+    }
+
+    @Test
+    fun simpleModeHasNoTitleEditButton() {
+        state.page = GRAPHS_PAGE
+        show(isSimpleMode = true)
+        assertThat(compose.onAllNodes(hasContentDescription(string(R.string.redesign_edit_graphs))).fetchSemanticsNodes()).isEmpty()
     }
 
     @Test

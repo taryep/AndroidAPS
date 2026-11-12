@@ -8,10 +8,13 @@
     <string name="redesign_menu" comment="Name of the bottom bar button and of the screen that holds settings, search and tools">Menu</string>
     <string name="redesign_tools" comment="Heading of the list of tools on the Menu screen (history, maintenance, configuration...)">Tools</string>
     <string name="redesign_needs_attention" comment="Heading on the Menu screen over the things the user must set up (pump, missing permissions)">Needs your attention</string>
+    <string name="redesign_search_placeholder" comment="Hint in the empty search field of the Menu screen. Long: it must fit one line on a phone">Search a setting, a screen, the docs</string>
     <string name="redesign_close_menu" comment="Screen reader action of the Menu button while the Menu screen is open">Close the menu and go back to the home screen</string>
     <string name="redesign_edit_mode" comment="Two places with the same words: the Menu shortcut that shows the graphs page with the buttons to add, change and remove graphs, and the label at the top of that page while it is in this mode">Edit mode</string>
     <string name="redesign_edit_done" comment="Button that leaves the edit mode of the graphs page">Done</string>
     <string name="redesign_page_home" comment="Screen reader name of the first page of the overview">Home, page 1 of 2</string>
+    <string name="redesign_graphs_title" comment="Title at the top of the graphs page">Graphs</string>
+    <string name="redesign_edit_graphs" comment="Screen reader name of the round pencil button at the top of the graphs page: it starts the edit mode of the graphs">Edit the graphs</string>
     <string name="redesign_page_graphs" comment="Screen reader name of the second page of the overview">Graphs, page 2 of 2</string>
     <string name="redesign_open_graphs" comment="Screen reader action of the glucose value on the home page: it shows the graphs page">Open the graphs</string>
 

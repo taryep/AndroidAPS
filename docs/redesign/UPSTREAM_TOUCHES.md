@@ -96,19 +96,19 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
 
 - **One** new parameter: `redesignLayout: GraphsRedesignLayout? = null`. Null (stock overview,
   history browser) keeps the stock layout exactly. The class lives in `redesign/` and holds
-  `fillHeight`, `graphGap`, `topPadding` and `quickLaunchSpace`.
-- **Fill height**: the first three graphs (BG, IOB, the first secondary one) grow (never shrink) so
-  they fill `fillHeight`, in the ratio of their saved heights, each at most
-  `GraphConfig.MAX_GRAPH_HEIGHT_DP`, also in edit mode. Later graphs follow below at the same scale
-  and are reached by scrolling. `GraphConfig` is not changed. `fixedPart` = the measured height down
-  to the end of the filled part (the whole section for up to three graphs, the end of the third graph
-  with `onGloballyPositioned` and `localPositionOf` for more) minus the graph heights applied, rounded
-  down to whole dp. It is taken **once per layout**: the `remember` is keyed on `fillHeight`, the
-  graph count, edit mode, gap, top padding, bars height and font size, and only a null value is set,
-  so the measure cannot chase its own result (a first version that updated it on every change did not
-  settle). `graphScale` = (`fillHeight` − `fixedPart`) / saved heights of the first three, at least 1.
-  The four `.height(...)` calls (BG, IOB, secondary graphs) go through `graphHeight(saved)`, which
-  returns `saved.dp` when the scale is 1.
+  `smallHeight`, `graphGap`, `topPadding`, `bottomPadding`, `quickLaunchSpace` and `legendHeight`.
+- **Fixed block heights** (phase 8a, replaces the phase 3 "fill height"): with a layout, every graph block
+  has a fixed height from its size. The saved height is a size code (100 Small, 175 Medium, 250 Grand,
+  any other value rounded to the nearest) and `GraphHeights.ofSaved(...)` (in `redesign/`, unit tested)
+  gives the dp. The height **includes the legend**. Nothing is measured: the phase 3 `fixedPart`,
+  `graphScale`, `reportFilledPart`, `SectionBox`, `FILL_GRAPH_COUNT` and their imports are removed.
+  `GraphConfig` and the saved format are not changed.
+- **Legends**: with a layout, each graph shows `RedesignGraphLegend` (in `redesign/`) centred at the top,
+  BG included. The plot gets `padding(top = legendHeight)`. The name row stays only for the pencil in
+  edit mode (empty name).
+- **No stock overlaps in the layout**: the BG box uses `pullUp(16 dp)` instead of `offset(y = -16.dp)`,
+  and the IOB and secondary boxes skip their `pullUp`, so the blocks add up exactly. Without a layout
+  the stock modifiers are used as before.
 - **Gap**: `.padding(top = graphGap)` at the end of the modifier chain of the IOB graph and of each
   secondary graph, after the touch modifiers, so a drag in a gap still scrolls the graphs and does
   not swipe the page. Only vertical: the long-press line, the hour lines and the "now" line keep
@@ -117,10 +117,7 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
 - **No QuickLaunch space** (`quickLaunchSpace = false`): no 48 dp spacer at the end, and the
   "Add graph" button is not placed at all while it is hidden (stock keeps it as an invisible
   placeholder).
-- Imports: `onSizeChanged`, `LocalDensity`, `floor`, `GraphsRedesignLayout`.
-
-The redesign passes `fillHeight` = height of page 2, and `null` in edit mode, so there the height
-slider matches what is seen.
+- Imports: `AapsTheme`, `GraphHeights`, `GraphLegendItem`, `GraphsRedesignLayout`, `RedesignGraphLegend`.
 
 ## Portrait only on a phone
 
@@ -243,6 +240,32 @@ button uses its own `ManageViewModel`: `cancelTempBasal()`, the master's confirm
 | `TreatmentBottomSheet(showCarbs = treatmentState.showCarbs && !redesignChrome)` | Carbs entry is the Carbs tile (SPEC 3.2.4). `TreatmentBottomSheet` already had the parameter, so it is not touched. |
 | `TreatmentBottomSheet(treatmentButtonsDef = if (redesignChrome) treatmentButtonsDef.withoutCarbsButton() else ...)` | The gear of the sheet no longer shows the "show carbs button" switch, which does nothing with the redesign. The switch stays in Settings (its +5/+10/+20 g settings depend on it). |
 | Imports | `rememberRedesignTileTaps`, `withoutCarbsButton`. |
+
+## Phase 8a - Graphs page title, heights, Menu
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
+
+See "Graphs page layout" above: the fixed heights and legends all hang on the existing
+`redesignLayout` parameter. No new parameter. With `redesignLayout == null` every stock modifier is the
+same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesign>)` branches).
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `RedesignMenuScreen(...)` without `onEditScreenClick` | Menu > "Mode édition" is removed: the edit mode starts from the pencil button of the graphs page. |
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/search/SearchBar.kt`
+
+- One new parameter with a default: `placeholder: String? = null`. Null keeps the stock "Search" text. The Menu passes its own hint.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphViewModel.kt`
+
+- One new function `migrateRedesignGraphHeights()`: it calls `RedesignGraphMigration.runOnce(...)` (in `redesign/`). Only the redesign graphs page calls it, so the stock screens never run it. One import.
+
+### `core/keys/src/commonMain/kotlin/app/aaps/core/keys/BooleanNonKey.kt` and `app/src/testFull/resources/prefs-schema.txt`
+
+- One new key `RedesignGraphHeightsMigrated` (`exportable = false`): the flag of the one-time BG height change (BG height 100 becomes 250). One line in the golden schema file.
 
 ## Resources
 

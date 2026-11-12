@@ -63,8 +63,7 @@ class RedesignMenuScreenTest {
     private fun show(
         showExit: Boolean = true,
         isTreatmentsEnabled: Boolean = true,
-        attentionItems: List<RedesignAttentionItem> = emptyList(),
-        onEditScreenClick: (() -> Unit)? = null
+        attentionItems: List<RedesignAttentionItem> = emptyList()
     ) {
         compose.setContent {
             MaterialTheme {
@@ -82,8 +81,7 @@ class RedesignMenuScreenTest {
                     onNavigate = { requests += it },
                     onClose = { closed++ },
                     bottomPadding = 80.dp,
-                    attentionItems = attentionItems,
-                    onEditScreenClick = onEditScreenClick
+                    attentionItems = attentionItems
                 )
             }
         }
@@ -191,17 +189,9 @@ class RedesignMenuScreenTest {
         }
 
     @Test
-    fun editScreenIsAShortcutWhenItCanBeUsed() {
-        var clicks = 0
-        show(onEditScreenClick = { clicks++ })
-        clickEntry(string(R.string.redesign_edit_mode))
-        assertThat(clicks).isEqualTo(1)
-    }
-
-    @Test
-    fun editScreenIsHiddenInSimpleMode() {
-        // MainScreen passes no callback in simple mode, where the graphs are preset.
-        show(onEditScreenClick = null)
+    fun editModeIsNotInTheMenu() {
+        // The edit mode starts from the pencil button of the graphs page (phase 8a).
+        show()
         assertThat(compose.onAllNodes(hasText(string(R.string.redesign_edit_mode))).fetchSemanticsNodes()).isEmpty()
     }
 

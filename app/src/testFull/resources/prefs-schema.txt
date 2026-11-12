@@ -420,6 +420,7 @@ quick_launch_actions|StringNonKey|true
 raise_urgent_alarms_as_android_notification|BooleanKey|true
 randombg_interval_min|IntKey|true
 randombg_randomize|BooleanKey|true
+redesign_graph_heights_migrated|BooleanNonKey|false
 resistance_lowers_target|BooleanKey|true
 rs_last_clear_key_request|DanaLongKey|true
 rs_logcanulachange|DanaBooleanKey|true

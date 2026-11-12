@@ -36,6 +36,9 @@ enum class BooleanNonKey(
 
     AllowHardwarePump("allow_hardware_pump", false),
 
+    // Redesign (docs/redesign/SPEC.md 4.2): the one-time change of the saved BG graph height. Local to this install, not exported.
+    RedesignGraphHeightsMigrated("redesign_graph_heights_migrated", false, exportable = false),
+
     // Set (committed) right before a startup VACUUM and cleared after it finishes. If it is still
     // set on the next launch, the previous VACUUM died below the JVM (native abort / OOM) — used to
     // break the boot-crash loop. Transient device state, not a user setting → not exportable.

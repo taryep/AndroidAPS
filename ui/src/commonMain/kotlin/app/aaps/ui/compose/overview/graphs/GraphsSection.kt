@@ -44,11 +44,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -72,7 +68,11 @@ import app.aaps.core.ui.compose.NumberInputRow
 import app.aaps.core.ui.compose.rowAction
 import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.ui.compose.redesign.GraphHeights
+import app.aaps.ui.compose.redesign.GraphLegendItem
 import app.aaps.ui.compose.redesign.GraphsRedesignLayout
+import app.aaps.ui.compose.redesign.RedesignGraphLegend
 import com.patrykandpatrick.vico.compose.cartesian.Scroll
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
@@ -84,7 +84,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlin.math.abs
-import kotlin.math.floor
 
 /**
  * Overview graphs section using Vico charts.
@@ -158,17 +157,12 @@ private val IOB_GRAPH_PULL_UP = 16.dp
  */
 private val GRAPH_OVERLAP = 5.dp
 
-/** Redesign fill height: this many graphs (BG, IOB, the first secondary one) fill the page; later ones follow below. */
-private const val FILL_GRAPH_COUNT = 3
+/** Redesign layout: the BG graph is pulled up over the treatment belt (48 dp) by this much; 32 dp of the belt stay visible above it. */
+private val BG_BELT_OVERLAP = 16.dp
+private val BG_BELT_VISIBLE = 32.dp
 
 /** The bottom padding of the section's column. */
 private val SECTION_BOTTOM_PADDING = 8.dp
-
-/** Holds the section's layout coordinates for the third graph, which measures its end against them. Not state: no recomposition. */
-private class SectionBox {
-
-    var coordinates: LayoutCoordinates? = null
-}
 
 /**
  * Draws the content [amount] higher and makes it take [amount] less height, so everything below it moves up
@@ -495,57 +489,19 @@ fun GraphsSection(
     // Set by the BG graph, read by every graph
     val inspect = remember { GraphInspectState() }
 
-    // Redesign fill height. The first FILL_GRAPH_COUNT graphs (BG, IOB, the first secondary one) fill the
-    // page; a graph after them follows below, at the same scale, and is reached by scrolling.
-    // The fixed part is everything above the end of the third graph that is not a graph height (belt,
-    // paddings, gaps), plus the space at the end. It is the measured height minus the graph heights
-    // applied, so a new measure gives the same value and does not start a loop.
-    val fillHeight = redesignLayout?.fillHeight
+    // Redesign layout (null = stock). Every graph block has a fixed height from its size (Small / Medium / Grand,
+    // taken from the saved height), legend included, so the page fills exactly and nothing is measured.
     val graphGap = redesignLayout?.graphGap ?: 0.dp
     val sectionBottomPadding = redesignLayout?.bottomPadding ?: SECTION_BOTTOM_PADDING
-    val density = LocalDensity.current
-    // Measured once per layout: while it is null the graphs have their saved heights, so the measure cannot chase
-    // its own result. It is taken again when something that changes the fixed part changes (rotation, edit mode, a graph
-    // added or removed, the font size). It does not depend on the graph heights.
-    val layoutKey = listOf(fillHeight, activeCount, canEdit, graphGap, redesignLayout?.topPadding, sectionBottomPadding, overlaidBarsHeight, density)
-    var fixedPart by remember(layoutKey) { mutableStateOf<Dp?>(null) }
-    val secondaryHeights = graphConfig.secondaryGraphs.take(activeCount).map { it.height }
-    val fillingHeights = (listOf(graphConfig.bgHeight, graphConfig.iobHeight) + secondaryHeights).take(FILL_GRAPH_COUNT)
-    val hasLaterGraphs = secondaryHeights.size + 2 > FILL_GRAPH_COUNT
-    val graphScale = fixedPart?.takeIf { fillHeight != null }?.let { fixed -> ((fillHeight!! - fixed) / fillingHeights.sum().dp).coerceAtLeast(1f) } ?: 1f
-    // Grown graphs stay within the maximum of the height slider.
-    val graphHeight: (Int) -> Dp = { saved ->
-        if (graphScale == 1f) saved.dp else floor(saved * graphScale).coerceAtMost(GraphConfig.MAX_GRAPH_HEIGHT_DP.toFloat()).dp
-    }
-    val appliedFillingHeight = fillingHeights.fold(0.dp) { total, saved -> total + graphHeight(saved) }
-    val sectionBox = remember { SectionBox() }
-    /** Takes the height measured from the top of the section down to where the filled part ends. */
-    fun reportFilledPart(heightPx: Float) {
-        val fixed = floor((with(density) { heightPx.toDp() } - appliedFillingHeight).value).dp
-        if (fixedPart == null) fixedPart = fixed
-    }
-    val measuresFixedPart =
-        if (fillHeight == null) Modifier
-        else Modifier.onGloballyPositioned { coordinates ->
-            sectionBox.coordinates = coordinates
-            // Up to three graphs: the whole section, with its end space. More: the third graph reports.
-            if (!hasLaterGraphs) reportFilledPart(coordinates.size.height.toFloat())
-        }
-    // With later graphs, the filled part ends at the third graph, and the section's bottom padding and the
-    // bars drawn over its end come after it.
-    val filledPartEnd = with(density) { (sectionBottomPadding + overlaidBarsHeight).toPx() }
-    val reportsThirdGraphEnd =
-        if (fillHeight == null || !hasLaterGraphs) Modifier
-        else Modifier.onGloballyPositioned { third ->
-            // The end of this graph in the section's own coordinates, so a scroll cannot skew it.
-            val section = sectionBox.coordinates?.takeIf { it.isAttached } ?: return@onGloballyPositioned
-            reportFilledPart(section.localPositionOf(third, Offset(0f, third.size.height.toFloat())).y + filledPartEnd)
-        }
+    val legendHeight = redesignLayout?.legendHeight ?: 0.dp
+    /** Height of a graph block (legend + plot) for a saved height. Redesign layout only. */
+    fun blockHeight(saved: Int): Dp =
+        redesignLayout!!.let { GraphHeights.ofSaved(saved, it.smallHeight.value, it.graphGap.value).dp }
+    val seriesColors = rememberSeriesColors()
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .then(measuresFixedPart)
             .padding(start = 16.dp, end = 16.dp, top = redesignLayout?.topPadding ?: 8.dp, bottom = sectionBottomPadding)
             .stopsBgFling(bgScrollForwarder)
             .closesInspectPillOnTouch(inspect)
@@ -633,7 +589,7 @@ fun GraphsSection(
 
         Box(
             modifier = Modifier
-                .offset(y = (-16).dp)
+                .then(if (redesignLayout == null) Modifier.offset(y = (-16).dp) else Modifier.pullUp(BG_BELT_OVERLAP))
                 .graphInspectTouch(inspect)
         ) {
             BgGraphCompose(
@@ -647,7 +603,10 @@ fun GraphsSection(
                 inspect = inspect,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(graphHeight(graphConfig.bgHeight))
+                    .then(
+                        if (redesignLayout == null) Modifier.height(graphConfig.bgHeight.dp)
+                        else Modifier.padding(top = legendHeight).height(blockHeight(graphConfig.bgHeight) - BG_BELT_VISIBLE - legendHeight)
+                    )
                     .onScrollOrZoomGesture(graphViewModel::onGraphInteraction)
                     .then(
                         // Merging, not a bare semantics block: a described node is reached by linear
@@ -662,6 +621,13 @@ fun GraphsSection(
                         else Modifier
                     )
             )
+            if (redesignLayout != null) {
+                RedesignGraphLegend(
+                    items = listOf(GraphLegendItem(stringResource(CoreUiStrings.glucose), AapsTheme.generalColors.originalBgValue)),
+                    height = legendHeight,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
             if (canEdit) {
                 GraphEditButton(
                     onClick = { editingBgOverlays = true },
@@ -716,7 +682,7 @@ fun GraphsSection(
         var editingIobOverlays by remember { mutableStateOf(false) }
         Box(
             modifier = Modifier
-                .pullUp(IOB_GRAPH_PULL_UP)
+                .then(if (redesignLayout == null) Modifier.pullUp(IOB_GRAPH_PULL_UP) else Modifier)
                 .graphInspectTouch(inspect)
                 .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
                 // Redesign gap: inside the touch area, so a drag in the gap still scrolls the graphs.
@@ -734,10 +700,23 @@ fun GraphsSection(
                 inspect = inspect,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(graphHeight(graphConfig.iobHeight) - REMOVED_TIME_LABELS_HEIGHT)
+                    .then(
+                        if (redesignLayout == null) Modifier.height(graphConfig.iobHeight.dp - REMOVED_TIME_LABELS_HEIGHT)
+                        else Modifier.padding(top = legendHeight).height(blockHeight(graphConfig.iobHeight) - legendHeight)
+                    )
             )
-            GraphNameRow(
-                name = stringResource(InterfacesStrings.values_with_slash, stringResource(CoreUiStrings.iob), stringResource(CoreUiStrings.basal_shortname)),
+            if (redesignLayout != null) {
+                RedesignGraphLegend(
+                    items = listOf(
+                        GraphLegendItem(stringResource(CoreUiStrings.iob), seriesColors.iob),
+                        GraphLegendItem(stringResource(CoreUiStrings.basal_shortname), AapsTheme.elementColors.tempBasal)
+                    ),
+                    height = legendHeight,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
+            if (redesignLayout == null || canEdit) GraphNameRow(
+                name = if (redesignLayout == null) stringResource(InterfacesStrings.values_with_slash, stringResource(CoreUiStrings.iob), stringResource(CoreUiStrings.basal_shortname)) else "",
                 editName = stringResource(CoreUiStrings.iob),
                 onEdit = if (canEdit) ({ editingIobOverlays = true }) else null,
                 modifier = Modifier
@@ -769,9 +748,7 @@ fun GraphsSection(
             val secondary = graphConfig.secondaryGraphs[i]
             Box(
                 modifier = Modifier
-                    // The end of the third graph is where the filled part of the page ends (redesign layout only).
-                    .then(if (i == FILL_GRAPH_COUNT - 3) reportsThirdGraphEnd else Modifier)
-                    .pullUp(GRAPH_OVERLAP)
+                    .then(if (redesignLayout == null) Modifier.pullUp(GRAPH_OVERLAP) else Modifier)
                     .graphInspectTouch(inspect)
                     .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
                     .padding(top = graphGap)
@@ -786,10 +763,20 @@ fun GraphsSection(
                     nowTimestamp = nowTimestamp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(graphHeight(secondary.height) - REMOVED_TIME_LABELS_HEIGHT)
+                        .then(
+                            if (redesignLayout == null) Modifier.height(secondary.height.dp - REMOVED_TIME_LABELS_HEIGHT)
+                            else Modifier.padding(top = legendHeight).height(blockHeight(secondary.height) - legendHeight)
+                        )
                 )
-                GraphNameRow(
-                    name = seriesListLabel(secondary.series),
+                if (redesignLayout != null) {
+                    RedesignGraphLegend(
+                        items = secondary.series.map { GraphLegendItem(stringResource(seriesShortNameId(it)), seriesColors.colorFor(it)) },
+                        height = legendHeight,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                }
+                if (redesignLayout == null || canEdit) GraphNameRow(
+                    name = if (redesignLayout == null) seriesListLabel(secondary.series) else "",
                     editName = seriesListLabel(secondary.series),
                     onEdit = if (canEdit) ({ editingGraphIndex = i }) else null,
                     modifier = Modifier

@@ -43,6 +43,9 @@ data class RedesignColors(
     /** The faint grey axis labels. */
     val graphLabel: Color,
     val selectedRange: Color,
+    /** The round edit button of the graphs page (SPEC 4.1): background and border. Its icon is [textSecondary], grey on purpose. */
+    val editButton: Color,
+    val editButtonBorder: Color,
     /** Text of the 250 / 170 / 70 / 56 labels: darker than the lines on light, so 11 sp stays readable. */
     val thresholdText: RedesignThresholdText
 ) {
@@ -88,6 +91,8 @@ val DarkRedesignColors = RedesignColors(
     graphCardBorder = Color(0xFF22252D),
     graphLabel = Color(0xFF858B98),
     selectedRange = Color(0xFF262A33),
+    editButton = Color(0xFF1E2128),
+    editButtonBorder = Color(0xFF3A4660),
     // The dark glucose colours, except 56: its line colour is too dark for text on the dark card.
     thresholdText = RedesignThresholdText(Color(0xFFE69F00), Color(0xFFF0E442), Color(0xFFFF6A3D), Color(0xFFE2602C))
 )
@@ -119,6 +124,8 @@ val LightRedesignColors = RedesignColors(
     graphCardBorder = Color(0xFFE1E4E9),
     graphLabel = Color(0xFF6B717D),
     selectedRange = Color(0xFFEEF0F3),
+    editButton = Color(0xFFEEF0F4),
+    editButtonBorder = Color(0xFFC9CED8),
     thresholdText = RedesignThresholdText(Color(0xFF8A6508), Color(0xFF9A6A00), Color(0xFFB34C00), Color(0xFF8B2500))
 )
 

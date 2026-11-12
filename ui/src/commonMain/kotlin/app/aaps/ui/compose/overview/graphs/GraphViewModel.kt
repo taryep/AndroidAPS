@@ -16,6 +16,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.ui.compose.redesign.RedesignGraphMigration
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
@@ -234,6 +235,9 @@ class GraphViewModel(
 
     @Volatile var lastInteractionMs: Long = 0L
         private set
+
+    /** Redesign only: the one-time change of the saved BG height (see `RedesignGraphMigration`). */
+    fun migrateRedesignGraphHeights() = RedesignGraphMigration.runOnce(preferences, graphConfigRepository)
 
     fun onGraphInteraction() {
         preferences.put(BooleanNonKey.ObjectivesScaleUsed, true)

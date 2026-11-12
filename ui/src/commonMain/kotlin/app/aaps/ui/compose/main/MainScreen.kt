@@ -489,11 +489,7 @@ fun MainScreen(
                             onNavigate = onNavigate,
                             onClose = closeRedesignMenu,
                             bottomPadding = contentPadding.calculateBottomPadding(),
-                            attentionItems = redesignAttentionItems,
-                            onEditScreenClick = if (uiState.isSimpleMode) null else ({
-                                closeRedesignMenu()
-                                redesignOverview.editScreen()
-                            })
+                            attentionItems = redesignAttentionItems
                         )
                     }
 

@@ -4,10 +4,13 @@
     <string name="redesign_menu">Menu</string>
     <string name="redesign_tools">Outils</string>
     <string name="redesign_needs_attention">À régler</string>
+    <string name="redesign_search_placeholder">Rechercher un réglage, un écran, la doc</string>
     <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
     <string name="redesign_edit_mode">Mode édition</string>
     <string name="redesign_edit_done">Terminer</string>
     <string name="redesign_page_home">Accueil, page 1 sur 2</string>
+    <string name="redesign_graphs_title">Graphiques</string>
+    <string name="redesign_edit_graphs">Modifier les graphiques</string>
     <string name="redesign_page_graphs">Graphiques, page 2 sur 2</string>
     <string name="redesign_open_graphs">Ouvrir les graphiques</string>
 

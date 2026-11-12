@@ -471,36 +471,75 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
 - **Spoken description**: "Glycémie sur les dernières 6 heures, actuellement 133 mg/dL. Appui long pour
   lire une valeur" (or "… Aucune valeur" without readings).
 
-## 4. Page 2 – Graphs (stock 4.0 graphs, moved)
+## 4. Page 2 – Graphs (stock 4.0 graphs, moved; edit mode redesigned in phase 8)
 
-Unchanged by v2 (the mockup draws a simplified page 2; the real page is the stock graph).
+Mockups: `graphs-p8-normal.png`, `graphs-p8-edit.png`, `graphs-p8-menu.png`, `graphs-p8-added.png`.
+The graphs themselves stay the **existing** `GraphsSection` (BG graph with predictions and markers,
+secondary graphs, their axes, scroll, zoom and press-and-hold). Phase 8 changes the page around them,
+their heights and the edit mode UI. Keep upstream changes to defaulted parameters of `GraphsSection`
+(and `BgGraphCompose` for the scale); everything else lives in `redesign/`. If a point below needs more
+than that, stop and tell me instead of doing it.
 
-- Render the **existing** `GraphsSection` unchanged: BG graph with predictions and markers,
-  secondary graphs, their axes, scroll, zoom and press-and-hold.
-- **Edit mode gating**: pencils and "Ajouter un graphique" are hidden by default and shown only in
-  edit mode. Add one parameter to `GraphsSection` (`editMode: Boolean = true`, default keeps stock
-  behaviour); the redesign passes its own state.
-- **Edit mode UI** (redesign side): a centred pill at the top of page 2, 40 dp high:
-  `✎ Mode édition` + filled button `✓ Terminer` (the mockup: button `#56B4E9`, text `#06263A`). Entered
-  from Menu › "Mode édition" (which also opens page 2). Leaving the page or tapping Terminer exits edit
-  mode. In **Simple Mode**, hide "Mode édition" (graphs are preset there).
-- **Layout** (one parameter on `GraphsSection`: `redesignLayout: GraphsRedesignLayout? = null`,
-  null = stock):
-  - 12 dp between the status bar and the top of the graphs, as on Home. **No page title** (the mockup
-    shows a "Graphiques" title: ignore it). 0 dp under the last graph (`bottomPadding`), so the graphs end
-    at the bottom bar (the chart keeps its own few dp).
-  - 12 dp gap between two graphs. The long-press line stays at the same time in every graph.
-  - The first three graphs (BG, IOB, the first secondary one) grow to fill the page height (never shrink,
-    each at most `MAX_GRAPH_HEIGHT_DP`, 250 dp), in the ratio of their saved heights, **also in edit
-    mode**. A fourth graph and the next ones follow below and are reached by scrolling. The fixed part is
-    measured once per layout (rotation, edit mode, a graph added or removed, font size).
-  - No QuickLaunch space at the end.
-  - **No floating buttons on this page**: neither the pump activity button nor the notification button.
+### 4.1 Page layout (normal mode)
+- **Title row** (changed: the page now has a title): "Graphiques", 28 sp bold, 20 dp from the left,
+  under the status bar. On the right (16 dp margin) the **edit button**: round, 44 dp (48 dp touch
+  target), background `#1E2128`, 1 dp border `#3A4660`, pencil icon **grey** `#9AA0AC` (a rare action,
+  it must not draw the eye). Content description "Modifier les graphiques". Hidden in **Simple Mode**.
+- Under the title: the graphs, 12 dp between two graphs, 0 dp under the last one. No QuickLaunch space,
+  **no floating buttons** (neither pump activity nor notifications). The long-press line stays at the
+  same time in every graph.
+- **Legends**: every graph has its legend centred at the top, on its own line, the BG graph included
+  ("● Glycémie"). Same style as the existing secondary graph legends.
 - **Same BG scale as Home** (fixed 40–280 with the adaptive rule of 3.6, same threshold lines and left
-  labels): **wanted (decided)**, but only through existing parameters or **one defaulted parameter** on
-  `BgGraphCompose`. If it needs deeper changes, stop and tell me instead of doing it. Phase 8.
-- *Optional, last*: the mockup draws the graph cards edge to edge (radius 0, 1 dp top/bottom border) like
-  the Home graph. Only if `GraphsSection` already allows it through the `redesignLayout` parameter.
+  labels): wanted, only through existing parameters or one defaulted parameter on `BgGraphCompose`
+  (phase 8c, optional).
+
+### 4.2 Graph heights: Petit / Moyen / Grand
+- Three sizes. **Petit = max(100 dp, (H − 3 × gap) / 4)**, H = height between the title row and the
+  bottom bar, gap = the gap between graphs. **Moyen = 1.5 × Petit, Grand = 2 × Petit.** No maximum.
+  So the page holds 4 units (Petit 1, Moyen 1.5, Grand 2) on every phone; above that the page scrolls.
+  Recomputed on rotation, font size or window change.
+- **Default**: BG Grand, IOB/basal Petit, every other graph Petit (G P P fills the page, like Home).
+- Layouts that fill one page exactly: G G · G P P, P G P, P P G, M M P, M P M, P M M · P P P P. Smaller
+  totals leave empty space at the bottom (**not** filled: the size the user picked is the size shown).
+- **Saved value**: keep the stock saved height per graph and use it as a size code: **100 = Petit,
+  175 = Moyen, 250 = Grand**; any other saved value is rounded to the nearest of the three. The real
+  height is computed on the redesign side, so the saved format and the stock UI are unchanged.
+- Replaces the former rule "the first three graphs grow to fill the page, max 250 dp".
+
+### 4.3 Edit mode
+- **Enter**: the title edit button (from phase 8a; until 8b it opens the current edit mode). It grows into
+  the edit pill (container transform, ≤ 200 ms; a plain cross-fade is fine if the animation is costly).
+  **Menu › "Mode édition" is removed** (section 6, phase 8a).
+- **Edit pill**: floating, centred over the title row, 52 dp high, radius 26, background `#1E2128`,
+  1 dp border `#3A4660`, shadow. Under it the title turns grey (`#3A3E48`). Content, left to right
+  (close on the left, confirm on the right, the Android rule):
+  `(✕)` · "Mode édition" (14 sp, `#C9CED8`) · `(+)` · `(✓)`. Buttons round 44 dp (48 dp touch);
+  ✕ and + on `#2A2E38`, ✓ filled `#56B4E9` with icon `#06121B`. No red (red is for delete).
+  Content descriptions: "Annuler", "Ajouter un graphique", "Terminer".
+- The **bottom bar stays** as in normal mode (no edit bar).
+- **Changes apply live.** `(✓)` keeps them and leaves edit mode. `(✕)` **and the Back gesture** restore
+  the graphs as they were when edit mode started (redesign side snapshot of the graph settings) and
+  leave edit mode. Tapping another bottom bar item = `(✓)` (changes kept).
+- **Edit mode look**: curves and legends at 40 % opacity; touch, zoom, scroll of the time axis and
+  press-and-hold on the graphs are **blocked** (the page itself still scrolls).
+- **Controls on each graph** (all 44 dp, 48 dp touch target, background `#1E2128`, border `#3A4660`):
+  - Right side, under the legend line: size control `− Petit +` (label 13 sp, 52 dp wide). `−` is
+    greyed in Petit, `+` greyed in Grand. Content descriptions "Réduire", "Agrandir".
+  - Just below it, right-aligned: the **✎ button** (icon `#56B4E9`), content description
+    "Options du graphique". It opens the graph menu, same content as the stock menus today:
+    - **BG graph**: Prédictions, Activité (check boxes). Text "Ce graphique ne peut pas être supprimé".
+    - **IOB / basal graph**: Activité.
+    - **Other graphs**: choice of the series (2), the stock selection.
+  - **BG and IOB / basal are fixed**: always first and second, cannot be moved or deleted (no buttons).
+  - **Other graphs**: bottom-left pill with `↑` `↓` and delete (trash icon `#E0603A`). `↑` greyed on the
+    first movable graph (it cannot go above IOB / basal), `↓` greyed on the last. Content descriptions
+    "Monter", "Descendre", "Supprimer le graphique". Delete is undone by `(✕)`, so no confirmation.
+- **Add `(+)`**: the new graph is added **at the bottom, in Petit**; the other graphs keep their size;
+  the page scrolls to it. `(+)` is greyed when the stock maximum number of graphs is reached (if there
+  is none, no limit).
+- Stock pencils and "Ajouter un graphique" of `GraphsSection` stay hidden (`editMode` parameter): the
+  redesign controls above replace them and call the same stock actions.
 
 ## 5. States checklist (Home)
 
@@ -551,9 +590,9 @@ bar is selected (2.3).
    light the dot of the Menu item (a progress, not a problem); the pump and the permissions do.
    The BG source warning is **not** here: it is in the alert slot of the circle row (3.3).
    (The mockup has no "À régler" section and puts Objectifs in the bar: ignore that, Appendix B.)
-4. 2 × 2 grid of large shortcuts (78 dp, radius 16, gap 10): **Paramètres** (existing settings screen),
-   **Mode édition** (section 4; hidden in Simple Mode; the mockup still says "Modifier l'écran"),
-   **Historique** (history browser), **Statistiques**.
+4. One row of 3 large shortcuts (78 dp, radius 16, gap 10): **Paramètres** (existing settings screen),
+   **Historique** (history browser), **Statistiques**. **"Mode édition" is removed** (phase 8a): edit mode
+   is entered from the pencil button of the Graphiques page (4.3).
 5. List "Outils" (rows 52 dp): Historique des traitements, Assistant profil, Maintenance, Assistant de
    configuration, Configuration. Use the **same actions** as the drawer entries
    (`MainDrawer.kt`), and keep any entry the drawer shows that this list misses.
@@ -628,7 +667,7 @@ touches too many upstream files, skip it and tell me.
 
 ## 9. Phases
 
-**État : phases 0 à 5 et 7 faites et validées sur le téléphone. Prochaine : phase 6 (actions des tuiles et Traitements).**
+**État : phases 0 à 7 faites et validées sur le téléphone. Prochaine : phase 8 (alignement du menu et échelle de la page 2).**
 (Old phases 5 "Themes" and 6 "Animations" are now phases 9 and 10.)
 
 Each phase: plan → my approval → code → `./gradlew.bat :app:assembleFullDebug` (or the variant
@@ -664,7 +703,7 @@ new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the ph
    - Add Compose previews (or screenshot tests in new files) for: closed loop / suspended / disconnected /
      open loop with a suggestion, temp target, TBR, carbs required, alert slot ×3, notification ×3,
      sensitivity line, largest font.
-6. **Tile actions and Traitements** (3.2.2, 3.2.3, 3.2.4): IOB + insulin sheet, Basale info + temp basal
+6. **Tile actions and Traitements** (3.2.2, 3.2.3, 3.2.4) – faite: IOB + insulin sheet, Basale info + temp basal
    editor sheet with the "Annuler la basale temp." button, carbs entry removed from the Traitements sheet. Upstream touches expected (3 defaulted
    parameters): the insulin dialog (`topInfo`), the temporary basal dialog (`topInfo`),
    `TreatmentBottomSheet` (`showCarbs`). Add the string resources (FR + EN). Test the not-paired
@@ -673,9 +712,20 @@ new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the ph
    sensor = time), the inconsistency bug, and the tap on the "Pompe Patch" row that opens the pump menu.
    Can be done before phase 5 if you prefer (it is independent).
    Start with the diagnosis and tell me the cause before coding.
-8. **Menu alignment and page 2 scale** (section 6, section 4): placeholder text, sizes, selected Menu item
-   of the bar; same BG scale on page 2 if it stays minimal. The Settings screen is not touched. Small,
-   last of the structural work.
+8a. **Graphiques page and heights** (4.1, 4.2, section 6): title row with the edit button, legends (BG
+   included), Petit / Moyen / Grand heights with the 100 / 175 / 250 size code (height logic in
+   `redesign/` with unit tests). The title button opens the **current** edit mode for now, and
+   Menu › "Mode édition" is removed (the entry point moves in one go). Also the Menu finishing touches:
+   placeholder text, sizes, selected Menu item of the bar. Low risk, no new upstream touch expected
+   beyond the existing `redesignLayout` parameter.
+8b. **New edit mode** (4.3). **Start with a diagnosis, before coding**: for each action (series menu of
+   each graph, add, delete, **move up / down**, set the size, restore a snapshot for `(✕)`), say whether
+   the stock code already offers it and through which call, and list the upstream touches it would need.
+   Moving a graph may not exist in 4.0: if it needs more than a defaulted parameter or a small public
+   function, stop and tell me. Then: the pill (✕) Mode édition (+) (✓), dimmed and locked graphs,
+   controls on each graph, Back = cancel, new graph at the bottom in Petit.
+8c. **Same BG scale on page 2** (4.1): optional. Only through existing parameters or one defaulted
+   parameter on `BgGraphCompose`; otherwise drop it and tell me. Independent of 8a / 8b.
 9. **Themes** (section 7): light theme, the redesign surfaces (including the v2 tokens), the true black
    option. The glucose palette is done (phase 0): only check its values. Also fix the stock temp basal
    colour of the light theme (`LightElementColors.tempBasal` = `#00FFFF`, light cyan, almost unreadable in
@@ -699,6 +749,9 @@ None at the moment. Ask me if you find one while exploring a phase.
 - Loop and Target slots carry captions in every state, closed loop included ("Fermée").
 - The Settings screen is not touched (no search field added): keep as much of the GitHub 4.0 code as possible.
 - Page 2 uses the same BG scale as Home, only if that stays a minimal change.
+- Graphiques page: title + grey edit button; edit pill (✕) Mode édition (+) (✓); Back = cancel; sizes
+  Petit / Moyen / Grand proportional to the page (min 100 dp, no max), default G P P; BG and IOB / basal
+  fixed; new graphs at the bottom in Petit; Menu › "Mode édition" removed.
 
 ## Mockup files
 
@@ -717,9 +770,12 @@ The notes under each image below are commentary, not UI text.
 | `sheet-basal.png` | Basale tap: info line, "Annuler la basale temp." (only while a TBR runs), stock temp basal editor. Without a TBR the line reads "Basale du profil 0,85 U/h" | 6 |
 | `sheet-treatments.png` | Traitements sheet without the carbs entry (other stock entries unchanged, not drawn) | 6 |
 | `panel-patch.png` | Consumables panel, patch pump: Patch = time, Insuline = reservoir, Capteur = time + (+) | 7 |
-| `menu.png` | Menu with "À régler" (Objectifs 9/10) and the 4b bottom bar, Menu selected | 8 |
-| `graphs.png`, `graphs-edit.png` | Simplified page 2 (the real page is the stock graph; no title) | 8 |
-| `*-light.png` | Light theme of Menu and page 2 | 9 |
+| `menu.png` | Menu with "À régler" (Objectifs 9/10), shortcuts Paramètres / Historique / Statistiques in one row (no "Mode édition"), 4b bottom bar, Menu selected | 8a |
+| `graphs-p8-normal.png` | Graphiques page: title + grey edit button, BG Grand, IOB Petit, COB Petit, legends | 8a |
+| `graphs-p8-edit.png` | Edit mode: pill (✕) Mode édition (+) (✓), dimmed graphs, size control, ✎, ↑ ↓ delete | 8b |
+| `graphs-p8-menu.png` | Edit mode, ✎ menu of the BG graph (Prédictions, Activité, cannot be deleted) | 8b |
+| `graphs-p8-added.png` | A graph added: at the bottom in Petit, page scrolled, others unchanged | 8b |
+| `menu-light.png`, `graphs-light.png`, `graphs-p8-edit-light.png` | Light theme of the Menu, the Graphiques page and its edit mode | 9 |
 
 The gallery of every screen (old iterations included) is the artifact "AAPS redesign – mockups".
 
@@ -761,8 +817,8 @@ larger font the plot shrinks further (min 160 dp), then the page scrolls.
 | Topic | Mockup | Decision (this file) |
 |---|---|---|
 | Bottom bar | Traitements, Gestion, **Objectifs**, Menu | Traitements, [Scènes], Gestion, **Graphiques**, Menu; Objectifs in Menu › "À régler" |
-| Page 2 title | "Graphiques" 28 sp title | no title |
-| Menu shortcut | "Modifier l'écran" | "Mode édition" |
+| Page 2 title | "Graphiques" 28 sp title | "Graphiques" title + grey round edit button (4.1) |
+| Menu shortcut | "Modifier l'écran" | removed; edit mode from the Graphiques page (4.3) |
 | Menu "À régler" | absent | kept (pump, permissions, Objectifs) |
 | Separator "·" | "Profil · 9 min", "Cible · 45 min", "Temp. · 25 min", "Pompe · 30 min", "· 13 requis", sensitivity line | none: a space and the accent colour |
 | Profile value | "Normal" + small "90 %" | "Normal (90%)" (stock name with modifiers) |

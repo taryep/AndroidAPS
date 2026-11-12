@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French strings of the phone overview redesign. Not managed by Crowdin, see values/strings_redesign.xml. -->
+<resources>
+    <string name="redesign_menu">Menu</string>
+    <string name="redesign_tools">Outils</string>
+    <string name="redesign_needs_attention">À régler</string>
+    <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
+    <string name="redesign_loop_suggestion">Proposition à accepter</string>
+</resources>

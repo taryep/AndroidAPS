@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Strings of the phone overview redesign (docs/redesign/SPEC.md).
+    Kept out of strings.xml on purpose: this file is not in crowdin.yml, so Crowdin never
+    overwrites it and the fork rebases on master without conflicts.
+-->
+<resources>
+    <string name="redesign_menu" comment="Name of the bottom bar button and of the screen that holds settings, search and tools">Menu</string>
+    <string name="redesign_tools" comment="Heading of the list of tools on the Menu screen (history, maintenance, configuration...)">Tools</string>
+    <string name="redesign_needs_attention" comment="Heading on the Menu screen over the things the user must set up (pump, missing permissions)">Needs your attention</string>
+    <string name="redesign_close_menu" comment="Screen reader action of the Menu button while the Menu screen is open">Close the menu and go back to the home screen</string>
+    <string name="redesign_loop_suggestion" comment="Row on the Menu screen in open loop: the loop suggests a change that the user must accept or not">Suggestion to accept</string>
+</resources>

@@ -248,13 +248,6 @@ class RedesignOverviewPagerTest {
     }
 
     @Test
-    fun theEndOfTheGraphsPageLeavesRoomForTheFloatingButtons() {
-        // Notification button only, then with the pump activity button over it.
-        assertThat(redesignFloatingButtonsHeight(pumpButtonShown = false)).isEqualTo(72.dp)
-        assertThat(redesignFloatingButtonsHeight(pumpButtonShown = true)).isEqualTo(128.dp)
-    }
-
-    @Test
     fun aNewStateStartsOnTheHomePage() {
         // A new start of the app (also after Android stopped the process) makes a new view model.
         val fresh = RedesignOverviewState()

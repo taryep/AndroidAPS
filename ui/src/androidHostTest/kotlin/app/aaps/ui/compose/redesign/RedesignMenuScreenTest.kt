@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -154,10 +153,6 @@ class RedesignMenuScreenTest {
         compose.setContent {
             MaterialTheme {
                 labels = redesignAttentionItems(
-                    bgSetupPlugin = plugin("xDrip+"),
-                    bgQualityBadgeIcon = null,
-                    bgQualityBadgeTint = Color.Unspecified,
-                    bgQualityBadgeDescription = null,
                     loopActionAvailable = true,
                     pumpSetupPlugin = plugin("Omnipod DASH"),
                     permissionsMissing = true,
@@ -168,7 +163,8 @@ class RedesignMenuScreenTest {
             }
         }
         compose.waitForIdle()
-        assertThat(labels).containsExactly("xDrip+", string(R.string.redesign_loop_suggestion), "Omnipod DASH", string(R.string.permission_sheet_title)).inOrder()
+        // The BG source warning is not in the Menu any more: it is beside the glucose circle.
+        assertThat(labels).containsExactly(string(R.string.redesign_loop_suggestion), "Omnipod DASH", string(R.string.permission_sheet_title)).inOrder()
     }
 
     private fun plugin(name: String): PluginBase =
@@ -181,7 +177,7 @@ class RedesignMenuScreenTest {
     fun editScreenIsAShortcutWhenItCanBeUsed() {
         var clicks = 0
         show(onEditScreenClick = { clicks++ })
-        clickEntry(string(R.string.redesign_edit_screen))
+        clickEntry(string(R.string.redesign_edit_mode))
         assertThat(clicks).isEqualTo(1)
     }
 
@@ -189,7 +185,7 @@ class RedesignMenuScreenTest {
     fun editScreenIsHiddenInSimpleMode() {
         // MainScreen passes no callback in simple mode, where the graphs are preset.
         show(onEditScreenClick = null)
-        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_edit_screen))).fetchSemanticsNodes()).isEmpty()
+        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_edit_mode))).fetchSemanticsNodes()).isEmpty()
     }
 
     @Test

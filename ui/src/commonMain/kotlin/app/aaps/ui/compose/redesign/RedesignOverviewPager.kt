@@ -1,5 +1,6 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -29,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -87,18 +90,47 @@ fun RedesignOverviewPager(
 
     val homeName = stringResource(UiStrings.redesign_page_home)
     val graphsName = stringResource(UiStrings.redesign_page_graphs)
-    HorizontalPager(
-        state = pagerState,
-        modifier = modifier.fillMaxSize(),
-        // Both pages stay composed, so the graphs do not load again at each swipe.
-        beyondViewportPageCount = 1
-    ) { page ->
-        when (page) {
-            HOME_PAGE -> Box(Modifier.fillMaxSize().semantics { paneTitle = homeName }) { homePage() }
-            else      -> Column(Modifier.fillMaxSize().semantics { paneTitle = graphsName }) {
-                if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
-                Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
+    Box(modifier.fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            // Both pages stay composed, so the graphs do not load again at each swipe.
+            beyondViewportPageCount = 1
+        ) { page ->
+            when (page) {
+                HOME_PAGE -> Box(Modifier.fillMaxSize().semantics { paneTitle = homeName }) { homePage() }
+                else      -> Column(Modifier.fillMaxSize().semantics { paneTitle = graphsName }) {
+                    if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
+                    Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
+                }
             }
+        }
+        if (RedesignFlags.PAGE_DOTS) {
+            RedesignPageDots(
+                current = pagerState.currentPage,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = PAGE_DOTS_BOTTOM)
+            )
+        }
+    }
+}
+
+/**
+ * Which page is open: ● ○ or ○ ●. Drawn over the bottom edge of the pages, so it takes no height
+ * from them. Only a picture: the screen reader has the page names (pane titles).
+ */
+@Composable
+fun RedesignPageDots(current: Int, modifier: Modifier = Modifier) {
+    val colors = redesignColors()
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(PAGE_DOT_SIZE),
+        modifier = modifier.clearAndSetSemantics {}
+    ) {
+        repeat(PAGE_COUNT) { page ->
+            Box(
+                Modifier
+                    .size(PAGE_DOT_SIZE)
+                    .background(if (page == current) colors.textPrimary else colors.textSecondary.copy(alpha = 0.4f), CircleShape)
+            )
         }
     }
 }
@@ -134,3 +166,5 @@ private fun RedesignEditPill(onDone: () -> Unit) {
 }
 
 private val PILL_BUTTON_PADDING = PaddingValues(horizontal = 12.dp)
+private val PAGE_DOT_SIZE = 6.dp
+private val PAGE_DOTS_BOTTOM = 4.dp

@@ -45,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -68,6 +70,7 @@ import app.aaps.core.ui.compose.NumberInputRow
 import app.aaps.core.ui.compose.rowAction
 import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
+import app.aaps.ui.compose.redesign.GraphsRedesignLayout
 import com.patrykandpatrick.vico.compose.cartesian.Scroll
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
@@ -79,6 +82,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlin.math.abs
+import kotlin.math.floor
 
 /**
  * Overview graphs section using Vico charts.
@@ -229,7 +233,9 @@ fun GraphsSection(
     /** Height of the bars drawn over the end of this section (the overview's preview mode), added to the space at its end. */
     overlaidBarsHeight: Dp = 0.dp,
     /** False hides the edit buttons (pencils) and "Add graph". The redesign shows them only in its edit mode. */
-    editMode: Boolean = true
+    editMode: Boolean = true,
+    /** Layout of the redesign graphs page: fill height, gaps, top space, no QuickLaunch space. Null keeps the stock layout. */
+    redesignLayout: GraphsRedesignLayout? = null
 ) {
     // In simple mode the graphs are preset and cannot be edited.
     val canEdit = !isSimpleMode && editMode
@@ -475,10 +481,35 @@ fun GraphsSection(
     // Set by the BG graph, read by every graph
     val inspect = remember { GraphInspectState() }
 
+    // Redesign fill height: the fixed part is everything in this section that is not a graph height
+    // (belt, paddings, gaps, the space at the end). It is measured as the height of the section minus
+    // the graph heights applied, so a new measure gives the same value and does not start a loop.
+    val fillHeight = redesignLayout?.fillHeight
+    val graphGap = redesignLayout?.graphGap ?: 0.dp
+    val density = LocalDensity.current
+    var fixedPart by remember { mutableStateOf<Dp?>(null) }
+    val secondaryHeights = graphConfig.secondaryGraphs.take(activeCount).map { it.height }
+    val savedGraphsHeight = (graphConfig.bgHeight + graphConfig.iobHeight + secondaryHeights.sum()).dp
+    val graphScale = fixedPart?.takeIf { fillHeight != null }?.let { fixed -> ((fillHeight!! - fixed) / savedGraphsHeight).coerceAtLeast(1f) } ?: 1f
+    // Grown graphs stay within the maximum of the height slider.
+    val graphHeight: (Int) -> Dp = { saved ->
+        if (graphScale == 1f) saved.dp else floor(saved * graphScale).coerceAtMost(GraphConfig.MAX_GRAPH_HEIGHT_DP.toFloat()).dp
+    }
+    val appliedGraphsHeight = graphHeight(graphConfig.bgHeight) + graphHeight(graphConfig.iobHeight) +
+        secondaryHeights.fold(0.dp) { total, saved -> total + graphHeight(saved) }
+    val measuresFixedPart =
+        if (fillHeight == null) Modifier
+        else Modifier.onSizeChanged { size ->
+            val fixed = floor((with(density) { size.height.toDp() } - appliedGraphsHeight).value).dp
+            // Less than 1 dp of difference is rounding, not a change.
+            if (fixedPart.let { it == null || abs((fixed - it).value) >= 1f }) fixedPart = fixed
+        }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .then(measuresFixedPart)
+            .padding(start = 16.dp, end = 16.dp, top = redesignLayout?.topPadding ?: 8.dp, bottom = 8.dp)
             .stopsBgFling(bgScrollForwarder)
             .closesInspectPillOnTouch(inspect)
     ) {
@@ -579,7 +610,7 @@ fun GraphsSection(
                 inspect = inspect,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(graphConfig.bgHeight.dp)
+                    .height(graphHeight(graphConfig.bgHeight))
                     .onScrollOrZoomGesture(graphViewModel::onGraphInteraction)
                     .then(
                         // Merging, not a bare semantics block: a described node is reached by linear
@@ -651,6 +682,8 @@ fun GraphsSection(
                 .pullUp(IOB_GRAPH_PULL_UP)
                 .graphInspectTouch(inspect)
                 .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
+                // Redesign gap: inside the touch area, so a drag in the gap still scrolls the graphs.
+                .padding(top = graphGap)
         ) {
             SecondaryGraphCompose(
                 viewModel = graphViewModel,
@@ -664,7 +697,7 @@ fun GraphsSection(
                 inspect = inspect,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(graphConfig.iobHeight.dp - REMOVED_TIME_LABELS_HEIGHT)
+                    .height(graphHeight(graphConfig.iobHeight) - REMOVED_TIME_LABELS_HEIGHT)
             )
             GraphNameRow(
                 name = stringResource(InterfacesStrings.values_with_slash, stringResource(CoreUiStrings.iob), stringResource(CoreUiStrings.basal_shortname)),
@@ -702,6 +735,7 @@ fun GraphsSection(
                     .pullUp(GRAPH_OVERLAP)
                     .graphInspectTouch(inspect)
                     .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
+                    .padding(top = graphGap)
             ) {
                 SecondaryGraphCompose(
                     viewModel = graphViewModel,
@@ -713,7 +747,7 @@ fun GraphsSection(
                     nowTimestamp = nowTimestamp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(secondary.height.dp - REMOVED_TIME_LABELS_HEIGHT)
+                        .height(graphHeight(secondary.height) - REMOVED_TIME_LABELS_HEIGHT)
                 )
                 GraphNameRow(
                     name = seriesListLabel(secondary.series),
@@ -770,9 +804,11 @@ fun GraphsSection(
         }
         // Add graph button. In simple mode, outside the edit mode, or with all graphs added, it stays as an invisible placeholder: its height
         // is part of the space below the last graph, and the spacer alone is lower than the QuickLaunch toolbar.
+        // The redesign has no QuickLaunch toolbar, so there the hidden placeholder is left out.
+        val quickLaunchSpace = redesignLayout?.quickLaunchSpace ?: true
         val canAddGraph = canEdit && activeCount < GraphConfig.MAX_SECONDARY_GRAPHS
         var showAddSheet by remember { mutableStateOf(false) }
-        TextButton(
+        if (canAddGraph || quickLaunchSpace) TextButton(
             onClick = { showAddSheet = true },
             enabled = canAddGraph,
             modifier = Modifier
@@ -815,7 +851,7 @@ fun GraphsSection(
             )
         }
         // Spacer so the last graph / Add button isn't covered by QuickLaunch toolbar
-        Spacer(Modifier.height(48.dp + overlaidBarsHeight))
+        Spacer(Modifier.height((if (quickLaunchSpace) 48.dp else 0.dp) + overlaidBarsHeight))
     }
 }
 

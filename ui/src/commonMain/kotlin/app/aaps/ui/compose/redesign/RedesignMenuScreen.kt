@@ -229,7 +229,7 @@ private fun MenuContent(
         val shortcuts = listOfNotNull(
             Shortcut(stringResourceOrNull(ElementType.SETTINGS.label()).orEmpty(), settingsIcon) { go(ElementType.SETTINGS) },
             // Hidden in simple mode, where the graphs are preset.
-            onEditScreenClick?.let { Shortcut(stringResource(UiStrings.redesign_edit_screen), Icons.Default.Edit, it) },
+            onEditScreenClick?.let { Shortcut(stringResource(UiStrings.redesign_edit_mode), Icons.Default.Edit, it) },
             Shortcut(stringResourceOrNull(ElementType.HISTORY_BROWSER.label()).orEmpty(), ElementType.HISTORY_BROWSER.icon()) { go(ElementType.HISTORY_BROWSER) },
             Shortcut(stringResourceOrNull(ElementType.STATISTICS.label()).orEmpty(), ElementType.STATISTICS.icon()) { go(ElementType.STATISTICS) }
         )

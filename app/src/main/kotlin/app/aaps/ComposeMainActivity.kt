@@ -119,6 +119,7 @@ import app.aaps.ui.compose.profileManagement.viewmodels.ProfileHelperViewModel
 import app.aaps.ui.compose.profileManagement.viewmodels.ProfileManagementViewModel
 import app.aaps.ui.compose.quickLaunch.QuickLaunchAction
 import app.aaps.ui.compose.quickWizard.viewmodels.QuickWizardManagementViewModel
+import app.aaps.ui.compose.redesign.RedesignOrientation
 import app.aaps.ui.compose.runningMode.RunningModeManagementViewModel
 import app.aaps.ui.compose.scenesSheet.ScenesViewModel
 import app.aaps.ui.compose.siteRotationDialog.viewModels.SiteRotationManagementViewModel
@@ -252,6 +253,8 @@ class ComposeMainActivity : MetroAppCompatActivity() {
         // so a plain enableEdgeToEdge() here is enough.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // Redesign (docs/redesign/SPEC.md): portrait only on a phone, before any content is drawn.
+        RedesignOrientation.lock(this)
         // Other apps may not draw over AAPS: an overlay could hide what a tap really does, for example on a bolus
         // confirmation. It also covers the dialogs, because this window stays visible under them. System and
         // accessibility overlays still show. Needs HIDE_OVERLAY_WINDOWS.

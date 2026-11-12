@@ -9,4 +9,10 @@ package app.aaps.ui.compose.redesign
 object RedesignFlags {
 
     const val ENABLED = true
+
+    /**
+     * Two small dots (● ○) at the bottom of the overview pages that show which page is open.
+     * Off for now: to be decided once the graphs page fills its height (SPEC 2).
+     */
+    const val PAGE_DOTS = false
 }

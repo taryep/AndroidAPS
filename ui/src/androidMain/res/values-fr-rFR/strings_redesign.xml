@@ -6,10 +6,40 @@
     <string name="redesign_needs_attention">À régler</string>
     <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
     <string name="redesign_loop_suggestion">Proposition de la boucle</string>
-    <string name="redesign_edit_screen">Modifier l\'écran</string>
     <string name="redesign_edit_mode">Mode édition</string>
     <string name="redesign_edit_done">Terminer</string>
     <string name="redesign_page_home">Accueil, page 1 sur 2</string>
     <string name="redesign_page_graphs">Graphiques, page 2 sur 2</string>
     <string name="redesign_open_graphs">Ouvrir les graphiques</string>
+
+    <string name="redesign_tile_profile">Profil</string>
+    <string name="redesign_tile_target">Cible</string>
+    <string name="redesign_tile_loop">Boucle</string>
+    <string name="redesign_tile_insulin">Insuline</string>
+    <string name="redesign_tile_carbs">Glucides</string>
+    <string name="redesign_tile_basal">Basale</string>
+    <string name="redesign_tile_temp_basal">Temp.</string>
+    <string name="redesign_tile_pump">Pompe</string>
+    <string name="redesign_label_with_time">%1$s · %2$s</string>
+    <string name="redesign_mode_closed">Fermée</string>
+    <string name="redesign_mode_open">Ouverte</string>
+    <string name="redesign_mode_lgs">LGS</string>
+    <string name="redesign_mode_paused">Pause %1$s</string>
+    <string name="redesign_mode_paused_no_time">Pause</string>
+    <string name="redesign_mode_disconnected">Déconnectée</string>
+    <string name="redesign_mode_disabled">Désactivée</string>
+    <string name="redesign_tile_open_loop">Boucle ouverte</string>
+    <string name="redesign_loop_suggestion_value">1 proposition</string>
+    <string name="redesign_carbs_required">· %1$d requis</string>
+    <string name="redesign_sensitivity">Sensibilité</string>
+    <string name="redesign_isf">ISF</string>
+    <string name="redesign_sensitivity_description">Sensibilité %1$s, ISF du profil %2$s, ISF utilisé %3$s</string>
+
+    <string name="redesign_bg_doubled">Doublons</string>
+    <string name="redesign_bg_flat">Données plates</string>
+    <string name="redesign_bg_problem_description">Problème de données de glycémie : %1$s. Ouvrir la source %2$s</string>
+    <string name="redesign_meal">Repas</string>
+    <string name="redesign_meal_now">Maintenant</string>
+    <string name="redesign_meal_description">Rappel repas : %1$s. Ouvrir</string>
+    <string name="redesign_pump_activity_description">Activité de la pompe. Ouvrir</string>
 </resources>

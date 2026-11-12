@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.aaps.core.interfaces.bgQualityCheck.BgQualityCheck
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.notifications.AapsNotification
 import app.aaps.core.interfaces.plugin.PluginBase
@@ -58,6 +59,7 @@ import app.aaps.core.ui.compose.LocalDateUtil
 import app.aaps.core.ui.compose.LocalSnackbarHostState
 import app.aaps.core.ui.compose.dialogs.OkCancelDialog
 import app.aaps.core.ui.compose.dialogs.ThreeButtonDialog
+import app.aaps.core.ui.compose.metroViewModel
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.preference.PreferenceSubScreenDef
 import app.aaps.core.ui.compose.stringResource
@@ -78,6 +80,9 @@ import app.aaps.ui.compose.quickLaunch.QuickLaunchAction
 import app.aaps.ui.compose.quickLaunch.QuickLaunchToolbar
 import app.aaps.ui.compose.quickLaunch.ResolvedQuickLaunchItem
 import app.aaps.ui.compose.redesign.RedesignFlags
+import app.aaps.ui.compose.redesign.RedesignHomeData
+import app.aaps.ui.compose.redesign.RedesignHomeInputs
+import app.aaps.ui.compose.redesign.RedesignHomeViewModel
 import app.aaps.ui.compose.redesign.RedesignMenuScreen
 import app.aaps.ui.compose.redesign.RedesignOverviewState
 import app.aaps.ui.compose.redesign.isRedesignPhoneLayout
@@ -141,6 +146,8 @@ fun MainScreen(
     bgQualityBadgeIcon: ImageVector? = null,
     bgQualityBadgeTint: Color = Color.Unspecified,
     bgQualityBadgeDescription: String? = null,
+    // Redesign: the reason of the BG source warning, shown beside the glucose circle.
+    bgQualityState: BgQualityCheck.State? = null,
     // Objectives progress
     objectivesSetupPlugin: PluginBase? = null,
     objectivesProgressText: String? = null,
@@ -194,15 +201,13 @@ fun MainScreen(
     }
     // While the Menu is open it takes Back, not the graphs page under it.
     SideEffect { redesignOverview.menuOpen = showRedesignMenu }
-    // Redesign: BG source warning, loop accept, pump set-up and permissions move from the bottom bar
-    // to the Menu, so the bar keeps at most five items.
+    // Tile values the stock state has not as separate texts (time left, basal rates).
+    val redesignHomeData = if (redesignChrome) metroViewModel<RedesignHomeViewModel>().data.collectAsStateWithLifecycle().value else RedesignHomeData()
+    // Redesign: loop accept, pump set-up and permissions move from the bottom bar to the Menu, so the bar
+    // keeps at most five items. The BG source warning goes beside the glucose circle (RedesignHomeInputs).
     val loopActionAvailable = loopActionViewModel.uiState.collectAsStateWithLifecycle().value.actionAvailable
     val redesignAttentionItems = if (redesignChrome) {
         redesignAttentionItems(
-            bgSetupPlugin = bgSetupPlugin,
-            bgQualityBadgeIcon = bgQualityBadgeIcon,
-            bgQualityBadgeTint = bgQualityBadgeTint,
-            bgQualityBadgeDescription = bgQualityBadgeDescription,
             loopActionAvailable = loopActionAvailable,
             pumpSetupPlugin = pumpSetupPlugin,
             permissionsMissing = permissionsMissing,
@@ -360,14 +365,24 @@ fun MainScreen(
                             )
                         },
                         paddingValues = contentPadding,
-                        // Redesign: 56 dp lower than stock, so the buttons do not float over the graphs
-                        // (notifications 16 dp above the bottom bar instead of 72 dp).
-                        fabBottomOffset = if (redesignChrome) (-56).dp else if (hasToolbar && showChrome) 56.dp else 0.dp,
+                        fabBottomOffset = if (hasToolbar && showChrome) 56.dp else 0.dp,
                         // In preview mode the bottom bar lies over the content instead of above it, so the end of each
                         // column needs its height too. The height is kept once measured, so the columns do not move each
                         // time the bars show and hide.
                         overlaidBarsHeight = if (previewMode) with(density) { bottomBarHeightPx.toDp() } else 0.dp,
                         redesign = if (redesignChrome) redesignOverview else null,
+                        redesignHome = RedesignHomeInputs(
+                            data = redesignHomeData,
+                            bgSourceName = bgSetupPlugin?.let { plugin -> plugin.pluginDescription.pluginName?.let { stringResource(it) } ?: plugin.name },
+                            bgQualityState = bgQualityState,
+                            onBgSourceClick = { bgSetupPlugin?.let { onNavigate(NavigationRequest.Plugin(it::class.simpleName.orEmpty())) } },
+                            eatReminder = eatReminderState,
+                            onEatReminderStop = mainViewModel::stopEatReminder,
+                            onEatReminderExtend = mainViewModel::extendEatReminder,
+                            eatReminderControlsEnabled = masterReachable,
+                            loopSuggestion = loopActionAvailable,
+                            onLoopSuggestionClick = { showLoopActionSheet = true }
+                        ),
                         bolusState = bolusState,
                         pumpStatusText = pumpStatusText,
                         queueStatusText = queueStatusText,

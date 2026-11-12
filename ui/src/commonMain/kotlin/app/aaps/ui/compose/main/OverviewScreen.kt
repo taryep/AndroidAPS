@@ -233,6 +233,7 @@ fun OverviewScreen(
         bgQualityBadgeIcon = bgQualityBadgeIcon,
         bgQualityBadgeTint = bgQualityBadgeTint,
         bgQualityBadgeDescription = bgQualityBadgeDescription,
+        bgQualityState = bgQualityState,
         objectivesSetupPlugin = objectivesSetupPlugin,
         objectivesProgressText = objectivesProgressText,
         objectivesProgressDescription = objectivesProgressDescription,

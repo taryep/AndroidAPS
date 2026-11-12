@@ -44,7 +44,9 @@ import app.aaps.ui.compose.notificationsSheet.NotificationFab
 import app.aaps.ui.compose.overview.chips.ChipsViewModel
 import app.aaps.ui.compose.overview.graphs.GraphViewModel
 import app.aaps.ui.compose.overview.statusLights.StatusViewModel
-import app.aaps.ui.compose.redesign.RedesignOverviewOrStock
+import app.aaps.ui.compose.redesign.RedesignHomeInputs
+import app.aaps.ui.compose.redesign.RedesignHomeStock
+import app.aaps.ui.compose.redesign.RedesignOverview
 import app.aaps.ui.compose.redesign.RedesignOverviewState
 import kotlinx.coroutines.delay
 
@@ -103,6 +105,8 @@ fun OverviewScreen(
     overlaidBarsHeight: Dp = 0.dp,
     /** Redesign (docs/redesign/SPEC.md): on a phone held upright, home and graphs on two pages. Null keeps the stock screen. */
     redesign: RedesignOverviewState? = null,
+    /** Redesign: what the home page needs from `MainScreen`. */
+    redesignHome: RedesignHomeInputs = RedesignHomeInputs(),
     bolusState: BolusProgressState? = null,
     pumpStatusText: String = "",
     queueStatusText: AnnotatedString? = null,
@@ -233,9 +237,32 @@ fun OverviewScreen(
                     eatReminderBanner = eatReminderBanner,
                     overlaidBarsHeight = overlaidBarsHeight
                 )
-            } else RedesignOverviewOrStock(
-                redesign, paddingValues, graphViewModel, chipsViewModel, isSimpleMode, overlaidBarsHeight, pumpButtonShown = showPumpFab
-            ) { stackedPadding, showGraphs, bgModifier ->
+            } else if (redesign != null) {
+                RedesignOverview(
+                    redesign = redesign,
+                    stock = RedesignHomeStock(
+                        profileName = profileName, isProfileModified = isProfileModified,
+                        tempTargetText = tempTargetText, tempTargetState = tempTargetState, tempTargetReason = tempTargetReason,
+                        runningMode = runningMode, runningModeText = runningModeText, runningModeRemaining = runningModeRemaining,
+                        tbrState = tbrState, commandsAllowed = commandsAllowed, statusLightsDef = statusLightsDef,
+                        activeSceneState = activeSceneState, sceneExpired = sceneExpired, activeSceneChainTargetName = activeSceneChainTargetName,
+                        onEndScene = onEndScene, onDismissScene = onDismissScene, endSceneEnabled = endSceneEnabled, formatDuration = formatDuration,
+                        notifications = notifications, pumpActivity = showPumpFab, bolusState = bolusState
+                    ),
+                    inputs = redesignHome,
+                    paddingValues = paddingValues,
+                    graphViewModel = graphViewModel,
+                    chipsViewModel = chipsViewModel,
+                    statusViewModel = statusViewModel,
+                    isSimpleMode = isSimpleMode,
+                    overlaidBarsHeight = overlaidBarsHeight,
+                    onNavigate = onNavigate,
+                    onIobClick = onIobChipClick,
+                    onBasalClick = onTbrChipClick,
+                    onNotificationsClick = { showNotificationSheet = true },
+                    onPumpActivityClick = { showPumpActivityDialog = true }
+                )
+            } else {
                 OverviewScreenStacked(
                     profileName = profileName,
                     isProfileModified = isProfileModified,
@@ -262,7 +289,7 @@ fun OverviewScreen(
                     onNavigate = onNavigate,
                     onTbrChipClick = onTbrChipClick,
                     onIobChipClick = onIobChipClick,
-                    paddingValues = stackedPadding,
+                    paddingValues = paddingValues,
                     activeSceneState = activeSceneState,
                     sceneExpired = sceneExpired,
                     activeSceneChainTargetName = activeSceneChainTargetName,
@@ -272,9 +299,7 @@ fun OverviewScreen(
                     commandsAllowed = commandsAllowed,
                     formatDuration = formatDuration,
                     eatReminderBanner = eatReminderBanner,
-                    overlaidBarsHeight = overlaidBarsHeight,
-                    showGraphs = showGraphs,
-                    bgModifier = bgModifier
+                    overlaidBarsHeight = overlaidBarsHeight
                 )
             }
         }
@@ -299,7 +324,9 @@ fun OverviewScreen(
         }
 
         PumpActivityFab(
-            visible = showPumpFab,
+            // Redesign: no floating buttons. On the home page these two buttons are beside the glucose
+            // circle; the graphs page has none, so the graphs reach the bottom bar.
+            visible = showPumpFab && redesign == null,
             bolusState = bolusState,
             onClick = { showPumpActivityDialog = true },
             modifier = Modifier
@@ -309,7 +336,7 @@ fun OverviewScreen(
         )
 
         NotificationFab(
-            notificationCount = notifications.size,
+            notificationCount = if (redesign != null) 0 else notifications.size,
             highestLevel = notifications.minByOrNull { it.level.ordinal }?.level,
             onClick = { showNotificationSheet = true },
             modifier = Modifier

@@ -25,14 +25,13 @@ Split and tablet layouts keep the stock chrome.
 | `ModalNavigationDrawer(gesturesEnabled = !redesignChrome)` | The drawer is replaced by the Menu; the edge swipe must not open it (and would fight the pager in phase 2). |
 | `hasToolbar = ... && !redesignChrome` | Hides the QuickLaunch toolbar and drops its 56 dp FAB offset. |
 | `topBarHeight = if (redesignChrome) 0.dp else ...` | No top bar. A height measured before a rotation must not stay as a gap. |
-| `OverviewScreen(fabBottomOffset = -56 dp)` with the redesign chrome | The notification button sits 16 dp above the bottom bar instead of 72 dp, and the pump activity button 72 dp instead of 128 dp, so they do not float over the graphs. |
 | `OverviewScreen(modifier = clearAndSetSemantics {} while the Menu is open)` | The screen reader must not read the home screen under the Menu. |
 | Search results overlay `&& !redesignChrome` | Search results are shown inside the Menu. |
 | `VersionOverlay` only when `!redesignChrome` | The version moves to Menu > About. |
 | `RedesignMenuScreen(...)` before the top bar | The Menu screen, over the overview, under the bottom bar. |
 | Top bar `visible = showChrome && !redesignChrome` | Top bar removed. |
 | `MainNavigationBar(onMenuClick = ..., menuSelected = ..., menuBadge = ...)` | Adds the Menu item (only with the redesign chrome), with a dot when something needs setting up. |
-| `loopActionAvailable` collected at the top (was collected just before the bar) and `redesignAttentionItems(...)`, passed to the Menu | BG source warning, loop accept, pump set-up and missing permissions are listed at the top of the Menu. |
+| `loopActionAvailable` collected at the top (was collected just before the bar) and `redesignAttentionItems(...)`, passed to the Menu | Loop accept, pump set-up and missing permissions are listed at the top of the Menu. (The BG source warning was there in phase 1 and moved beside the glucose circle in phase 3.) |
 | `MainNavigationBar(bgSetupPlugin = null, loopActionAvailable = false, pumpSetupPlugin = null, permissionsMissing = false)` with the redesign chrome | Those four items leave the bar, which keeps at most five: Treatments, Scenes, Manage, Objectives, Menu. With all nine items shown, every label broke inside a word. In phase 3 the BG warning and loop accept also go next to the BG circle. |
 | Imports | `rememberSaveable`, `LocalWindowInfo`, `clearAndSetSemantics`, redesign symbols. |
 
@@ -47,20 +46,8 @@ Not touched: `MainTopBar.kt`, `MainDrawer.kt`, `QuickLaunchToolbar.kt`, `overvie
 - `canEdit = !isSimpleMode && editMode` replaces `!isSimpleMode` at the four places that show a
   pencil or "Add graph". Two comments updated.
 
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreenStacked.kt`
-
-- New parameters `showGraphs: Boolean = true` and `bgModifier: Modifier = Modifier`.
-- `if (showGraphs)` before `GraphsSection(...)`; `modifier = bgModifier` on `BgInfoSection(...)`.
-  The redesign uses the stock stacked screen without graphs as page 1 until phase 3.
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreen.kt`
-
-- New parameter `redesign: RedesignOverviewState? = null`.
-- The stacked branch calls `RedesignOverviewOrStock(...) { ... OverviewScreenStacked(...) }`: with
-  `redesign` null it draws the stock screen as before. It also gets `showPumpFab`, so the end of
-  the graphs page leaves room for the pump activity button while it shows (128 dp, else 72 dp). The call to `OverviewScreenStacked` keeps
-  its lines, with the padding from the lambda and the two new parameters.
-- Two imports.
+`OverviewScreenStacked.kt` had two parameters in phase 2 (page 1 was the stock screen without its
+graphs). Phase 3 replaced page 1, so the file is back to stock.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
 
@@ -72,6 +59,82 @@ Not touched: `MainTopBar.kt`, `MainDrawer.kt`, `QuickLaunchToolbar.kt`, `overvie
 | `OverviewScreen(redesign = ...)` with the redesign chrome | The two pages. |
 | `RedesignMenuScreen(onEditScreenClick = ...)`, null in simple mode | Menu > "Edit screen": graphs page in edit mode. |
 | Imports | `SideEffect`, `viewModel`, `RedesignOverviewState`. |
+
+## Phase 3 - Home blocks A and B
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreen.kt`
+
+- New parameters `redesign: RedesignOverviewState? = null` (phase 2) and
+  `redesignHome: RedesignHomeInputs = RedesignHomeInputs()`.
+- One new branch before the stacked one: `else if (redesign != null) { RedesignOverview(...) }`.
+  The stacked call is unchanged.
+- `PumpActivityFab(visible = showPumpFab && redesign == null)` and
+  `NotificationFab(notificationCount = if (redesign != null) 0 else ...)`: with the redesign there
+  are no floating buttons. On the home page these two buttons are beside the glucose circle; the
+  graphs page has none (correction 3.3), so the graphs reach the bottom bar. Their padding is stock.
+  (The `fabBottomOffset = -56 dp` hook of phases 1–3 in `MainScreen` is gone for the same reason:
+  `MainScreen` passes the stock value again.)
+- Imports.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| New parameter `bgQualityState: BgQualityCheck.State? = null` | The reason ("Duplicates", "Flat data") on the BG source button. Only a spoken sentence was passed before, and a localized text must not be cut up. |
+| `metroViewModel<RedesignHomeViewModel>()` with the redesign chrome | Tile values the stock state has not as separate texts: time left of profile and target, basal rate, temporary basal rate, percent and time left. It reads the same sources as `MainViewModel`, which is not touched. |
+| `OverviewScreen(redesignHome = RedesignHomeInputs(...))` | BG source warning, eat reminder and open loop suggestion for the home page. |
+| `redesignAttentionItems(...)` without the BG source | The BG source warning left the Menu for the home page. |
+| Imports | `BgQualityCheck`, `metroViewModel`, redesign symbols. |
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/OverviewScreen.kt`
+
+- `MainScreen(bgQualityState = bgQualityState)`: one argument; the value was already collected there.
+
+## Graphs page layout
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
+
+- **One** new parameter: `redesignLayout: GraphsRedesignLayout? = null`. Null (stock overview,
+  history browser) keeps the stock layout exactly. The class lives in `redesign/` and holds
+  `fillHeight`, `graphGap`, `topPadding` and `quickLaunchSpace`.
+- **Fill height**: the graphs grow (never shrink) so the section is `fillHeight` high, in the
+  ratio of their saved heights, each at most `GraphConfig.MAX_GRAPH_HEIGHT_DP`. `GraphConfig` is not
+  changed. `fixedPart` (`remember`) = measured height of the section (`onSizeChanged`) minus the
+  graph heights applied, rounded down to whole dp; a change under 1 dp is ignored, so a new measure
+  does not start a loop. `graphScale` = (`fillHeight` − `fixedPart`) / saved graph heights, at
+  least 1, worked out again when `fillHeight` changes. The four `.height(...)` calls (BG, IOB,
+  secondary graphs) go through `graphHeight(saved)`, which returns `saved.dp` when the scale is 1.
+- **Gap**: `.padding(top = graphGap)` at the end of the modifier chain of the IOB graph and of each
+  secondary graph, after the touch modifiers, so a drag in a gap still scrolls the graphs and does
+  not swipe the page. Only vertical: the long-press line, the hour lines and the "now" line keep
+  their x (each graph places them from the same time, its own scroll and its own left edge).
+- **Top padding**: the section's top padding is `topPadding` instead of 8 dp.
+- **No QuickLaunch space** (`quickLaunchSpace = false`): no 48 dp spacer at the end, and the
+  "Add graph" button is not placed at all while it is hidden (stock keeps it as an invisible
+  placeholder).
+- Imports: `onSizeChanged`, `LocalDensity`, `floor`, `GraphsRedesignLayout`.
+
+The redesign passes `fillHeight` = height of page 2, and `null` in edit mode, so there the height
+slider matches what is seen.
+
+## Portrait only on a phone
+
+### `app/src/main/kotlin/app/aaps/ComposeMainActivity.kt`
+
+- `RedesignOrientation.lock(this)` in `onCreate`, right after `super.onCreate`, and its import.
+  The manifest is not changed.
+
+`RedesignOrientation` (`ui/src/androidMain/.../redesign/`) sets `SCREEN_ORIENTATION_USER_PORTRAIT`
+for the whole activity when `RedesignFlags.ENABLED` and the device is a phone (smallest side of
+`maximumWindowMetrics` under 600 dp, so split screen does not change the answer). Every screen of the
+activity stays upright, settings included, and nothing is drawn in landscape first. Flag off or
+tablet: nothing (a foldable opened to its tablet screen gets the lock taken back). A pump wizard's
+`KeepScreenOnEffect` and `LockPortraitOrientation` put this lock back when they end.
+
+Why the activity and not a manifest attribute: the manifest would lock with the flag off and on
+tablets too (target SDK 35 obeys it there). Why not Compose code in `MainScreen` (the first try): it
+runs after the first frame, so the app opened in landscape and then turned, and the other screens
+(settings) could turn.
 
 ## Resources
 

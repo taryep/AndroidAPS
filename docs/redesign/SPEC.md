@@ -94,7 +94,8 @@ Bottom bar: Traitements | [Scènes] | Gestion | Graphiques | Menu
 - The overview is a `HorizontalPager` with 2 pages. **No visible page indicator, no tabs, no swipe**
   (4b): the "Graphiques" item of the bottom bar switches page, and shows which page is open.
   Page names exist only as accessibility labels ("Accueil, page 1 sur 2", "Graphiques, page 2 sur 2").
-- Tapping the BG circle on Home opens page 2 (the Graphiques item is then highlighted).
+- **Decided 10 Nov:** nothing on Home opens page 2 any more: no tap on the BG circle, no tap on the
+  Home graph. The only way in is the Graphiques item of the bottom bar.
 - Back on page 2 returns to Home.
 
 ### 2.1 Top bar (`main/MainTopBar.kt`)
@@ -156,16 +157,17 @@ From top to bottom, inside the safe area. The page starts **12 dp below the stat
 | B. Status | Consumables bar (3.5), width = screen − 12 dp | **26** |
 | Client | AAPSClient status card (**AAPSClient build only**) | card |
 | C. Graph | Full-width card: range buttons (40) + plot (≤ 290) + hour labels (16) + padding (10) + borders (2) | ≈ 358 |
+| | Sensitivity line (**only when active**, 3.4), 6 dp under the graph (decided 10 Nov) | 24 |
 | D. Tiles | 2 × 2 grid (3.2), tiles 48 dp, gap 16 dp (both directions), grid 316 dp wide, centred | 112 |
-| | Sensitivity line (**only when active**, 3.4), 6 dp under the tiles | 24 |
 | Bottom bar | existing `MainNavigationBar` (2.3) | ≈ 87 incl. gesture inset |
 
 Gap rules (Appendix A has the arithmetic for the reference phone):
 
 - Circle row → consumables bar: **flexible**, minimum 12 dp.
 - Consumables bar → graph: **fixed 6 dp**.
-- Graph → tiles: **flexible**, minimum 12 dp.
-- Tiles → sensitivity line: fixed 6 dp. Last block → bottom bar: fixed 14 dp.
+- Graph → tiles: **flexible**, minimum 12 dp. When the sensitivity line is shown it sits in this gap,
+  6 dp under the graph, and the flexible gap runs from the line to the tiles (minimum 12 dp).
+- Last block → bottom bar: fixed 14 dp.
 - The two flexible gaps **share the remaining height equally** (build with two weighted spacers).
 - If the minimum gaps cannot be kept, the **plot shrinks first** (down to 160 dp, as in phase 4);
   below that the page scrolls. The plot never grows above 290 dp.
@@ -176,7 +178,8 @@ Gap rules (Appendix A has the arithmetic for the reference phone):
 Reuse the data of the existing chips (`overview/chips/*`, `ChipsViewModel`, `ChipsUiState`).
 Each tile is a **48 dp high card, radius 22 dp** (about 150 dp wide on the reference phone): an icon of
 24 dp on the left, as high as the two text lines; line 1 = label 11 sp; line 2 = value 14 sp semibold.
-Horizontal padding 14 dp (Profil, Insuline active) or 10 dp (Glucides, Basale). The time left (profile,
+The two text lines are **centred in the space right of the icon** (decided 10 Nov); the icon stays on
+the left. Horizontal padding 14 dp (Profil, Insuline active) or 10 dp (Glucides, Basale). The time left (profile,
 temporary basal) follows the label after a space, in the accent colour and semi-bold; **no separator
 sign such as "·" anywhere on the home page**. Tap = same action as the corresponding chip today,
 except Insuline active and Basale (3.2.2, 3.2.3).
@@ -213,7 +216,9 @@ States (dark theme colors in section 7; tile background tint / border / accent):
 | Disabled | cross | "Désactivée" | red `#2C1616` / `#5A2626` / `#FF8A80` | `#E5534B` |
 | Superbolus | (existing) | (existing text) | orange | orange (existing) |
 
-The accessible name always carries the full stock text ("Boucle : Pause 25 min").
+**Decided 9 Nov:** the Loop slot shows **only the icon, no caption text**; the colour tells the mode. The
+"Slot caption" column is kept as the wording for the accessible name only. The accessible name always
+carries the full stock text ("Boucle : Pause 25 min").
 
 #### 3.2.2 Insuline active tile (new behaviour)
 
@@ -294,11 +299,12 @@ row 2   │ Loop (round)│   │  133   │   │ Target(round)│
     `RedesignBgCircle.kt` (scale the sizes with the circle). The mockup draws a single triangle: keep the
     stock count. The triangles stand out of the ring by about 7 dp, so the circle is not clipped
     (only its touch area is round).
-  - Inside, centred: delta (18 sp, semibold, trend arrow icon) / BG value (**72 sp**, bold,
+  - Inside, centred: delta (18 sp, semibold, **no trend arrow icon**, decided 10 Nov: the triangles on the
+    ring carry the trend alone) / BG value (**72 sp**, bold,
     BG-range colour, tabular, letter-spacing about −2 sp) / age "il y a 1 min" (13 sp, secondary).
   - Keep the stock stale-data behaviour.
-  - Tap → graphs page. Content description: "Glycémie 133 mg/dL, en baisse de 14, il y a
-    1 minute. Ouvrir les graphiques".
+  - **No tap action** (decided 10 Nov). Content description: "Glycémie 133 mg/dL, en baisse de 14,
+    il y a 1 minute" (the trend is still spoken).
 - **Left column, row 1 – alert slot** (84 × 84 dp, radius 18 dp), priority order, only one shown:
   1. BG source warning (duplicates / flat data): red tint (`#331617` / `#7A2A2A` / `#FF7A6B`),
      drop icon 22 dp, line 1 = source name ("xDrip+", 11 sp), line 2 = reason ("Doublons", 12 sp bold).
@@ -317,16 +323,20 @@ row 2   │ Loop (round)│   │  133   │   │ Target(round)│
   BG source warning > eat reminder > pump activity. When nothing applies the cell stays empty and keeps
   its size. On page 2 there are no floating buttons.
 - **Left column, row 2 – Loop slot** (84 dp **round**, radius 42): colours per running mode (3.2.1).
-  **Every mode, closed loop included**: icon about 30 dp + the caption(s) of 3.2.1 (12 sp bold,
-  second line 11 sp, auto-shrink to 10 sp). Open loop suggestion waiting: blue open-loop colours, caption
-  "Ouverte" and a count badge (18 dp) "1" at the top right; tap opens the existing sheet to accept it.
-  Otherwise a tap opens the existing running-mode dialog (what the Boucle tile did). Content description:
+  **Every mode, closed loop included**: **icon only** (about 36 dp, no caption; decided 9 Nov). The
+  extra time ("25 min") is kept in the accessible name. Open loop suggestion waiting: blue open-loop
+  colours and a count badge (18 dp) "1" at the top right; tap opens the existing sheet to accept it.
+  **Decided 12 Nov (step 6):** open loop with a suggestion waiting (badge): tap = accept the suggestion,
+  long press = running-mode dialog, no chevron. Every other case: a tap opens the existing running-mode
+  dialog (what the Boucle tile did). Content description:
   "Boucle : Fermée" (stock text of the state).
 - **Right column, row 1 – notification button**: bell icon 36 dp, **no background**, 84 × 84 dp touch
   area (replaces the floating `NotificationFab` on Home), icon colour secondary text. Count badge 22 dp
   at the bottom right of the icon (right 20 dp, bottom 20 dp inside the cell) with a 3 dp ring in the
-  page colour: **always red `#E5484D` with a white number**, whatever the importance of the
-  notifications (no urgent / info distinction). Tap opens the existing `NotificationBottomSheet`.
+  page colour: white number, **colour by type** (decided 9 Nov, replaces the always-red badge; types fixed
+  12 Nov: info blue, warning yellow, alert red; the badge takes the colour of the most serious type
+  present). Tap opens the existing `NotificationBottomSheet`. Also decided 12 Nov (step 7): a popup
+  for serious alerts only (the existing "urgent" notifications), and a message preview for all.
   Hidden when no notifications (the cell stays empty). Content description: "2 notifications" /
   "1 notification".
 - **Right column, row 2 – Target slot** (84 dp **round**): icon 32 dp + value 12 sp bold (tabular),
@@ -341,7 +351,8 @@ row 2   │ Loop (round)│   │  133   │   │ Target(round)│
 
 - Shown **only** when the existing `SensitivityChip` / `SensitivityChipBlock` would show
   something. Otherwise it takes no space.
-- Placed **under the tile grid** (v2), centred, 24 dp, no container, 12 sp:
+- Placed **between the graph and the tile grid** (decided 10 Nov; it was under the grid), centred,
+  24 dp, no container, 12 sp:
   `⇅ Sensibilité 80 %  ISF 36 → 45 mg/dL` (a gap, no separator sign) (labels secondary colour, values semibold).
 - Tap = same dialog as the stock sensitivity chip.
 
@@ -420,8 +431,13 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   (`#262A33`) + primary text (`#F2F4F7`); unselected text `#8A909C`. **Default 6 h.** The choice is kept
   in `RedesignOverviewState` (over a rotation and while other screens are open, not over a new start
   of the app; no preference). The buttons have a selected state and a spoken name ("6 heures").
-- **Time window**: ends at the **next full hour** (e.g. now 00:55 → window ends 01:00). No scroll,
-  no zoom, no predictions, no other series.
+- **Time window**: ends at the **next full hour** (e.g. now 00:55 → window ends 01:00). No zoom, no
+  predictions, no other series.
+- **Scroll (decided 10 Nov, step 8):** on 3 h, 6 h, 12 h and 18 h a horizontal drag moves the visible
+  window inside the last 24 hours (24 h shows everything). A change of range always brings the window
+  back to now. A new reading does not move a window the user has scrolled back. No "now" button. While
+  the finger drags, the value axis does not move; after release it adapts to the visible window, as the
+  graphs already in the app do (decided 12 Nov).
 - **Hour labels** under the plot, including both edges (6 h at 00:55 → 19h … 1h), 11 sp, tertiary
   colour. Step: 1 h for 3 h and 6 h, 2 h for 12 h, 3 h for 18 h, 4 h for 24 h. Format "19h", "0h", "1h",
   from a string resource (`redesign_graph_hour`), the same in French and English.
@@ -444,6 +460,8 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   6 h, one in 3 on 12 h, one in 6 on 18 h and 24 h, counted back from the newest. Dot radius ≈
   min(2.8 dp, 0.42 × spacing). Last reading: hollow circle (r 4.5 dp, stroke 2 dp, filled with the page
   colour), always drawn.
+- **Treatment values (decided 10 Nov, step 2):** on 3 h and 6 h only, the bolus dose in units is written
+  above the bolus triangle and the carbs in grams below the carbs triangle. No value for an SMB.
 - **Treatment markers**: as on the stock BG graph, same colours. A manual bolus is a triangle pointing
   down at the reading from above; carbs a triangle pointing up at it from below; an SMB a small triangle
   pointing up, only on 3 h, 6 h and 12 h. A marker sits on the nearest reading (within 15 min), else in
@@ -457,8 +475,8 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   with them so no two labels overlap. When the target is not the profile target, the label and the step
   of the line in force take the colour of the Target slot (temporary target: orange; adjusted by the
   loop: the "adjusted" colour); past steps stay grey.
-- **Tap**: a tap on the graph opens the graphs page (also an action for the screen reader). A long
-  press is not a tap.
+- **Tap**: none (decided 10 Nov: the graph no longer opens the graphs page; this also frees the long
+  press and TalkBack). The only gesture besides the long press is the horizontal drag above.
 - **Running-mode band**: a 5 dp rounded bar at the top of the plot over the period where the mode
   was not closed loop, same colours as the stock 4.0 band (3.2.1).
 - **Long press** (≈ 450 ms, the system long-press timeout) shows **the stock inspect pill,
@@ -467,7 +485,7 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   of the card, over the range buttons, centred on the reading and kept inside the card. Dashed vertical
   line + ring on the reading; follows the finger and snaps to readings like stock; the same haptics as
   stock; disappears 2 s after release. No predictions are passed. While held, the drag moves the line,
-  not the page. A simple tap does nothing more than open the graphs page.
+  not the page and not the window. A simple tap does nothing.
 - **Spoken description**: "Glycémie sur les dernières 6 heures, actuellement 133 mg/dL. Appui long pour
   lire une valeur" (or "… Aucune valeur" without readings).
 
@@ -558,7 +576,7 @@ Each must be checked on the phone or in a Compose preview (the mockup has a swit
 - [ ] COB 0 / COB > 0 / carbs required.
 - [ ] IOB below 1,0 U / above / negative.
 - [ ] Sensitivity line on / off (it sits under the tiles).
-- [ ] Notifications: none / one / several (red badge with the count).
+- [ ] Notifications: none / one / several (badge colour by type: info, warning, alert).
 - [ ] Eat reminder counting down / time is up.
 - [ ] BG source warning (duplicates) at the same time as an eat reminder (warning wins).
 - [ ] Pump activity alone; pump activity together with an eat reminder (eat reminder wins).
@@ -651,7 +669,7 @@ Redesign surfaces (put them in a small colour object in `redesign/`, not in the 
 | BG warning slot (red) | `#331617` + `#7A2A2A` / `#FF7A6B` | light red tint, dark red text |
 | Eat reminder slot (orange) | `#2A2213` + `#5A4318` / `#F7B267` | light orange tint, dark orange text |
 | Pump activity slot (blue) | `#14203A` + `#26406B` / `#8CB8F2` | light blue tint, dark blue text |
-| Notification badge | `#E5484D` (white text), one colour for every notification | same, with a ring in the page colour |
+| Notification badge | colour by type (info blue, warning yellow, alert red), white text | same, with a ring in the page colour |
 
 Light-theme tints for the running modes: same hues as the dark table, very light background,
 mid border, dark accent (e.g. closed loop `#E9F6EC` / `#BFE3CA` / `#1D7238`).
@@ -674,7 +692,10 @@ touches too many upstream files, skip it and tell me.
 
 ## 9. Phases
 
-**État : phases 0 à 7 faites et validées sur le téléphone. Prochaine : phase 8 (alignement du menu et échelle de la page 2).**
+**État (12 nov. 2026) : phases 0 à 7, 8a et 8.5 faites. Prochaine : étape 1 du suivi (bugs de l'accueil).**
+Le suivi (document « Suivi AAPS redesign » du projet Claude) remplace le backlog et le plan : 10 étapes
+numérotées, dans l'ordre où on les fait. Les phases ci-dessous 8b et 8c deviennent l'étape 3, la phase 9 l'étape 9 et la phase 10 l'étape 10. En cas de
+contradiction, le suivi l'emporte sur cette spec.
 (Old phases 5 "Themes" and 6 "Animations" are now phases 9 and 10.)
 
 Each phase: plan → my approval → code → `./gradlew.bat :app:assembleFullDebug` (or the variant
@@ -682,7 +703,9 @@ I use) → existing `ui` tests (`OverviewScreenVariantsTest`, `OverviewSizeSweep
 must still pass with `RedesignFlags.ENABLED = false`; adapt or add tests for the redesign only in
 new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the phone → commit.
 
-0. **Palette daltonienne** (branche `colorblind-colors`) – faite.
+0. **Palette daltonienne** (branche `colorblind-colors`) – faite, ainsi que le réglage dans les Paramètres à 3 choix (hors redesign,
+   sans `RedesignFlags`) : désactivé (couleurs d'origine, par défaut), style A Okabe-Ito (deutéranopie et
+   protanopie), style C magenta / bleu-vert / jaune (tritanopie), inclus dans l'export des paramètres.
 1. **Chrome**: hide top bar and QuickLaunch, add the Menu item and the Menu screen (section 6) – faite.
 2. **Pager**: two pages, page 2 = stock `GraphsSection`, edit mode (section 4) – faite.
 3. **Home blocks A and B**: tiles, sensitivity line, consumables pill, BG circle and its side
@@ -733,27 +756,37 @@ new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the ph
    controls on each graph, Back = cancel, new graph at the bottom in Petit.
 8c. **Same BG scale on page 2** (4.1): optional. Only through existing parameters or one defaulted
    parameter on `BgGraphCompose`; otherwise drop it and tell me. Independent of 8a / 8b.
-9. **Themes** (section 7): light theme, the redesign surfaces (including the v2 tokens), the true black
+9. **Themes** (section 7): also review every colour of the light theme on the Graphiques page (basal in
+   light cyan, the "Déviations" legend dot, the green deviation bars are unreadable), then light theme, the redesign surfaces (including the v2 tokens), the true black
    option. The glucose palette is done (phase 0): only check its values. Also fix the stock temp basal
    colour of the light theme (`LightElementColors.tempBasal` = `#00FFFF`, light cyan, almost unreadable in
    the "Annuler : Basal temp." dialog; seen in the phase 6 test). Proposed: `#0B6A70`, the teal of the Basale tile. Check the light mockups
    (`Accueil, thème clair`, `Menu, thème clair`, `Graphiques, thème clair`, `Paramètres, thème clair`).
-10. **Nice to have, last**: short animations (≤ 200 ms): BG number cross-fade on a new reading,
+10. **Nice to have, last**: two more animations are planned (step 10 of the tracking document): the BG circle refreshes every minute
+    (age text; value, triangles and colour on each new reading) while the graph stays at 5 min, and the
+    consumables bar opens like a drawer. These two transitions need the 200 ms limit raised.
+    Short animations (≤ 200 ms): BG number cross-fade on a new reading,
     trend arc sliding, new dot appearing. They run only when a real new reading arrives from the
     BG source (about once a minute or every 5 min), never on a timer: the mockup makes a new
     reading every 4 s only to show the animation.
 
 ## 10. Open questions
 
-None at the moment. Ask me if you find one while exploring a phase.
+Open (12 Nov): none. The colour-blind setting and the very low / very high colours are asked from AAPS
+with two separate **issues, not pull requests** (AAPS does not accept AI-generated pull requests, see
+`CONTRIBUTING.md`; check master first). Ask me if you find a new question while exploring a phase.
 
 **Decided (v2, by me):**
 - Alert slot priority stays BG warning > eat reminder > pump activity.
-- The notification badge is always red, no urgent / info distinction.
+- **Changed 9 Nov:** the notification badge colour depends on the type of alert (was: always red).
+- **Changed 9 Nov:** the Loop slot shows the icon only, no caption (was: caption in every mode).
+- **Added 10 Nov:** no way to open the graphs page from Home (circle and graph); the circle has no trend
+  arrow; the sensitivity line sits between the graph and the tiles; tile text is centred; the Home graph
+  scrolls inside 24 h and shows bolus and carbs values (3.6).
 - The Basale sheet gets the "Annuler la basale temp." button.
 - Patch pump rows: Pompe Patch = time in use, Insuline = reservoir left, Capteur = time in use; bars
   aligned on the right; "Ajouter" becomes a (+) to the right of the "Capteur" label.
-- Loop and Target slots carry captions in every state, closed loop included ("Fermée").
+- Target slot carries its value in every state. The Loop slot has no caption (changed 9 Nov, see above).
 - The Settings screen is not touched (no search field added): keep as much of the GitHub 4.0 code as possible.
 - Page 2 uses the same BG scale as Home, only if that stays a minimal change.
 - Graphiques page: title + grey edit button; edit pill (✕) Mode édition (+) (✓); Back = cancel; sizes
@@ -810,7 +843,7 @@ Values read from the mockup source (board "Version D").
 | Hour labels | 16 dp row, 11 sp |
 | Tile grid | 316 dp wide, 2 columns, gap 16 dp, rows 48 dp, radius 22 |
 | Tile content | icon 24, gap 9, label 11 sp (line height 13), value 14 sp semibold, gap 2 |
-| Sensitivity line | 24 dp, 12 sp, icon 13 dp |
+| Sensitivity line | 24 dp, 12 sp, icon 13 dp, 6 dp under the graph (before the tiles) |
 | Bottom bar | 6 dp top padding + 60 dp items + 20 dp bottom (gesture) + 1 dp border ≈ 87 |
 
 Vertical budget without the sensitivity line:
@@ -830,10 +863,13 @@ larger font the plot shrinks further (min 160 dp), then the page scrolls.
 | Separator "·" | "Profil · 9 min", "Cible · 45 min", "Temp. · 25 min", "Pompe · 30 min", "· 13 requis", sensitivity line | none: a space and the accent colour |
 | Profile value | "Normal" + small "90 %" | "Normal (90%)" (stock name with modifiers) |
 | Alert slot priority | pump > BG warning > eat reminder | BG warning > eat reminder > pump (decided) |
-| Notification badge | always red | always red, same as the mockup (no urgent / info colour) |
-| Loop slot | icon only | icon + caption in every mode, closed loop included (decided) |
+| Notification badge | always red | colour by type: info, warning, alert (changed 9 Nov) |
+| Loop slot | icon only | icon only, as the mockup (changed 9 Nov: the caption was dropped) |
 | Target slot | icon + value | plus the time left for a temporary target (decided) |
 | Trend triangles | one triangle | stock count (1 to 3) |
+| Trend arrow in the circle | arrow next to the delta | none (10 Nov), triangles only |
+| Open the graphs page from Home | tap on the circle and on the graph | none (10 Nov), bottom bar only |
+| Sensitivity line | under the tiles | between the graph and the tiles (10 Nov) |
 | Inspect pill | time, BG, IOB, basal | stock `GraphInspectPill`, complete |
 | Font | Inter | system font |
 | Insuline tile | label "Insuline active", value "2,33 U" | same label; value from the existing chip state |

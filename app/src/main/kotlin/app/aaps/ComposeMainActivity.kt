@@ -19,6 +19,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -119,7 +120,9 @@ import app.aaps.ui.compose.profileManagement.viewmodels.ProfileHelperViewModel
 import app.aaps.ui.compose.profileManagement.viewmodels.ProfileManagementViewModel
 import app.aaps.ui.compose.quickLaunch.QuickLaunchAction
 import app.aaps.ui.compose.quickWizard.viewmodels.QuickWizardManagementViewModel
+import app.aaps.ui.compose.redesign.LocalRedesignEnabled
 import app.aaps.ui.compose.redesign.RedesignOrientation
+import app.aaps.ui.compose.redesign.redesignEnabled
 import app.aaps.ui.compose.runningMode.RunningModeManagementViewModel
 import app.aaps.ui.compose.scenesSheet.ScenesViewModel
 import app.aaps.ui.compose.siteRotationDialog.viewModels.SiteRotationManagementViewModel
@@ -184,6 +187,9 @@ class ComposeMainActivity : MetroAppCompatActivity() {
 
     /** Set when this activity is recreated because of a `UiRestart` request, so its view models go too. */
     private var rebuildingForRestart = false
+
+    /** Redesign: true when the new interface is shown. Read in onCreate, so it is the same for the whole life of the activity. */
+    private var redesignOn = false
 
     /**
      * The factory `by viewModels()` uses.
@@ -253,8 +259,10 @@ class ComposeMainActivity : MetroAppCompatActivity() {
         // so a plain enableEdgeToEdge() here is enough.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // Redesign (docs/redesign/SPEC.md): portrait only on a phone, before any content is drawn.
-        RedesignOrientation.lock(this)
+        // Redesign (docs/redesign/SPEC.md): the new or the classic interface, read once; the activity starts again
+        // when the setting changes (observePreferences). Portrait only on a phone, before any content is drawn.
+        redesignOn = redesignEnabled(preferences)
+        RedesignOrientation.lock(this, redesignOn)
         // Other apps may not draw over AAPS: an overlay could hide what a tap really does, for example on a bolus
         // confirmation. It also covers the dialogs, because this window stays visible under them. System and
         // accessibility overlays still show. Needs HIDE_OVERLAY_WINDOWS.
@@ -300,7 +308,7 @@ class ComposeMainActivity : MetroAppCompatActivity() {
         observePreferences()
 
         setContent {
-            MainContent()
+            CompositionLocalProvider(LocalRedesignEnabled provides redesignOn) { MainContent() }
         }
     }
 
@@ -664,6 +672,16 @@ class ComposeMainActivity : MetroAppCompatActivity() {
             uiRestart.signal.drop(1).collect {
                 rebuildingForRestart = true
                 recreate()
+            }
+        }
+        // Redesign: the new or the classic interface was picked (Settings › Appearance, or the Menu). Start
+        // again in the other one, with fresh view models, as for a restart asked above.
+        lifecycleScope.launch {
+            preferences.observe(BooleanKey.GeneralRedesign).collect {
+                if (redesignEnabled(preferences) != redesignOn) {
+                    rebuildingForRestart = true
+                    recreate()
+                }
             }
         }
     }

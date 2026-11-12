@@ -10,7 +10,8 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 
 | N° | Étape | Statut |
 |---|---|---|
-| 1 | Accueil : bugs | À faire |
+| 1 | Accueil : bugs | En cours (code fait, test sur le téléphone) |
+| 1b | Interrupteur nouvelle / ancienne interface | En cours (code fait, test sur le téléphone) |
 | 2 | Accueil : affichage | À faire |
 | 3 | Accueil : défilement du graphique | À faire |
 | 4 | Feuilles Insuline et Basale : barre du haut | À faire |
@@ -25,11 +26,18 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`. Les étapes 1, 2 et 3 touchent le même code (graphique et cercle de l'accueil) et s'enchaînent : l'étape 3 demande que l'étape 2 soit finie.
 
 ### 1. Accueil : bugs
-- [ ] Diagnostic de chaque bug (fichiers de `redesign/` seulement)
+- [x] Diagnostic de chaque bug (fichiers de `redesign/` seulement)
 - [ ] Changements de cible reliés sur le graphique (segment vertical, couleur de la cible en vigueur) ; vérifier aussi la page 2
 - [ ] « Glucides requis » affiché deux fois : trouver la duplication, n'en garder qu'une
 - [ ] Décalage entre les chevrons ∨ et ∧ de la barre des consommables (bouton 44 × 24 dp)
 - [ ] Revérifier sur le téléphone l'échelle au-dessus de 280 (déjà faite)
+
+### 1b. Interrupteur nouvelle / ancienne interface
+- [x] Accord sur la conception (12 nov.) : un réglage, pas un nouveau build
+- [ ] Réglage « Nouvelle interface » (activé par défaut, inclus dans l'export) dans Paramètres › Apparence
+- [ ] Dans le Menu de la nouvelle interface : ligne « Nouvelle interface » ; l'appui demande une confirmation et dit comment revenir
+- [ ] L'écran redémarre au changement ; interface classique = AAPS d'origine (écran principal, lignes des feuilles Insuline et Basale, pas de verrouillage portrait)
+- [ ] La constante `RedesignFlags.ENABLED` reste l'interrupteur du build (false = jamais de nouvelle interface)
 
 ### 2. Accueil : affichage
 - [ ] Diagnostic

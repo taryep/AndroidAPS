@@ -27,23 +27,31 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -54,7 +62,9 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.plugin.PluginBase
+import app.aaps.core.keys.BooleanKey
 import app.aaps.core.ui.compose.clearFocusOnTap
+import app.aaps.core.ui.compose.dialogs.OkCancelDialog
 import app.aaps.core.ui.compose.icons.IcSettingsOff
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.navigation.icon
@@ -98,7 +108,8 @@ fun RedesignMenuScreen(
     onClose: () -> Unit,
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
-    attentionItems: List<RedesignAttentionItem> = emptyList()
+    attentionItems: List<RedesignAttentionItem> = emptyList(),
+    onClassicInterface: () -> Unit = {}
 ) {
     val colors = redesignColors()
     val focusManager = LocalFocusManager.current
@@ -173,6 +184,7 @@ fun RedesignMenuScreen(
                     isTreatmentsEnabled = isTreatmentsEnabled,
                     showExit = showExit,
                     attentionItems = attentionItems,
+                    onClassicInterface = onClassicInterface,
                     onNavigate = onNavigate,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -191,6 +203,7 @@ private fun MenuContent(
     isTreatmentsEnabled: Boolean,
     showExit: Boolean,
     attentionItems: List<RedesignAttentionItem>,
+    onClassicInterface: () -> Unit,
     onNavigate: (NavigationRequest) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -262,6 +275,31 @@ private fun MenuContent(
                     )
                 }
             }
+        }
+
+        // The way back to the classic interface. It asks first, and says how to come back.
+        var askClassic by rememberSaveable { mutableStateOf(false) }
+        MenuCard(colors) {
+            MenuRow(
+                label = stringResource(BooleanKey.GeneralRedesign.title),
+                colors = colors,
+                onClick = { askClassic = true },
+                modifier = Modifier
+                    .testTag(TAG_NEW_INTERFACE)
+                    .semantics { toggleableState = ToggleableState.On },
+                trailing = { Switch(checked = true, onCheckedChange = null) }
+            )
+        }
+        if (askClassic) {
+            OkCancelDialog(
+                title = stringResource(UiStrings.redesign_classic_interface_title),
+                message = stringResource(UiStrings.redesign_classic_interface_message),
+                onConfirm = {
+                    askClassic = false
+                    onClassicInterface()
+                },
+                onDismiss = { askClassic = false }
+            )
         }
 
         // About (with the version, which used to be in the top bar) and Exit.
@@ -420,6 +458,7 @@ private fun MenuRow(
     textColor: Color = colors.textPrimary,
     leadingIcon: ImageVector? = null,
     stateDescription: String? = null,
+    modifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Surface(
@@ -427,7 +466,7 @@ private fun MenuRow(
         enabled = enabled,
         color = Color.Transparent,
         contentColor = textColor,
-        modifier = Modifier
+        modifier = modifier
             .then(if (stateDescription != null) Modifier.semantics { this.stateDescription = stateDescription } else Modifier)
             .fillMaxWidth()
             .heightIn(min = 52.dp)
@@ -461,3 +500,4 @@ private val TITLE_TOP_PADDING = 20.dp
 private val SECTION_GAP = 14.dp
 private val GRID_GAP = 10.dp
 private const val DISABLED_ALPHA = 0.38f
+internal const val TAG_NEW_INTERFACE = "redesign_new_interface"

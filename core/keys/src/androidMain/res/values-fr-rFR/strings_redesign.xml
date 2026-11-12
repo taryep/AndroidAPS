@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French strings of the redesign switch. Not managed by Crowdin: this file is not in crowdin.yml. -->
+<resources>
+    <string name="pref_title_redesign">Nouvelle interface</string>
+    <string name="pref_summary_redesign">Le nouvel écran d\'accueil avec la barre du bas. Désactivée : l\'interface classique d\'AAPS. L\'écran redémarre quand vous la changez.</string>
+</resources>

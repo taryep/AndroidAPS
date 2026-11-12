@@ -58,4 +58,6 @@
     <string name="redesign_profile_basal">Basale du profil %1$s</string>
     <string name="redesign_cancel_temp_basal">Annuler la basale temp.</string>
     <string name="redesign_cancel_temp_basal_description">Annuler la basale temporaire en cours</string>
+    <string name="redesign_classic_interface_title">Revenir à l\'interface classique ?</string>
+    <string name="redesign_classic_interface_message">L\'écran redémarre dans l\'interface classique d\'AAPS. Pour revenir : Paramètres › Apparence › Nouvelle interface.</string>
 </resources>

@@ -19,6 +19,8 @@ import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.TextResolver
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
+import app.aaps.core.keys.BooleanKey
+import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.convertedToAbsolute
 import app.aaps.core.objects.extensions.convertedToPercent
 import app.aaps.core.objects.extensions.round
@@ -96,7 +98,8 @@ class RedesignHomeViewModel(
     private val rh: TextResolver,
     private val loop: Loop,
     private val config: Config,
-    private val decimalFormatter: DecimalFormatter
+    private val decimalFormatter: DecimalFormatter,
+    private val preferences: Preferences
 ) : ViewModel() {
 
     // The same 30 s tick as the chips, so the time left moves at the same moment.
@@ -146,6 +149,12 @@ class RedesignHomeViewModel(
             newestCarbsTime = if (carbsReq > 0) persistenceLayer.getNewestCarbs()?.timestamp ?: 0L else 0L
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CobUiState())
+
+    /**
+     * Goes back to the classic AAPS interface (Menu of the new interface). `ComposeMainActivity` sees the
+     * setting change and starts again; the way back is Settings › Appearance.
+     */
+    fun useClassicInterface() = preferences.put(BooleanKey.GeneralRedesign, false)
 
     private suspend fun build(profileData: ProfileDisplayData?, targetData: TempTargetDisplayData?, tbrData: TbrDisplayData?, now: Long): RedesignHomeData {
         val profile = profileFunction.getProfile()

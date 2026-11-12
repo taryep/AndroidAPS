@@ -71,7 +71,7 @@ import app.aaps.ui.search.SearchUiState
  */
 @Composable
 fun redesignChromeActive(): Boolean =
-    RedesignFlags.ENABLED &&
+    LocalRedesignEnabled.current &&
         isRedesignPhoneLayout(with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() })
 
 /**
@@ -322,7 +322,8 @@ fun RedesignMainScreen(
                     onNavigate = onNavigate,
                     onClose = closeMenu,
                     bottomPadding = contentPadding.calculateBottomPadding(),
-                    attentionItems = attentionItems
+                    attentionItems = attentionItems,
+                    onClassicInterface = homeViewModel::useClassicInterface
                 )
             }
 

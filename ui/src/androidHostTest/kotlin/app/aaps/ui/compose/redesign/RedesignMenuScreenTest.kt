@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
@@ -25,6 +26,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.state.ToggleableState
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginDescription
@@ -44,6 +48,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import app.aaps.core.keys.R as KeysR
 import app.aaps.core.ui.R as CoreUiR
 
 /**
@@ -60,6 +65,7 @@ class RedesignMenuScreenTest {
 
     private val requests = mutableListOf<NavigationRequest>()
     private var closed = 0
+    private var classic = 0
 
     @Before
     fun setUp() {
@@ -93,7 +99,8 @@ class RedesignMenuScreenTest {
                     onNavigate = { requests += it },
                     onClose = { closed++ },
                     bottomPadding = 80.dp,
-                    attentionItems = attentionItems
+                    attentionItems = attentionItems,
+                    onClassicInterface = { classic++ }
                 )
                 }
             }
@@ -103,6 +110,28 @@ class RedesignMenuScreenTest {
 
     private fun clickEntry(label: String) {
         compose.onNode(hasText(label) and hasClickAction(), useUnmergedTree = false).performScrollTo().performClick()
+    }
+
+    @Test
+    fun theNewInterfaceRowAsksFirstThenGoesBackToTheClassicInterface() {
+        show()
+        val row = compose.onNode(hasTestTag(TAG_NEW_INTERFACE))
+        row.performScrollTo()
+        // The row is a switch that is on, with the title of the setting.
+        row.assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On))
+        row.assert(hasText(string(KeysR.string.pref_title_redesign)))
+
+        // Cancel: nothing changes.
+        row.performClick()
+        compose.onNodeWithText(string(R.string.redesign_classic_interface_message)).assertIsDisplayed()
+        compose.onNodeWithText(string(CoreUiR.string.cancel)).performClick()
+        assertThat(classic).isEqualTo(0)
+        compose.onNodeWithText(string(R.string.redesign_classic_interface_message)).assertDoesNotExist()
+
+        // OK: the classic interface is asked once.
+        row.performClick()
+        compose.onNodeWithText(string(CoreUiR.string.ok)).performClick()
+        assertThat(classic).isEqualTo(1)
     }
 
     @Test

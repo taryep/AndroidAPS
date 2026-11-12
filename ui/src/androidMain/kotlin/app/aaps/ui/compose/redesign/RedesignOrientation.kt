@@ -9,7 +9,8 @@ import kotlin.math.min
  * settings, ...) stays upright. Called from `ComposeMainActivity.onCreate`, before any content, so
  * the app does not first draw in landscape and then turn.
  *
- * - Flag off: nothing, the app is stock.
+ * - New interface off ([enabled] false): no lock, the app is stock. A lock set before (the user just turned
+ *   the new interface off, and the activity starts again) is taken back.
  * - Tablet: not locked; its landscape layouts are stock and stay. "Tablet" is the device, not the
  *   window: the largest window the screen can give (`maximumWindowMetrics`), so a phone in split
  *   screen stays a phone and a tablet in split screen stays a tablet. On a foldable it follows the
@@ -21,10 +22,9 @@ import kotlin.math.min
  */
 object RedesignOrientation {
 
-    fun lock(activity: Activity) {
-        if (!RedesignFlags.ENABLED) return
-        if (isPhone(activity)) activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
-        // A foldable opened to its tablet screen: take back the lock set while it was folded.
+    fun lock(activity: Activity, enabled: Boolean) {
+        if (enabled && isPhone(activity)) activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+        // A foldable opened to its tablet screen, or the new interface turned off: take back our lock.
         else if (activity.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT)
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings of the redesign switch (docs/redesign/SPEC.md). Not managed by Crowdin: this file is not in crowdin.yml. -->
+<resources>
+    <string name="pref_title_redesign">New interface</string>
+    <string name="pref_summary_redesign">The new home screen with the bottom bar. Off: the classic AAPS interface. The screen restarts when you change it.</string>
+</resources>

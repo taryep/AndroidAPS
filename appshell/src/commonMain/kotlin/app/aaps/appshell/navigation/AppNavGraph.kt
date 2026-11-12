@@ -103,7 +103,7 @@ import app.aaps.ui.compose.quickLaunch.QuickLauchConfigScreen
 import app.aaps.ui.compose.quickLaunch.QuickLaunchConfigViewModel
 import app.aaps.ui.compose.quickWizard.QuickWizardManagementScreen
 import app.aaps.ui.compose.quickWizard.viewmodels.QuickWizardManagementViewModel
-import app.aaps.ui.compose.redesign.RedesignFlags
+import app.aaps.ui.compose.redesign.LocalRedesignEnabled
 import app.aaps.ui.compose.redesign.RedesignIobLine
 import app.aaps.ui.compose.redesign.RedesignTbrLine
 import app.aaps.ui.compose.runningMode.RunningModeManagementViewModel
@@ -344,7 +344,7 @@ fun NavGraphBuilder.appNavGraph(
                 onShowDeliveryError(comment, CoreUiStrings.treatmentdeliveryerror)
             },
             // Redesign (SPEC 3.2.2): the IOB line on top, from every entry point.
-            topInfo = if (RedesignFlags.ENABLED) { { RedesignIobLine() } } else null
+            topInfo = if (LocalRedesignEnabled.current) { { RedesignIobLine() } } else null
         )
     }
 
@@ -373,7 +373,7 @@ fun NavGraphBuilder.appNavGraph(
                 onShowDeliveryError(comment, CoreUiStrings.temp_basal_delivery_error)
             },
             // Redesign (SPEC 3.2.3): the basal line and, while a temp basal runs, its Cancel button.
-            topInfo = if (RedesignFlags.ENABLED) {
+            topInfo = if (LocalRedesignEnabled.current) {
                 { RedesignTbrLine(onCancelled = { navController.safePopBackStack() }, onError = { onShowDeliveryError(it, CoreUiStrings.temp_basal_delivery_error) }) }
             } else null
         )

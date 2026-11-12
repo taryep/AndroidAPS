@@ -1,8 +1,9 @@
 # Upstream files touched by the redesign
 
-Every change in a file that also exists on `master`, and why. All of them check
-`RedesignFlags.ENABLED` (in `ui/.../compose/redesign/RedesignFlags.kt`), so with the flag set to
-`false` the app behaves like stock 4.0. New files in `redesign/` and new resource files are not
+Every change in a file that also exists on `master`, and why. All of them check the switch (step 1b):
+`LocalRedesignEnabled` or `redesignEnabled(preferences)` (in `ui/.../compose/redesign/RedesignFlags.kt`), so with
+the setting "New interface" off, or the build constant `RedesignFlags.ENABLED` set to `false`, the app behaves
+like stock 4.0. New files in `redesign/` and new resource files are not
 listed here.
 
 ## Main screen and bottom bar (current)
@@ -88,11 +89,12 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
 
 ### `app/src/main/kotlin/app/aaps/ComposeMainActivity.kt`
 
-- `RedesignOrientation.lock(this)` in `onCreate`, right after `super.onCreate`, and its import.
+- `RedesignOrientation.lock(this, redesignOn)` in `onCreate`, right after `super.onCreate`, and its import
+  (`redesignOn`: see "Switch between the new and the classic interface" below).
   The manifest is not changed.
 
 `RedesignOrientation` (`ui/src/androidMain/.../redesign/`) sets `SCREEN_ORIENTATION_USER_PORTRAIT`
-for the whole activity when `RedesignFlags.ENABLED` and the device is a phone (smallest side of
+for the whole activity when the new interface is on and the device is a phone (smallest side of
 `maximumWindowMetrics` under 600 dp, so split screen does not change the answer). Every screen of the
 activity stays upright, settings included, and nothing is drawn in landscape first. Flag off or
 tablet: nothing (a foldable opened to its tablet screen gets the lock taken back). A pump wizard's
@@ -157,9 +159,9 @@ the same rounding as `ChipsViewModel.showIobInfo`) and `tempBasalLine` (the data
 
 | Hook | Why |
 |---|---|
-| `InsulinDialogScreen(topInfo = if (RedesignFlags.ENABLED) { { RedesignIobLine() } } else null)` | The IOB line. Passed in the route, not by the tile, so it is there from every entry point (Traitements too, on purpose) and survives Back and the death of the process. |
-| `TempBasalDialogScreen(topInfo = if (RedesignFlags.ENABLED) { { RedesignTbrLine(...) } } else null)` | The basal line and the Cancel button. After a confirmed cancel the screen closes; a failed cancel shows the stock "temp basal delivery error". |
-| Imports | `RedesignFlags`, `RedesignIobLine`, `RedesignTbrLine`. |
+| `InsulinDialogScreen(topInfo = if (LocalRedesignEnabled.current) { { RedesignIobLine() } } else null)` | The IOB line. Passed in the route, not by the tile, so it is there from every entry point (Traitements too, on purpose) and survives Back and the death of the process. |
+| `TempBasalDialogScreen(topInfo = if (LocalRedesignEnabled.current) { { RedesignTbrLine(...) } } else null)` | The basal line and the Cancel button. After a confirmed cancel the screen closes; a failed cancel shows the stock "temp basal delivery error". |
+| Imports | `LocalRedesignEnabled`, `RedesignIobLine`, `RedesignTbrLine`. |
 
 Each line reads its own `RedesignHomeViewModel` (a new, light instance in the route). The Cancel
 button uses its own `ManageViewModel`: `cancelTempBasal()`, the master's confirmation in
@@ -180,6 +182,21 @@ same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesi
 ### `core/keys/src/commonMain/kotlin/app/aaps/core/keys/BooleanNonKey.kt` and `app/src/testFull/resources/prefs-schema.txt`
 
 - One new key `RedesignGraphHeightsMigrated` (`exportable = false`): the flag of the one-time BG height change (BG height 100 becomes 250). One line in the golden schema file.
+
+## Step 1b - Switch between the new and the classic interface
+
+The setting "New interface" (`BooleanKey.GeneralRedesign`, key `redesign_enabled`, on by default, exported with
+the settings) picks the interface without a new build. It is in Settings › Appearance, and the Menu of the new
+interface has a row to go back to the classic one (it asks first and says where to come back). The activity
+reads the setting once in `onCreate` and starts again when it changes, so no screen ever sees it change.
+
+| File | Hook | Why |
+|---|---|---|
+| `core/keys/.../BooleanKey.kt` | New key `GeneralRedesign`. | The setting. Its strings are in the new files `core/keys/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` (not in `crowdin.yml`). |
+| `app/src/testFull/resources/prefs-schema.txt` | One line `redesign_enabled\|BooleanKey\|true`. | The golden list of keys. |
+| `ui/.../search/BuiltInSearchables.kt` | `BooleanKey.GeneralRedesign` after the colour-blind mode in the Appearance screen. | The way back from the classic interface, which has no Menu. |
+| `app/.../ComposeMainActivity.kt` | Field `redesignOn = redesignEnabled(preferences)` set in `onCreate`; `CompositionLocalProvider(LocalRedesignEnabled provides redesignOn)` around `MainContent()`; in `observePreferences`, a collector of the key that calls `recreate()` (with `rebuildingForRestart`, so the view models are new) when the value differs from `redesignOn`. Imports. | One value for the whole life of the activity, the same for every screen (main screen, sheets, portrait lock). |
+| `appshell/.../AppNavGraph.kt` | `RedesignFlags.ENABLED` became `LocalRedesignEnabled.current` in the two `topInfo` hooks. | The insulin and basal lines follow the setting. |
 
 ## Resources
 

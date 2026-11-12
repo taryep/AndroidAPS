@@ -220,7 +220,9 @@ fun RedesignHomePage(
                     onNavigate = onNavigate,
                     statusLightsDef = stock.statusLightsDef,
                     expanded = statusExpanded,
-                    onExpandedChange = { statusExpanded = it }
+                    onExpandedChange = { statusExpanded = it },
+                    isPatchPump = status.isPatchPump,
+                    pumpHasMenu = status.pumpHasMenu
                 )
             }
 
@@ -349,7 +351,7 @@ private val MIN_GAP = 12.dp
 private val GRAPH_GAP = 6.dp
 private val CIRCLE_ROW_HEIGHT = 200.dp
 private val SLOT_ROW_HEIGHT = 100.dp
-private val CONSUMABLES_HEIGHT = 26.dp
+private val CONSUMABLES_HEIGHT = 32.dp
 private val TILES_HEIGHT = 112.dp
 private val TILES_WIDTH = 316.dp
 private val SENSITIVITY_HEIGHT = 24.dp

@@ -13,5 +13,7 @@ data class StatusUiState(
     val batteryStatus: StatusItem? = null,
     val showFill: Boolean = false,
     val showPumpBatteryChange: Boolean = false,
-    val isPatchPump: Boolean = false
+    val isPatchPump: Boolean = false,
+    /** The active pump has its own screen (the one the Manage sheet "Pump" item opens). */
+    val pumpHasMenu: Boolean = false
 )

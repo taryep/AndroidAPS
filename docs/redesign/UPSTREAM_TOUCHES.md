@@ -185,7 +185,17 @@ What the theme cannot reach (the sizes are fixed inside the Material 3 navigatio
 item height (60 dp), icon size (22 dp), indicator size (56 × 30 dp), semi-bold selected label and the
 11 sp shrink of a long label.
 
-Not touched: `OverviewStatusSection` (the open consumables panel is the stock one; only the closed 26 dp bar is ours).
+### Phase 7: consumables panel of a patch pump (SPEC 3.5.1)
+
+| File | Hook | Why |
+|---|---|---|
+| `overview/statusLights/StatusItem.kt` | Three new defaulted fields: `levelValue: Double?` (reservoir units as a number), `ageMax: String?` (critical age in short text, "3d"), `reservoirReadingLimit: Double?` (the driver's `maxReservoirReading`). | The patch panel shows "age / maximum" and draws a reservoir bar. The stock panel does not read them. |
+| `overview/statusLights/StatusViewModel.kt` | `buildInsulinStatus`: `levelValue = reservoirLevel.takeIf { it > 0 }`, `reservoirReadingLimit = maxReading`. Sensor and cannula items: `ageMax = formatAgeMax(...)` (new private function, the critical age from the settings, same short form as the ages). `refreshState`: `pumpHasMenu = (activePlugin.activePumpInternal as? PluginBase)?.hasComposeContent() == true`. Import `PluginBase`. | Same value as the "U" text, no new reading. `pumpHasMenu` says if the Manage sheet "Pump" item would open a screen. It must ask `activePumpInternal`: `activePump` is a concentration wrapper, never a `PluginBase`. Test: `StatusViewModelPumpMenuTest` (new file). |
+| `overview/statusLights/StatusUiState.kt` | New field `pumpHasMenu: Boolean = false`. | See above. |
+
+`overview/OverviewStatusSection.kt` is stock again (the step 1 slot `expandedContent` is removed). The patch card is in `redesign/RedesignPatchPumpPanel.kt`: own card, radius 22, no title, settings sheet reusing the internal `StatusLightsSettingsContent`. Other pumps keep the stock panel. New strings: `redesign_age_max_days`, `redesign_value_of_max`.
+The 96 U on the stock "Patch pump" row is the insulin used since the patch change (TDD), not a reservoir;
+the redesign panel does not show it.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreen.kt`
 

@@ -40,9 +40,9 @@ import app.aaps.ui.compose.overview.OverviewStatusSection
 import app.aaps.ui.compose.overview.statusLights.StatusItem
 
 /**
- * The consumables bar of the home page (SPEC 3.5). Collapsed: a 26 dp bar with the ages and levels
- * that the stock bar shows (same data, same warning and critical colours). Expanded: the stock panel,
- * unchanged, with its settings icon and its buttons.
+ * The consumables bar of the home page (SPEC 3.5). Collapsed: a 32 dp bar with the ages and levels
+ * that the stock bar shows (same data, same warning and critical colours). Expanded: our own panel for a patch pump,
+ * the stock panel (unchanged, with its settings icon and its buttons) for the other pumps.
  */
 @Composable
 fun RedesignConsumablesBar(
@@ -57,9 +57,29 @@ fun RedesignConsumablesBar(
     statusLightsDef: PreferenceSubScreenDef,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPatchPump: Boolean = false,
+    pumpHasMenu: Boolean = false
 ) {
     if (expanded) {
+        // Patch pump: our own card, one value per row (SPEC 3.5.1). Other pumps: the stock panel.
+        if (isPatchPump) {
+            RedesignPatchPumpPanel(
+                cannulaStatus = cannulaStatus,
+                insulinStatus = insulinStatus,
+                sensorStatus = sensorStatus,
+                batteryStatus = batteryStatus,
+                showFill = showFill,
+                showPumpBatteryChange = showPumpBatteryChange,
+                commandsAllowed = commandsAllowed,
+                onNavigate = onNavigate,
+                statusLightsDef = statusLightsDef,
+                onCollapse = { onExpandedChange(false) },
+                pumpHasMenu = pumpHasMenu,
+                modifier = modifier
+            )
+            return
+        }
         OverviewStatusSection(
             sensorStatus = sensorStatus,
             insulinStatus = insulinStatus,
@@ -82,7 +102,7 @@ fun RedesignConsumablesBar(
     if (listOfNotNull(cannulaStatus, insulinStatus, sensorStatus, batteryStatus).isEmpty()) return
     val colors = redesignColors()
     Surface(
-        shape = RoundedCornerShape(BAR_HEIGHT / 2),
+        shape = RoundedCornerShape(BAR_RADIUS),
         color = colors.surface,
         border = BorderStroke(1.dp, colors.border),
         modifier = modifier
@@ -90,7 +110,7 @@ fun RedesignConsumablesBar(
             .height(BAR_HEIGHT)
             .clickable { onExpandedChange(true) }
     ) {
-        // The bar is 26 dp high: its text does not grow with the system font (the open panel does).
+        // The bar is 32 dp high: its text does not grow with the system font (the open panel does).
         RedesignFontScaleCap(1f) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp)) {
             Row(
@@ -141,10 +161,13 @@ private fun ConsumableItem(item: StatusItem, colors: RedesignColors) {
                     append(item.level)
                 }
             },
-            style = TextStyle(fontSize = 12.sp, color = colors.textPrimary, fontFeatureSettings = "tnum"),
+            style = TextStyle(fontSize = 13.sp, color = colors.textPrimary, fontFeatureSettings = "tnum"),
             maxLines = 1
         )
     }
 }
 
-private val BAR_HEIGHT = 26.dp
+private val BAR_HEIGHT = 32.dp
+
+/** The same radius as the open patch panel, so the bar and the card look like one object. */
+private val BAR_RADIUS = 16.dp

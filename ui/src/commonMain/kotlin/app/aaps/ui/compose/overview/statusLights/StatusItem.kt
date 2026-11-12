@@ -21,5 +21,11 @@ data class StatusItem(
     val icon: ImageVector,
     val compactAge: Boolean = true,     // Show age in collapsed view
     val compactLevel: Boolean = true,   // Show level in collapsed view
-    val expandedLevel: Boolean = true   // Show level in expanded view
+    val expandedLevel: Boolean = true,  // Show level in expanded view
+    /** The level as a number (reservoir units), for a layout that draws its own bar. Not used by the stock panel. */
+    val levelValue: Double? = null,
+    /** Longest age before the item is critical, short text ("3d", "8h"). For a layout that shows "age / maximum". */
+    val ageMax: String? = null,
+    /** The pump driver's largest reservoir reading [U]. A display limit, not always the real size. */
+    val reservoirReadingLimit: Double? = null
 )

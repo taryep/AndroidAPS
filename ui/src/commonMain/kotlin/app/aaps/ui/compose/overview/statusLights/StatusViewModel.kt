@@ -10,6 +10,7 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.TextResolver
 import app.aaps.core.interfaces.rx.bus.RxBus
@@ -160,7 +161,9 @@ class StatusViewModel(
                     batteryStatus = batteryStatus,
                     showFill = pumpDescription.isRefillingCapable && isInitialized,
                     showPumpBatteryChange = pumpDescription.isBatteryReplaceable || pump.isBatteryChangeLoggingEnabled(),
-                    isPatchPump = isPatchPump
+                    isPatchPump = isPatchPump,
+                    // activePump is a concentration wrapper, not the plugin: ask the plugin itself.
+                    pumpHasMenu = (activePlugin.activePumpInternal as? PluginBase)?.hasComposeContent() == true
                 )
             }
 
@@ -188,6 +191,7 @@ class StatusViewModel(
             age = event?.let { formatAge(it.timestamp) } ?: "-",
             ageStatus = event?.let { getAgeStatus(it.timestamp, IntKey.OverviewSageWarning, IntKey.OverviewSageCritical) } ?: StatusLevel.UNSPECIFIED,
             agePercent = event?.let { getAgePercent(it.timestamp, IntKey.OverviewSageCritical) } ?: 0f,
+            ageMax = formatAgeMax(IntKey.OverviewSageCritical),
             level = level,
             levelStatus = if (levelPercent >= 0) getLevelStatus((levelPercent * 100).toDouble(), IntKey.OverviewSbatWarning, IntKey.OverviewSbatCritical) else StatusLevel.UNSPECIFIED,
             levelPercent = if (levelPercent >= 0) 1f - levelPercent else -1f,
@@ -228,6 +232,8 @@ class StatusViewModel(
             levelPercent = -1f, // No progress bar - reservoir sizes vary by pump
             icon = IcPumpCartridge,
             compactAge = !isPatchPump, // Overview: insulin age hidden for patch pumps
+            levelValue = reservoirLevel.takeIf { it > 0 },
+            reservoirReadingLimit = maxReading
         )
     }
 
@@ -247,6 +253,7 @@ class StatusViewModel(
             age = event?.let { formatAge(it.timestamp) } ?: "-",
             ageStatus = event?.let { getAgeStatus(it.timestamp, IntKey.OverviewCageWarning, IntKey.OverviewCageCritical) } ?: StatusLevel.UNSPECIFIED,
             agePercent = event?.let { getAgePercent(it.timestamp, IntKey.OverviewCageCritical) } ?: 0f,
+            ageMax = formatAgeMax(IntKey.OverviewCageCritical),
             level = if (usage > 0) rh.gs(CoreUiStrings.value_with_unit, decimalFormatter.to0Decimal(usage), rh.gs(CoreUiStrings.insulin_unit_shortname)) else null,
             levelStatus = StatusLevel.UNSPECIFIED, // Usage doesn't have warning thresholds
             levelPercent = -1f,
@@ -301,6 +308,19 @@ class StatusViewModel(
         val diff = dateUtil.computeDiff(timestamp, dateUtil.now())
         return if (diff.days == 0L) rh.gs(UiStrings.status_age_short_hours, diff.hours)
         else rh.gs(UiStrings.status_age_short, diff.days, diff.hours)
+    }
+
+    /** The critical age of a setting in the same short form as the ages: "8h", "3d", or "2d12h" when it is not whole days. */
+    private fun formatAgeMax(criticalKey: IntPreferenceKey): String? {
+        val hours = preferences.get(criticalKey)
+        if (hours <= 0) return null
+        val days = hours / 24
+        val rest = hours % 24
+        return when {
+            days == 0 -> rh.gs(UiStrings.status_age_short_hours, hours)
+            rest == 0 -> rh.gs(UiStrings.redesign_age_max_days, days)
+            else      -> rh.gs(UiStrings.status_age_short, days, rest)
+        }
     }
 
     private fun getAgeStatus(timestamp: Long, warnKey: IntPreferenceKey, urgentKey: IntPreferenceKey): StatusLevel {

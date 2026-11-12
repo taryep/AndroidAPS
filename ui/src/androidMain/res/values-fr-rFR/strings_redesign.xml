@@ -46,4 +46,8 @@
     <string name="redesign_graph_description_no_value">Glycémie sur les dernières %1$s. Aucune valeur</string>
     <string name="redesign_graphs">Graphiques</string>
     <string name="redesign_close_graphs">Retour à l’accueil</string>
+    <string name="redesign_open_pump_menu">Ouvrir le menu de la pompe</string>
+    <string name="redesign_add_sensor">Ajouter un capteur</string>
+    <string name="redesign_age_max_days">%1$dj</string>
+    <string name="redesign_value_of_max">%1$s / %2$s</string>
 </resources>

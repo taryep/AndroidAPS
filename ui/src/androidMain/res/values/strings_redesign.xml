@@ -52,4 +52,8 @@
     <string name="redesign_graph_description_no_value" comment="Screen reader text of the home glucose graph when it has no reading. %1$s=time shown. Example: Glucose over the last 6 hours. No reading">Glucose over the last %1$s. No reading</string>
     <string name="redesign_graphs" comment="Bottom bar item that shows the graphs page. Short, one word">Graphs</string>
     <string name="redesign_close_graphs" comment="Screen reader action of the Graphs bottom bar item while the graphs page is shown: the same button goes back to the home page">Back to the home page</string>
+    <string name="redesign_open_pump_menu" comment="Screen reader action of the patch pump row in the consumables panel: opens the pump's own screen">Open the pump menu</string>
+    <string name="redesign_add_sensor" comment="Screen reader name of the small round (+) button next to Sensor in the consumables panel">Add a sensor</string>
+    <string name="redesign_age_max_days" comment="Longest age of a sensor or patch, short, whole days only. d=days. %1$d=days. Example: 3d">%1$dd</string>
+    <string name="redesign_value_of_max" comment="Value and its maximum in the consumables panel. %1$s=value, %2$s=maximum. Example: 2d17h / 3d">%1$s / %2$s</string>
 </resources>

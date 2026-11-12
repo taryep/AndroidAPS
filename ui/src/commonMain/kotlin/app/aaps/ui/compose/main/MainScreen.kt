@@ -85,6 +85,8 @@ import app.aaps.ui.compose.redesign.RedesignHomeInputs
 import app.aaps.ui.compose.redesign.RedesignHomeViewModel
 import app.aaps.ui.compose.redesign.RedesignMenuScreen
 import app.aaps.ui.compose.redesign.RedesignOverviewState
+import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.GRAPHS_PAGE
+import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
 import app.aaps.ui.compose.redesign.isRedesignPhoneLayout
 import app.aaps.ui.compose.redesign.redesignAttentionItems
 import app.aaps.ui.compose.scenesSheet.ScenesBottomSheet
@@ -203,16 +205,18 @@ fun MainScreen(
     SideEffect { redesignOverview.menuOpen = showRedesignMenu }
     // Tile values the stock state has not as separate texts (time left, basal rates).
     val redesignHomeData = if (redesignChrome) metroViewModel<RedesignHomeViewModel>().data.collectAsStateWithLifecycle().value else RedesignHomeData()
-    // Redesign: loop accept, pump set-up and permissions move from the bottom bar to the Menu, so the bar
-    // keeps at most five items. The BG source warning goes beside the glucose circle (RedesignHomeInputs).
+    // Redesign: objectives, pump set-up and permissions move from the bottom bar to the Menu, so the bar
+    // keeps at most five items. The BG source warning goes beside the glucose circle (RedesignHomeInputs),
+    // and the loop suggestion is the Loop tile.
     val loopActionAvailable = loopActionViewModel.uiState.collectAsStateWithLifecycle().value.actionAvailable
     val redesignAttentionItems = if (redesignChrome) {
         redesignAttentionItems(
-            loopActionAvailable = loopActionAvailable,
+            objectivesSetupPlugin = objectivesSetupPlugin,
+            objectivesProgressText = objectivesProgressText,
+            objectivesProgressDescription = objectivesProgressDescription,
             pumpSetupPlugin = pumpSetupPlugin,
             permissionsMissing = permissionsMissing,
             onNavigate = onNavigate,
-            onLoopActionClick = { showLoopActionSheet = true },
             onPermissionsClick = onPermissionsClick
         )
     } else emptyList()
@@ -549,7 +553,7 @@ fun MainScreen(
                             bgQualityBadgeIcon = bgQualityBadgeIcon,
                             bgQualityBadgeTint = bgQualityBadgeTint,
                             bgQualityBadgeDescription = bgQualityBadgeDescription,
-                            objectivesSetupPlugin = objectivesSetupPlugin,
+                            objectivesSetupPlugin = if (redesignChrome) null else objectivesSetupPlugin,
                             objectivesProgressText = objectivesProgressText,
                             objectivesProgressDescription = objectivesProgressDescription,
                             onNavigate = onNavigate,
@@ -565,7 +569,20 @@ fun MainScreen(
                                 }
                             } else null,
                             menuSelected = showRedesignMenu,
-                            menuBadge = redesignAttentionItems.isNotEmpty(),
+                            // Only what needs the user lights the dot: Objectives is a progress and does not.
+                            menuBadge = redesignAttentionItems.any { it.needsAction },
+                            onGraphsClick = if (redesignChrome) {
+                                {
+                                    val menuWasOpen = showRedesignMenu
+                                    closeRedesignMenu()
+                                    if (redesignOverview.page == GRAPHS_PAGE && !menuWasOpen) {
+                                        // Second tap: back to the home page, which also ends the edit mode.
+                                        redesignOverview.editMode = false
+                                        redesignOverview.page = HOME_PAGE
+                                    } else redesignOverview.page = GRAPHS_PAGE
+                                }
+                            } else null,
+                            graphsSelected = redesignOverview.page == GRAPHS_PAGE && !showRedesignMenu,
                             modifier = Modifier.onSizeChanged {
                                 if (it.height > 0 && it.height != bottomBarHeightPx) bottomBarHeightPx = it.height
                             }

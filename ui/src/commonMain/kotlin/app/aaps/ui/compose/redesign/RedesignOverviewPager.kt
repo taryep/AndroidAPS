@@ -1,6 +1,5 @@
 package app.aaps.ui.compose.redesign
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -31,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -47,11 +44,10 @@ import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
 import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.PAGE_COUNT
 
 /**
- * The redesign overview: two pages side by side, home and graphs, changed by a sideways swipe.
+ * The redesign overview: two pages side by side, home and graphs, changed by buttons only (no swipe).
  * No page indicator; each page has a name for the screen reader.
  *
- * The graphs keep their own sideways drag (it scrolls the history). The pager gets the drag only
- * where no graph takes it, or when the graph is at the end of its history.
+ * The graphs keep every sideways drag (it scrolls the history); the pager never takes one.
  *
  * @param homePage the content of the home page; it scrolls by itself
  * @param graphsPage the content of the graphs page; gets the edit mode, scrolls by itself
@@ -90,47 +86,21 @@ fun RedesignOverviewPager(
 
     val homeName = stringResource(UiStrings.redesign_page_home)
     val graphsName = stringResource(UiStrings.redesign_page_graphs)
-    Box(modifier.fillMaxSize()) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            // Both pages stay composed, so the graphs do not load again at each swipe.
-            beyondViewportPageCount = 1
-        ) { page ->
-            when (page) {
-                HOME_PAGE -> Box(Modifier.fillMaxSize().semantics { paneTitle = homeName }) { homePage() }
-                else      -> Column(Modifier.fillMaxSize().semantics { paneTitle = graphsName }) {
-                    if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
-                    Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
-                }
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxSize(),
+        // Only the buttons change the page (the Graphs item of the bottom bar, a tap on the glucose
+        // circle or the home graph, Menu > Edit mode, Back). No swipe, so the graphs keep every drag.
+        userScrollEnabled = false,
+        // Both pages stay composed, so the graphs do not load again at each change of page.
+        beyondViewportPageCount = 1
+    ) { page ->
+        when (page) {
+            HOME_PAGE -> Box(Modifier.fillMaxSize().semantics { paneTitle = homeName }) { homePage() }
+            else      -> Column(Modifier.fillMaxSize().semantics { paneTitle = graphsName }) {
+                if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
+                Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
             }
-        }
-        if (RedesignFlags.PAGE_DOTS) {
-            RedesignPageDots(
-                current = pagerState.currentPage,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = PAGE_DOTS_BOTTOM)
-            )
-        }
-    }
-}
-
-/**
- * Which page is open: ● ○ or ○ ●. Drawn over the bottom edge of the pages, so it takes no height
- * from them. Only a picture: the screen reader has the page names (pane titles).
- */
-@Composable
-fun RedesignPageDots(current: Int, modifier: Modifier = Modifier) {
-    val colors = redesignColors()
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(PAGE_DOT_SIZE),
-        modifier = modifier.clearAndSetSemantics {}
-    ) {
-        repeat(PAGE_COUNT) { page ->
-            Box(
-                Modifier
-                    .size(PAGE_DOT_SIZE)
-                    .background(if (page == current) colors.textPrimary else colors.textSecondary.copy(alpha = 0.4f), CircleShape)
-            )
         }
     }
 }
@@ -166,5 +136,3 @@ private fun RedesignEditPill(onDone: () -> Unit) {
 }
 
 private val PILL_BUTTON_PADDING = PaddingValues(horizontal = 12.dp)
-private val PAGE_DOT_SIZE = 6.dp
-private val PAGE_DOTS_BOTTOM = 4.dp

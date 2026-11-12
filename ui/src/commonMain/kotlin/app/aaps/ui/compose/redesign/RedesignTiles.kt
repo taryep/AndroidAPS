@@ -102,7 +102,11 @@ fun RedesignTiles(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(TILE_GAP)) {
             InsulinTile(state, colors, Modifier.weight(1f), onIobClick)
-            CarbsTile(state, colors, Modifier.weight(1f))
+            // Carbs entry, with the block of the Treatments item: nothing on a client that is not paired or has no role for it.
+            CarbsTile(
+                state, colors, Modifier.weight(1f),
+                onClick = if (commandsAllowed && role.allows(ElementType.CARBS.role)) ({ onNavigate(NavigationRequest.Element(ElementType.CARBS)) }) else null
+            )
             BasalTile(state, colors, Modifier.weight(1f), onBasalClick)
         }
     }
@@ -230,7 +234,7 @@ private fun InsulinTile(state: RedesignTilesState, colors: RedesignColors, modif
 }
 
 @Composable
-private fun CarbsTile(state: RedesignTilesState, colors: RedesignColors, modifier: Modifier) {
+private fun CarbsTile(state: RedesignTilesState, colors: RedesignColors, modifier: Modifier, onClick: (() -> Unit)?) {
     val cob = state.cob
     val tint = when {
         cob.carbsReq > 0   -> colors.carbsRequired
@@ -246,8 +250,7 @@ private fun CarbsTile(state: RedesignTilesState, colors: RedesignColors, modifie
         tinted = tint != colors.neutral,
         // A stronger border when carbs are required, as the SPEC asks.
         strongBorder = cob.carbsReq > 0,
-        // The stock carbs chip has no action either.
-        onClick = null,
+        onClick = onClick,
         modifier = modifier
     )
 }

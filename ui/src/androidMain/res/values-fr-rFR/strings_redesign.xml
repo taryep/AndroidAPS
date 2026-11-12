@@ -5,7 +5,6 @@
     <string name="redesign_tools">Outils</string>
     <string name="redesign_needs_attention">À régler</string>
     <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
-    <string name="redesign_loop_suggestion">Proposition de la boucle</string>
     <string name="redesign_edit_mode">Mode édition</string>
     <string name="redesign_edit_done">Terminer</string>
     <string name="redesign_page_home">Accueil, page 1 sur 2</string>
@@ -47,4 +46,6 @@
     <string name="redesign_graph_hour">%1$dh</string>
     <string name="redesign_graph_description">Glycémie sur les dernières %1$s, actuellement %2$s. Appui long pour lire une valeur</string>
     <string name="redesign_graph_description_no_value">Glycémie sur les dernières %1$s. Aucune valeur</string>
+    <string name="redesign_graphs">Graphiques</string>
+    <string name="redesign_close_graphs">Retour à l’accueil</string>
 </resources>

@@ -147,6 +147,27 @@ No upstream file. The graph is new code in `redesign/` and reads `GraphViewModel
 reuses `inspectDataAt` and `GraphInspectPill` (public in `GraphInspect.kt`), `beltColor` (internal in
 `TreatmentBeltGraphCompose.kt`) and `BgRange.toColor` (internal in `BgInfoSection.kt`), all unchanged.
 
+## Phase 4b - Graphs item, Carbs tile, Objectives in the Menu
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainNavigationBar.kt`
+
+- Two new parameters with defaults that keep the stock bar: `onGraphsClick: (() -> Unit)? = null` (null
+  hides the item) and `graphsSelected: Boolean = false`.
+- One call just before the Menu item: `RedesignGraphsNavigationItem(...)`, only when `onGraphsClick`
+  is not null. One import.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `MainNavigationBar(onGraphsClick = ..., graphsSelected = ...)` with the redesign chrome | A tap shows the graphs page; while it is shown the same tap goes back to the home page and ends the edit mode. Selected while the page is shown and the Menu is closed. |
+| `MainNavigationBar(objectivesSetupPlugin = null)` with the redesign chrome | Objectives leaves the bar (at most five items). |
+| `redesignAttentionItems(objectivesSetupPlugin, objectivesProgressText, objectivesProgressDescription, ...)` | Objectives is the first row of "À régler". The open loop suggestion row is gone: the Loop tile does it. |
+| `menuBadge = redesignAttentionItems.any { it.needsAction }` | Objectives is a progress and does not light the dot of the Menu item. |
+| Imports | `GRAPHS_PAGE`, `HOME_PAGE`. |
+
+Not touched: `TreatmentBottomSheet`, the Treatments item.
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

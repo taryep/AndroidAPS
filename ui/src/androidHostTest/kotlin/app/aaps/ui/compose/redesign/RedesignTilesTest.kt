@@ -144,15 +144,16 @@ class RedesignTilesTest {
         tap(string(R.string.redesign_tile_loop))
         tap(string(R.string.redesign_tile_insulin))
         tap(string(R.string.redesign_tile_basal))
+        tap(string(R.string.redesign_tile_carbs))
         assertThat(requests).containsExactly(
             NavigationRequest.Element(ElementType.PROFILE_MANAGEMENT),
             NavigationRequest.Element(ElementType.TEMP_TARGET_MANAGEMENT),
-            NavigationRequest.Element(ElementType.RUNNING_MODE)
+            NavigationRequest.Element(ElementType.RUNNING_MODE),
+            // The Carbs tile opens carbs entry, as the Carbs button of the treatment sheet does.
+            NavigationRequest.Element(ElementType.CARBS)
         ).inOrder()
         assertThat(iobClicks).isEqualTo(1)
         assertThat(basalClicks).isEqualTo(1)
-        // The stock carbs chip has no action, so the tile has none either.
-        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_tile_carbs), substring = true) and hasClickAction()).fetchSemanticsNodes()).isEmpty()
     }
 
     @Test
@@ -169,6 +170,8 @@ class RedesignTilesTest {
         show(tiles(), commandsAllowed = false)
         compose.onNode(hasText(string(R.string.redesign_tile_target), substring = true) and hasClickAction()).assertIsNotEnabled()
         compose.onNode(hasText(string(R.string.redesign_tile_loop), substring = true) and hasClickAction()).assertIsNotEnabled()
+        // Carbs entry is blocked like the Treatments item: the tile has no action at all.
+        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_tile_carbs), substring = true) and hasClickAction()).fetchSemanticsNodes()).isEmpty()
         // Profile management opens read-only there, as with the stock chip.
         compose.onNode(hasText(string(R.string.redesign_tile_profile), substring = true) and hasClickAction()).assertIsEnabled()
     }

@@ -33,6 +33,7 @@ import app.aaps.core.ui.compose.icons.Pump
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
+import app.aaps.ui.compose.redesign.RedesignGraphsNavigationItem
 import app.aaps.ui.compose.redesign.RedesignMenuNavigationItem
 
 @Composable
@@ -71,7 +72,11 @@ fun MainNavigationBar(
     /** Redesign: true while the Menu screen is open, so its item shows as selected. */
     menuSelected: Boolean = false,
     /** Redesign: true when the Menu holds something to set up; shows a dot on the Menu item. */
-    menuBadge: Boolean = false
+    menuBadge: Boolean = false,
+    /** Redesign: shows the graphs page, or goes back to the home page while it is shown. Null (stock) hides the Graphs item. */
+    onGraphsClick: (() -> Unit)? = null,
+    /** Redesign: true while the graphs page is shown, so its item shows as selected. */
+    graphsSelected: Boolean = false
 ) {
     val navColors = NavigationBarItemDefaults.colors(
         selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -318,6 +323,7 @@ fun MainNavigationBar(
         }
 
         // Redesign: Menu, always last
+        if (onGraphsClick != null) RedesignGraphsNavigationItem(selected = graphsSelected, onClick = onGraphsClick, colors = navColors)
         if (onMenuClick != null) RedesignMenuNavigationItem(selected = menuSelected, badge = menuBadge, onClick = onMenuClick, colors = navColors)
     }
 }

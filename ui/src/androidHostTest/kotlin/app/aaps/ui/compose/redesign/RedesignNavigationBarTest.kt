@@ -10,26 +10,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
-import app.aaps.core.interfaces.plugin.PluginBase
-import app.aaps.core.interfaces.plugin.PluginDescription
 import app.aaps.core.interfaces.resources.TextRefIdRegistry
-import app.aaps.core.keys.interfaces.TextRef
-import app.aaps.core.ui.CoreUiStrings
-import app.aaps.core.ui.compose.icons.IcPluginObjectives
 import app.aaps.ui.R
 import app.aaps.ui.UiStringIds
 import app.aaps.ui.compose.main.MainNavigationBar
@@ -38,8 +34,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -68,6 +62,7 @@ class RedesignNavigationBarTest {
     }
 
     private val menuLabel get() = RuntimeEnvironment.getApplication().getString(R.string.redesign_menu)
+    private val graphsLabel get() = RuntimeEnvironment.getApplication().getString(R.string.redesign_graphs)
 
     @Test
     fun theStockBarHasNoMenuItem() {
@@ -85,6 +80,36 @@ class RedesignNavigationBarTest {
         // While open, the screen reader says that the tap closes the menu.
         val closeLabel = RuntimeEnvironment.getApplication().getString(R.string.redesign_close_menu)
         compose.onNode(SemanticsMatcher("click label") { it.config.getOrNull(SemanticsActions.OnClick)?.label == closeLabel }).assertExists()
+    }
+
+    @Test
+    fun theStockBarHasNoGraphsItem() {
+        compose.setContent { MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}) } }
+        compose.onNode(hasText(graphsLabel)).assertDoesNotExist()
+    }
+
+    @Test
+    fun theGraphsItemIsBeforeTheMenuAndWorks() {
+        var clicks = 0
+        compose.setContent {
+            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onGraphsClick = { clicks++ }, onMenuClick = {}) }
+        }
+        compose.onNode(hasText(graphsLabel)).assertIsNotSelected().performClick()
+        assertThat(clicks).isEqualTo(1)
+        // Order: the Graphs item comes before the Menu item.
+        val graphsX = compose.onNode(hasText(graphsLabel)).fetchSemanticsNode().boundsInRoot.left
+        val menuX = compose.onNode(hasText(menuLabel)).fetchSemanticsNode().boundsInRoot.left
+        assertThat(graphsX).isLessThan(menuX)
+    }
+
+    @Test
+    fun whileTheGraphsAreShownTheItemIsSelectedAndSaysItGoesBack() {
+        compose.setContent {
+            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onGraphsClick = {}, graphsSelected = true) }
+        }
+        compose.onNode(hasText(graphsLabel)).assertIsSelected()
+        val backLabel = RuntimeEnvironment.getApplication().getString(R.string.redesign_close_graphs)
+        compose.onNode(SemanticsMatcher("click label") { it.config.getOrNull(SemanticsActions.OnClick)?.label == backLabel }).assertExists()
     }
 
     @Test
@@ -119,10 +144,9 @@ class RedesignNavigationBarTest {
                         quickWizardCount = 3,
                         automationTotal = 4,
                         automationCount = 2,
-                        // BG source warning, loop accept, pump set-up and permissions are not here: with
+                        // BG source warning, loop accept, objectives, pump set-up and permissions are not here: with
                         // the redesign they are in the Menu, which gets a badge instead (see MainScreen).
-                        objectivesSetupPlugin = plugin(null, IcPluginObjectives, CoreUiStrings.objectives),
-                        objectivesProgressText = "9/10",
+                        onGraphsClick = {},
                         onMenuClick = {},
                         menuBadge = true
                     )
@@ -139,17 +163,9 @@ class RedesignNavigationBarTest {
         File(dir, "navbar_worst_$name.txt").writeText(problems.joinToString("\n").ifEmpty { "no problems" })
         println("navbar worst case $name: ${problems.size} problems\n" + problems.joinToString("\n"))
 
-        // Five items: treatments, scenes, manage, objectives, menu.
+        // Five items: treatments, scenes, manage, graphs, menu.
         compose.onNode(hasText(menuLabel)).assertExists()
     }
-
-    private fun plugin(name: String?, icon: ImageVector, label: TextRef?): PluginBase =
-        mock<PluginBase>().also {
-            val description = PluginDescription().icon(icon)
-            if (label != null) description.pluginName(label)
-            whenever(it.pluginDescription).thenReturn(description)
-            whenever(it.name).thenReturn(name ?: "")
-        }
 
     /** Every label that is broken inside a word or cut without an ellipsis (the same rules as `OverviewSizeSweepTest`). */
     private fun textProblems(): List<String> =

@@ -143,12 +143,12 @@ class RedesignOverviewPagerTest {
     }
 
     @Test
-    fun aSwipeChangesThePage() {
+    fun aSwipeDoesNotChangeThePage() {
         show()
-        // Over the home page, below the glucose value: no graph there to take the drag.
+        // Only buttons change the page (SPEC 4b): the swipe that used to open the graphs does nothing.
         compose.onNodeWithTag(SCREEN).performTouchInput { swipeLeft(startX = right - 10f, endX = left + 10f) }
         compose.waitForIdle()
-        assertThat(state.page).isEqualTo(GRAPHS_PAGE)
+        assertThat(state.page).isEqualTo(HOME_PAGE)
     }
 
     @Test

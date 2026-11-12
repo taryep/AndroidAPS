@@ -148,24 +148,41 @@ class RedesignMenuScreenTest {
     }
 
     @Test
-    fun theItemsLeavingTheBarComeMostUrgentFirst() {
-        var labels = emptyList<String>()
+    fun theItemsLeavingTheBarAreObjectivesFirstThenTheMostUrgent() {
+        var items = emptyList<RedesignAttentionItem>()
         compose.setContent {
             MaterialTheme {
-                labels = redesignAttentionItems(
-                    loopActionAvailable = true,
+                items = redesignAttentionItems(
+                    objectivesSetupPlugin = plugin("Objectives"),
+                    objectivesProgressText = "9/10",
+                    objectivesProgressDescription = "9 of 10 objectives done",
                     pumpSetupPlugin = plugin("Omnipod DASH"),
                     permissionsMissing = true,
                     onNavigate = {},
-                    onLoopActionClick = {},
                     onPermissionsClick = {}
-                ).map { it.label }
+                )
             }
         }
         compose.waitForIdle()
-        // The BG source warning is not in the Menu any more: it is beside the glucose circle.
-        assertThat(labels).containsExactly(string(R.string.redesign_loop_suggestion), "Omnipod DASH", string(R.string.permission_sheet_title)).inOrder()
+        // The BG source warning is beside the glucose circle and the loop suggestion is the Loop tile: neither is here.
+        assertThat(items.map { it.label }).containsExactly("Objectives", "Omnipod DASH", string(R.string.permission_sheet_title)).inOrder()
+        assertThat(items.first().stateDescription).isEqualTo("9 of 10 objectives done")
+        // Objectives is a progress, so it does not light the dot on the Menu item; the other two do.
+        assertThat(items.map { it.needsAction }).containsExactly(false, true, true).inOrder()
     }
+
+    @Test
+    fun withNothingToDoTheSectionIsEmpty() {
+        var items = listOf<RedesignAttentionItem>()
+        compose.setContent {
+            MaterialTheme {
+                items = redesignAttentionItems(null, null, null, null, false, {}, {})
+            }
+        }
+        compose.waitForIdle()
+        assertThat(items).isEmpty()
+    }
+
 
     private fun plugin(name: String): PluginBase =
         mock<PluginBase>().also {

@@ -9,7 +9,6 @@
     <string name="redesign_tools" comment="Heading of the list of tools on the Menu screen (history, maintenance, configuration...)">Tools</string>
     <string name="redesign_needs_attention" comment="Heading on the Menu screen over the things the user must set up (pump, missing permissions)">Needs your attention</string>
     <string name="redesign_close_menu" comment="Screen reader action of the Menu button while the Menu screen is open">Close the menu and go back to the home screen</string>
-    <string name="redesign_loop_suggestion" comment="Row on the Menu screen in open loop: the loop suggests a change that the user must accept or not">Loop suggestion</string>
     <string name="redesign_edit_mode" comment="Two places with the same words: the Menu shortcut that shows the graphs page with the buttons to add, change and remove graphs, and the label at the top of that page while it is in this mode">Edit mode</string>
     <string name="redesign_edit_done" comment="Button that leaves the edit mode of the graphs page">Done</string>
     <string name="redesign_page_home" comment="Screen reader name of the first page of the overview">Home, page 1 of 2</string>
@@ -53,4 +52,6 @@
     <string name="redesign_graph_hour" comment="Hour label under the home glucose graph. Very short. %1$d=hour of the day, 0 to 23. Example: 19h">%1$dh</string>
     <string name="redesign_graph_description" comment="Screen reader text of the home glucose graph. %1$s=time shown, %2$s=last glucose value with unit. Example: Glucose over the last 6 hours, now 133 mg/dL. Long press to read a value">Glucose over the last %1$s, now %2$s. Long press to read a value</string>
     <string name="redesign_graph_description_no_value" comment="Screen reader text of the home glucose graph when it has no reading. %1$s=time shown. Example: Glucose over the last 6 hours. No reading">Glucose over the last %1$s. No reading</string>
+    <string name="redesign_graphs" comment="Bottom bar item that shows the graphs page. Short, one word">Graphs</string>
+    <string name="redesign_close_graphs" comment="Screen reader action of the Graphs bottom bar item while the graphs page is shown: the same button goes back to the home page">Back to the home page</string>
 </resources>

@@ -5,8 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -28,10 +28,13 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -47,6 +50,7 @@ import app.aaps.ui.compose.main.TempTargetChipState
 import app.aaps.ui.compose.overview.chips.CobUiState
 import app.aaps.ui.compose.overview.chips.IobUiState
 import com.google.common.truth.Truth.assertThat
+import java.io.File
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -55,11 +59,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import java.io.File
 
 /**
  * Phase 3: the six home tiles. Each tap does what the stock chip does, every state of SPEC 3.2 has a
- * picture in `ui/build/reports/redesign/tiles/`, and the longest French values fit without "…".
+ * picture in `ui/build/reports/redesign/tiles/`, and the longest French values fit without "â€¦".
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -84,12 +87,12 @@ class RedesignTilesTest {
         tbrState: TbrState = TbrState.NONE,
         iob: IobUiState = IobUiState(text = "0,00 U", iobTotal = 0.0),
         cob: CobUiState = CobUiState(text = "0 g"),
-        data: RedesignHomeData = RedesignHomeData(profileName = "Normal", targetText = "120–130", basalRate = "0,85 U/h"),
+        data: RedesignHomeData = RedesignHomeData(profileName = "Normal", targetText = "120â€“130", basalRate = "0,85 U/h"),
         loopSuggestion: Boolean = false
     ) = RedesignTilesState(
         profileName = "Normal", isProfileModified = isProfileModified,
-        tempTargetText = "120–130", tempTargetState = tempTargetState, tempTargetReason = TT.Reason.EATING_SOON,
-        runningMode = runningMode, runningModeText = "Boucle fermée", runningModeRemaining = runningModeRemaining,
+        tempTargetText = "120â€“130", tempTargetState = tempTargetState, tempTargetReason = TT.Reason.EATING_SOON,
+        runningMode = runningMode, runningModeText = "Boucle fermÃ©e", runningModeRemaining = runningModeRemaining,
         tbrState = tbrState, iob = iob, cob = cob, data = data, loopSuggestion = loopSuggestion
     )
 
@@ -168,8 +171,8 @@ class RedesignTilesTest {
     fun eachTileDoesWhatItsChipDoes() {
         show(tiles())
         tap(string(R.string.redesign_tile_profile))
-        tap("120–130")
-        tap(string(R.string.redesign_mode_closed))
+        tap("120â€“130")
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).performClick()
         tap(string(R.string.redesign_tile_active_insulin))
         tap(string(R.string.redesign_tile_basal))
         tap(string(R.string.redesign_tile_carbs))
@@ -187,17 +190,30 @@ class RedesignTilesTest {
     @Test
     fun aWaitingLoopSuggestionOpensTheSheetToAcceptIt() {
         show(tiles(runningMode = RM.Mode.OPEN_LOOP, loopSuggestion = true))
-        compose.onNode(hasText(string(R.string.redesign_mode_open), substring = true) and hasClickAction()).performClick()
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_open), substring = true) and hasClickAction()).performClick()
         assertThat(suggestionClicks).isEqualTo(1)
         assertThat(requests).isEmpty()
         picture("loop_suggestion")
     }
 
     @Test
+    fun withASuggestionWaitingALongPressChangesTheModeAndTheSlotShowsOnlyItsIcon() {
+        // Step 7 (decided 12 Nov): tap = the sheet to accept the suggestion, long press = the running mode dialog.
+        show(tiles(runningMode = RM.Mode.OPEN_LOOP, loopSuggestion = true))
+        val slot = compose.onNode(hasContentDescription(string(R.string.redesign_mode_open), substring = true) and hasClickAction())
+        slot.performTouchInput { longClick() }
+        compose.waitForIdle()
+        assertThat(requests).containsExactly(NavigationRequest.Element(ElementType.RUNNING_MODE))
+        assertThat(suggestionClicks).isEqualTo(0)
+        // Icon only (decided 9 Nov): the mode word is not written in the slot, only said by the screen reader.
+        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_mode_open)), useUnmergedTree = true).fetchSemanticsNodes()).isEmpty()
+    }
+
+    @Test
     fun onAnUnpairedClientTheCommandTilesAreOff() {
         show(tiles(), commandsAllowed = false)
-        compose.onNode(hasText("120–130", substring = true) and hasClickAction()).assertIsNotEnabled()
-        compose.onNode(hasText(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).assertIsNotEnabled()
+        compose.onNode(hasText("120â€“130", substring = true) and hasClickAction()).assertIsNotEnabled()
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).assertIsNotEnabled()
         // Carbs entry is blocked like the Treatments item: the tile has no action at all.
         assertThat(compose.onAllNodes(hasText(string(R.string.redesign_tile_carbs), substring = true) and hasClickAction()).fetchSemanticsNodes()).isEmpty()
         // Profile management opens read-only there, as with the stock chip.
@@ -263,7 +279,7 @@ class RedesignTilesTest {
 
     @Test
     fun withTheLargestFontNothingOverlapsAndTheTilesShrink() {
-        // At 200 % some text may end with "…" (the SPEC allows it), but nothing may spill out of a tile.
+        // At 200 % some text may end with "â€¦" (the SPEC allows it), but nothing may spill out of a tile.
         show(worstCase(), fontScale = 2f)
         picture("worst_case_font200")
         val report = File("build/reports/redesign/tiles").apply { mkdirs() }
@@ -279,7 +295,7 @@ class RedesignTilesTest {
         cob = CobUiState(text = "0 g", carbsReq = 13),
         data = RedesignHomeData(
             profileName = "Normal (90%)", profileTimeLeft = "9 min",
-            targetText = "120–130", basalRate = "0,85 U/h",
+            targetText = "120â€“130", basalRate = "0,85 U/h",
             tempBasalRunning = true, tempBasalRate = "1,02 U/h", tempBasalPercent = "120%", tempBasalTimeLeft = "25 min"
         )
     )

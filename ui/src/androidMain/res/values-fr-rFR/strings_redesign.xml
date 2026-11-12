@@ -25,6 +25,10 @@
     <string name="redesign_mode_paused_no_time">Pause</string>
     <string name="redesign_mode_disconnected">Déconnectée</string>
     <string name="redesign_mode_disabled">Désactivée</string>
+    <string name="redesign_loop_mode_time">%1$s, %2$s</string>
+    <string name="redesign_loop_slot">Boucle : %1$s</string>
+    <string name="redesign_loop_slot_suggestion">Boucle : %1$s. Une suggestion attend</string>
+    <string name="redesign_loop_change_mode">Changer le mode</string>
     <string name="redesign_carbs_required">%1$dg requis</string>
     <string name="redesign_sensitivity">Sensibilité</string>
     <string name="redesign_isf">ISF</string>

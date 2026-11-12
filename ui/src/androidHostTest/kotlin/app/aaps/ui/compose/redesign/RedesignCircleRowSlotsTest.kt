@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -126,7 +127,7 @@ class RedesignCircleRowSlotsTest {
     }
 
     @Test
-    fun theLoopSlotShowsACaptionInEveryMode() {
+    fun theLoopSlotNamesTheModeInEveryMode() {
         val modes = listOf(
             RM.Mode.CLOSED_LOOP to "", RM.Mode.OPEN_LOOP to "", RM.Mode.CLOSED_LOOP_LGS to "",
             RM.Mode.SUSPENDED_BY_USER to "25 min", RM.Mode.DISCONNECTED_PUMP to "30 min", RM.Mode.DISABLED_LOOP to ""
@@ -136,10 +137,11 @@ class RedesignCircleRowSlotsTest {
                 @Composable { RedesignLoopSlot(state(mode, remaining), true, { requests += it }, { suggestionClicks++ }) }
             }.toTypedArray())
         }
-        // Closed loop has a caption too, not only an icon.
-        compose.onNode(hasText(string(R.string.redesign_mode_closed), substring = true)).assertExists()
-        compose.onNode(hasText(string(R.string.redesign_mode_disconnected), substring = true)).assertExists()
-        compose.onNode(hasText("25 min", substring = true)).assertExists()
+        // Step 7: the slot shows the icon only. The mode and the time left stay in the screen reader name.
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_closed), substring = true)).assertExists()
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_disconnected), substring = true)).assertExists()
+        compose.onNode(hasContentDescription("25 min", substring = true)).assertExists()
+        compose.onAllNodes(hasText("25 min", substring = true)).assertCountEquals(0)
         picture("loop_modes")
         show(fontScale = 2f) {
             SlotsRow({ RedesignLoopSlot(state(RM.Mode.DISCONNECTED_PUMP, "30 min"), true, { requests += it }, {}) })
@@ -152,7 +154,7 @@ class RedesignCircleRowSlotsTest {
         show {
             SlotsRow({ RedesignLoopSlot(state(RM.Mode.OPEN_LOOP, loopSuggestion = true), true, { requests += it }, { suggestionClicks++ }) })
         }
-        compose.onNode(hasText(string(R.string.redesign_mode_open), substring = true) and hasClickAction()).performClick()
+        compose.onNode(hasContentDescription(string(R.string.redesign_mode_open), substring = true) and hasClickAction()).performClick()
         assertThat(suggestionClicks).isEqualTo(1)
         assertThat(requests).isEmpty()
         picture("loop_suggestion")

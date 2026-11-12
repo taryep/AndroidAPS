@@ -17,7 +17,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 4 | Feuilles Insuline et Basale : barre du haut | Code fait, à tester |
 | 5 | Medtrum et barres de progression | En partie : barre Medtrum faite ; ronds et traductions à décider |
 | 6 | Écran d'injection : texte | Code fait, à tester |
-| 7 | Boucle | À faire |
+| 7 | Boucle | Code fait, à tester |
 | 8 | Notifications | À faire |
 | 9 | Page Graphiques : mode édition | À faire |
 | 10 | Thème clair | À faire |
@@ -96,7 +96,7 @@ Résultat du diagnostic (12 nov.) :
 Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin les réécrit). Les remplacements vivent dans un fichier du fork, comme `strings_redesign.xml`. Pour qu'une traduction arrive un jour dans AAPS, il faut aussi la proposer sur Crowdin ([mode d'emploi](https://androidaps.readthedocs.io/en/latest/SupportingAaps/Translations.html)).
 
 ### 7. Boucle
-- [ ] Diagnostic (slot Boucle, badge ①)
+- [x] Diagnostic (slot Boucle, badge ①) : le slot montrait encore la légende (« Fermée »…) ; avec une suggestion, l'appui ouvrait la feuille d'acceptation et il n'y avait pas d'appui long. Choix de sécurité : l'appui ouvre toujours la feuille d'origine qui demande avant d'envoyer (pas d'acceptation en un seul appui)
 - [ ] Icône seule, sans texte ; la couleur indique le mode. Les noms accessibles gardent le texte complet
 - [ ] Geste : boucle ouverte avec une suggestion en attente → appui = accepter la suggestion, appui long = changer le mode. Sans suggestion en attente → appui = changer le mode. Pas de chevron : le badge ① suffit
 

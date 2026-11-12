@@ -1,7 +1,9 @@
 package app.aaps.ui.compose.redesign
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,13 +56,16 @@ import app.aaps.ui.compose.overview.chips.toIcon
 
 /**
  * One round slot (84 dp) of the circle row (SPEC 3.3): an icon, a bold caption and, under it, a small
- * second line. [badge] is a small count at the top right (an open loop suggestion waits).
+ * second line. With no caption and no second line, only the icon is shown (the Loop slot, step 7).
+ * [badge] is a small count at the top right (an open loop suggestion waits).
  *
  * The text never overflows: it gets smaller, down to 10 sp, before it ends with "...".
  *
  * @param onClick null for a slot with no action
+ * @param onLongClick a second action on a long press, with [onLongClickLabel] for the screen reader
  * @param stateDescription the full stock text for the screen reader
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RedesignRoundSlot(
     tint: RedesignTint,
@@ -73,7 +78,9 @@ fun RedesignRoundSlot(
     badge: String? = null,
     description: String? = null,
     stateDescription: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null
 ) {
     val semantics = Modifier.semantics(mergeDescendants = true) {
         if (description != null) contentDescription = description
@@ -89,14 +96,35 @@ fun RedesignRoundSlot(
                 modifier = Modifier.padding(horizontal = 6.dp)
             ) {
                 Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(iconSize))
-                Spacer(Modifier.height(3.dp))
-                SlotText(caption, tint, fontSize = 12, bold = true)
+                if (caption.isNotEmpty()) {
+                    Spacer(Modifier.height(3.dp))
+                    SlotText(caption, tint, fontSize = 12, bold = true)
+                }
                 if (secondLine.isNotEmpty()) SlotText(secondLine, tint, fontSize = 11, bold = false)
             }
         }
     }
     Box(modifier.size(ROUND_SLOT_SIZE)) {
-        if (onClick != null) {
+        if (onClick != null && onLongClick != null) {
+            // A tap and a long press: a plain Surface with combinedClickable, clipped to the circle.
+            Surface(
+                shape = CircleShape,
+                color = tint.background,
+                border = BorderStroke(1.dp, tint.border),
+                modifier = Modifier
+                    .size(ROUND_SLOT_SIZE)
+                    .clip(CircleShape)
+                    .combinedClickable(
+                        enabled = enabled,
+                        role = Role.Button,
+                        onLongClickLabel = onLongClickLabel,
+                        onLongClick = onLongClick,
+                        onClick = onClick
+                    )
+                    .then(semantics),
+                content = content
+            )
+        } else if (onClick != null) {
             Surface(
                 onClick = onClick,
                 enabled = enabled,
@@ -153,9 +181,9 @@ private fun SlotText(text: String, tint: RedesignTint, fontSize: Int, bold: Bool
 }
 
 /**
- * The Loop slot: the running mode with its colours (SPEC 3.2.1) and a caption in every mode, closed
- * loop included. A tap does what the Loop tile did: it opens the running mode dialog, or, while an
- * open loop suggestion waits, the sheet to accept it.
+ * The Loop slot: the running mode with its colours (SPEC 3.2.1), the icon only (step 7); the words are for
+ * the screen reader. A tap does what the Loop tile did: it opens the running mode dialog, or, while an
+ * open loop suggestion waits, the sheet to accept it; then a long press opens the running mode dialog.
  */
 @Composable
 fun RedesignLoopSlot(
@@ -206,17 +234,29 @@ fun RedesignLoopSlot(
             caption = state.runningModeText; tint = if (mode == RM.Mode.SUPER_BOLUS) colors.superBolus else colors.neutral
         }
     }
+    // Step 7 (decided 9 Nov): the icon only, the colour tells the mode. The words stay for the screen reader:
+    // "Loop: Paused, 25 min", and "a suggestion waits" with the badge.
+    val modeText = if (secondLine.isNotEmpty()) stringResource(UiStrings.redesign_loop_mode_time, caption, secondLine) else caption
+    val description =
+        if (state.loopSuggestion) stringResource(UiStrings.redesign_loop_slot_suggestion, modeText)
+        else stringResource(UiStrings.redesign_loop_slot, modeText)
+    val canChangeMode = commandsAllowed && role.allows(ElementType.RUNNING_MODE.role)
+    val openModeDialog = { onNavigate(NavigationRequest.Element(ElementType.RUNNING_MODE)) }
     RedesignRoundSlot(
         tint = tint,
         icon = mode?.toIcon() ?: ElementType.RUNNING_MODE.icon(),
         iconSize = LOOP_ICON_SIZE,
-        caption = caption,
-        secondLine = secondLine,
+        caption = "",
         badge = if (state.loopSuggestion) "1" else null,
-        // The full stock text (mode and time left) for the screen reader, as on the chip.
+        description = description,
+        // The full stock text (mode and time left), as on the chip.
         stateDescription = state.runningModeText.takeIf { !state.loopSuggestion && it.isNotEmpty() },
-        enabled = state.loopSuggestion || (commandsAllowed && role.allows(ElementType.RUNNING_MODE.role)),
-        onClick = if (state.loopSuggestion) onLoopSuggestionClick else ({ onNavigate(NavigationRequest.Element(ElementType.RUNNING_MODE)) }),
+        enabled = state.loopSuggestion || canChangeMode,
+        // Step 7 (decided 12 Nov): with a suggestion waiting, a tap opens the stock sheet to accept it (it asks
+        // before anything is sent) and a long press changes the mode. Otherwise a tap changes the mode.
+        onClick = if (state.loopSuggestion) onLoopSuggestionClick else openModeDialog,
+        onLongClick = if (state.loopSuggestion && canChangeMode) openModeDialog else null,
+        onLongClickLabel = stringResource(UiStrings.redesign_loop_change_mode),
         modifier = modifier
     )
 }
@@ -243,7 +283,7 @@ fun RedesignTargetSlot(
         TempTargetChipState.Adjusted -> AapsTheme.generalColors.adjusted.let { RedesignTint(it.copy(alpha = 0.2f).compositeOver(colors.surface), it.copy(alpha = 0.5f), it) }
         TempTargetChipState.None     -> colors.neutral
     }
-    val value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "—" }
+    val value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "Ã¢â‚¬â€" }
     val timeLeft = if (active) data.targetTimeLeft else ""
     RedesignRoundSlot(
         tint = tint,
@@ -269,7 +309,7 @@ private fun TT.Reason?.toIcon(): ImageVector = when (this) {
 
 /** Size of the round Loop and Target slots. */
 val ROUND_SLOT_SIZE = 84.dp
-private val LOOP_ICON_SIZE = 30.dp
+private val LOOP_ICON_SIZE = 36.dp
 private val TARGET_ICON_SIZE = 32.dp
 private val BADGE_SIZE = 18.dp
 private val BADGE_RING = 2.dp

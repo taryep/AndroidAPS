@@ -88,6 +88,8 @@ import app.aaps.ui.compose.redesign.RedesignMenuScreen
 import app.aaps.ui.compose.redesign.RedesignOverviewState
 import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.GRAPHS_PAGE
 import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
+import app.aaps.ui.compose.redesign.rememberRedesignTileTaps
+import app.aaps.ui.compose.redesign.withoutCarbsButton
 import app.aaps.ui.compose.redesign.isRedesignPhoneLayout
 import app.aaps.ui.compose.redesign.redesignAttentionItems
 import app.aaps.ui.compose.scenesSheet.ScenesBottomSheet
@@ -316,6 +318,10 @@ fun MainScreen(
                 val masterReachable by mainViewModel.masterReachable.collectAsStateWithLifecycle()
                 // Stable pairing signal — hides the mutating nav buttons on an unpaired client.
                 val masterOrPairedClient by mainViewModel.masterOrPairedClient.collectAsStateWithLifecycle()
+                // Redesign: the Active insulin and Basal tiles open the insulin and temp basal screens (SPEC 3.2.2, 3.2.3).
+                val redesignTileTaps = if (redesignChrome) {
+                    rememberRedesignTileTaps(manageViewModel, masterOrPairedClient, onNavigate, chipsViewModel::showIobInfo, mainViewModel::showTbrInfo)
+                } else null
                 // (Probe-while-offline is now global — see ComposeMainActivity. This screen still reads
                 // masterReachable for its own gating.)
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -345,8 +351,8 @@ fun MainScreen(
                         statusViewModel = statusViewModel,
                         statusLightsDef = statusLightsDef,
                         onNavigate = onNavigate,
-                        onTbrChipClick = mainViewModel::showTbrInfo,
-                        onIobChipClick = chipsViewModel::showIobInfo,
+                        onTbrChipClick = redesignTileTaps?.onBasalClick ?: mainViewModel::showTbrInfo,
+                        onIobChipClick = redesignTileTaps?.onIobClick ?: chipsViewModel::showIobInfo,
                         notifications = notifications,
                         onDismissNotification = onDismissNotification,
                         onNotificationActionClick = onNotificationActionClick,
@@ -645,13 +651,15 @@ fun MainScreen(
             showCalibration = treatmentState.showCalibration,
             showTreatment = treatmentState.showTreatment,
             showInsulin = treatmentState.showInsulin,
-            showCarbs = treatmentState.showCarbs,
+            // Redesign: carbs entry is the Carbs tile (SPEC 3.2.4).
+            showCarbs = treatmentState.showCarbs && !redesignChrome,
             showCalculator = treatmentState.showCalculator,
             isDexcomSource = treatmentState.isDexcomSource,
             showSettingsIcon = treatmentState.showSettingsIcon,
             quickWizardItems = treatmentState.quickWizardItems,
             onNavigate = onNavigate,
-            treatmentButtonsDef = treatmentButtonsDef,
+            // Redesign: no carbs switch in the gear either, it would do nothing.
+            treatmentButtonsDef = if (redesignChrome) treatmentButtonsDef.withoutCarbsButton() else treatmentButtonsDef,
         )
     }
 

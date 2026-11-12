@@ -84,7 +84,8 @@ fun InsulinDialogScreen(
     iobUiState: StateFlow<IobUiState>,
     cobUiState: StateFlow<CobUiState>,
     onNavigateBack: () -> Unit,
-    onShowDeliveryError: (String) -> Unit
+    onShowDeliveryError: (String) -> Unit,
+    topInfo: (@Composable () -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val bgInfo by bgInfoState.collectAsStateWithLifecycle()
@@ -199,7 +200,8 @@ fun InsulinDialogScreen(
         },
         onNavigateBack = onNavigateBack,
         onConfirmClick = { viewModel.prepareAndConfirm() },
-        onInsulinTypeSelect = viewModel::selectInsulinType
+        onInsulinTypeSelect = viewModel::selectInsulinType,
+        topInfo = topInfo
     )
 }
 
@@ -227,7 +229,8 @@ internal fun InsulinDialogContent(
     onInsulinTypeSelect: (ICfg) -> Unit,
     onSettingsClick: (() -> Unit)?,
     onNavigateBack: () -> Unit,
-    onConfirmClick: () -> Unit
+    onConfirmClick: () -> Unit,
+    topInfo: (@Composable () -> Unit)? = null
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -304,6 +307,7 @@ internal fun InsulinDialogContent(
         ) {
             // --- Status Bar ---
             DialogStatusBar(bgInfo = bgInfo, iob = iob, cob = cob)
+            topInfo?.invoke()
 
             // --- Card 1: Switches ---
             Card(

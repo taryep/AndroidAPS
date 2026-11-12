@@ -57,7 +57,8 @@ import app.aaps.core.ui.compose.stringResourceOrNull
 fun TempBasalDialogScreen(
     viewModel: TempBasalDialogViewModel = metroViewModel(),
     onNavigateBack: () -> Unit,
-    onShowDeliveryError: (String) -> Unit
+    onShowDeliveryError: (String) -> Unit,
+    topInfo: (@Composable () -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -106,7 +107,8 @@ fun TempBasalDialogScreen(
         onBasalAbsoluteChange = viewModel::updateBasalAbsolute,
         onDurationChange = viewModel::updateDuration,
         onNavigateBack = onNavigateBack,
-        onConfirmClick = { viewModel.prepareAndConfirm() }
+        onConfirmClick = { viewModel.prepareAndConfirm() },
+        topInfo = topInfo
     )
 }
 
@@ -121,7 +123,8 @@ internal fun TempBasalDialogContent(
     onBasalAbsoluteChange: (Double) -> Unit,
     onDurationChange: (Double) -> Unit,
     onNavigateBack: () -> Unit,
-    onConfirmClick: () -> Unit
+    onConfirmClick: () -> Unit,
+    topInfo: (@Composable () -> Unit)? = null
 ) {
     val focusManager = LocalFocusManager.current
     Scaffold(
@@ -187,6 +190,7 @@ internal fun TempBasalDialogContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            topInfo?.invoke()
             // Single card: basal rate + duration
             Card(
                 modifier = Modifier.fillMaxWidth(),

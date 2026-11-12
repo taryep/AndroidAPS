@@ -50,4 +50,9 @@
     <string name="redesign_add_sensor">Ajouter un capteur</string>
     <string name="redesign_age_max_days">%1$dj</string>
     <string name="redesign_value_of_max">%1$s / %2$s</string>
+    <string name="redesign_iob_line">Bolus %1$s + Basale %2$s = %3$s</string>
+    <string name="redesign_tbr_line">%1$s @%2$s %3$d/%4$d min</string>
+    <string name="redesign_profile_basal">Basale du profil %1$s</string>
+    <string name="redesign_cancel_temp_basal">Annuler la basale temp.</string>
+    <string name="redesign_cancel_temp_basal_description">Annuler la basale temporaire en cours</string>
 </resources>

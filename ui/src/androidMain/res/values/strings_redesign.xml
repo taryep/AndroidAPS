@@ -56,4 +56,11 @@
     <string name="redesign_add_sensor" comment="Screen reader name of the small round (+) button next to Sensor in the consumables panel">Add a sensor</string>
     <string name="redesign_age_max_days" comment="Longest age of a sensor or patch, short, whole days only. d=days. %1$d=days. Example: 3d">%1$dd</string>
     <string name="redesign_value_of_max" comment="Value and its maximum in the consumables panel. %1$s=value, %2$s=maximum. Example: 2d17h / 3d">%1$s / %2$s</string>
+
+    <!-- Lines on top of the insulin and temp basal screens opened from the tiles -->
+    <string name="redesign_iob_line" comment="One line over the insulin screen: insulin on board from boluses, from basal, and the total. %1$s, %2$s, %3$s=insulin with unit, the basal part can be negative. Example: Bolus 1.50 U + Basal -1.30 U = 0.20 U">Bolus %1$s + Basal %2$s = %3$s</string>
+    <string name="redesign_tbr_line" comment="One line over the temp basal screen while a temporary basal runs. %1$s=rate with unit, %2$s=start time, %3$d=minutes passed, %4$d=total minutes. Example: 0.00 U/h @15:58 5/60 min">%1$s @%2$s %3$d/%4$d min</string>
+    <string name="redesign_profile_basal" comment="One line over the temp basal screen when no temporary basal runs. %1$s=basal rate with unit. Example: Profile basal 0.85 U/h">Profile basal %1$s</string>
+    <string name="redesign_cancel_temp_basal" comment="Button over the temp basal screen while a temporary basal runs. Short">Cancel temp basal</string>
+    <string name="redesign_cancel_temp_basal_description" comment="Screen reader name of the Cancel temp basal button">Cancel the running temporary basal</string>
 </resources>

@@ -3,8 +3,11 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.model.durationInMinutes
+import app.aaps.core.data.model.getPassedDurationToTimeInMinutes
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.overview.graph.OverviewDataCache
 import app.aaps.core.interfaces.overview.graph.ProfileDisplayData
 import app.aaps.core.interfaces.overview.graph.TbrDisplayData
@@ -15,7 +18,9 @@ import app.aaps.core.interfaces.resources.TextResolver
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.extensions.convertedToAbsolute
 import app.aaps.core.objects.extensions.convertedToPercent
+import app.aaps.core.objects.extensions.round
 import app.aaps.core.ui.CoreUiStrings
+import app.aaps.ui.UiStrings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -54,11 +59,24 @@ data class RedesignHomeData(
     /** The temporary basal as a percent of the profile basal, e.g. "0%". */
     val tempBasalPercent: String = "",
     /** Time left of the temporary basal. */
-    val tempBasalTimeLeft: String = ""
+    val tempBasalTimeLeft: String = "",
+    /** The data of the stock "Temp basal" dialog on one line (SPEC 3.2.3), e.g. "0.00 U/h @15:58 5/60 min". */
+    val tempBasalLine: String = ""
 )
 
 /**
- * Builds [RedesignHomeData] from the same sources `MainViewModel` reads for the chips, the overview
+ * The parts of the insulin on board, as the stock IOB dialog shows them (`ChipsViewModel.showIobInfo`):
+ * same calls, same rounding.
+ */
+@Immutable
+data class RedesignIobParts(val bolus: Double, val basal: Double) {
+
+    /** The total, added exactly as the stock dialog adds it. */
+    val total: Double get() = bolus + basal
+}
+
+/**
+ * Builds [RedesignHomeData] and [RedesignIobParts] from the same sources `MainViewModel` reads for the chips, the overview
  * data cache, the profile and the active temporary basal. It only formats; it changes nothing.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
@@ -68,6 +86,7 @@ class RedesignHomeViewModel(
     private val overviewDataCache: OverviewDataCache,
     private val profileFunction: ProfileFunction,
     private val persistenceLayer: PersistenceLayer,
+    private val iobCobCalculator: IobCobCalculator,
     private val dateUtil: DateUtil,
     private val rh: TextResolver
 ) : ViewModel() {
@@ -88,6 +107,18 @@ class RedesignHomeViewModel(
     ) { profile, target, tbr, now -> build(profile, target, tbr, now) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RedesignHomeData())
 
+    /**
+     * Bolus and basal insulin on board for the IOB line of the insulin screen (SPEC 3.2.2). Same trigger
+     * as the IOB chip (a new IOB graph), plus the tick. Only computed while the line is shown. Null until
+     * the first value is known.
+     */
+    val iobParts: StateFlow<RedesignIobParts?> = combine(overviewDataCache.iobGraphFlow, ticker) { _, _ ->
+        RedesignIobParts(
+            bolus = iobCobCalculator.calculateIobFromBolus().round().iob,
+            basal = iobCobCalculator.calculateIobFromTempBasalsIncludingConvertedExtended().round().basaliob
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     private suspend fun build(profileData: ProfileDisplayData?, targetData: TempTargetDisplayData?, tbrData: TbrDisplayData?, now: Long): RedesignHomeData {
         val profile = profileFunction.getProfile()
         val tempBasal = if (tbrData != null && tbrData.state != TbrState.NONE) persistenceLayer.getTemporaryBasalActiveAt(now) else null
@@ -101,7 +132,16 @@ class RedesignHomeViewModel(
             tempBasalRunning = running != null,
             tempBasalRate = running?.let { (tb, p) -> rh.gs(CoreUiStrings.pump_base_basal_rate, tb.convertedToAbsolute(now, p)) }.orEmpty(),
             tempBasalPercent = running?.let { (tb, p) -> rh.gs(CoreUiStrings.formatPercent, tb.convertedToPercent(now, p).toDouble()) }.orEmpty(),
-            tempBasalTimeLeft = running?.let { (tb, _) -> timeLeft(tb.timestamp, tb.duration, now) }.orEmpty()
+            tempBasalTimeLeft = running?.let { (tb, _) -> timeLeft(tb.timestamp, tb.duration, now) }.orEmpty(),
+            tempBasalLine = running?.let { (tb, p) ->
+                rh.gs(
+                    UiStrings.redesign_tbr_line,
+                    rh.gs(CoreUiStrings.pump_base_basal_rate, tb.convertedToAbsolute(now, p)),
+                    dateUtil.timeString(tb.timestamp),
+                    tb.getPassedDurationToTimeInMinutes(now),
+                    tb.durationInMinutes.toInt()
+                )
+            }.orEmpty()
         )
     }
 

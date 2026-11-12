@@ -203,6 +203,47 @@ the redesign panel does not show it.
 |---|---|
 | `RedesignHomeStock(..., pumpStatusText = pumpStatusText)` (one more argument in the existing hook) | The pump activity slot shows what the pump does in the stock words of the pump status banner (temp basal, reading status, connecting...), not always "Injection". |
 
+## Phase 6 - Tile actions and Traitements
+
+New file `redesign/RedesignTileActions.kt`: the tap rules of the two tiles, the IOB line, the basal
+line and its Cancel button. `RedesignHomeViewModel` (our file) gets `iobParts` (the same two calls and
+the same rounding as `ChipsViewModel.showIobInfo`) and `tempBasalLine` (the data of the stock
+"Temp basal" dialog in the new string `redesign_tbr_line`, "0,00 U/h @15:58 5/60 min").
+`ChipsViewModel` and `ChipsUiState` are not touched.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/insulinDialog/InsulinDialogScreen.kt`
+
+- New last parameter `topInfo: (@Composable () -> Unit)? = null` on `InsulinDialogScreen` and on
+  `InsulinDialogContent`; the screen passes it on.
+- `topInfo?.invoke()` right under `DialogStatusBar`. Null (stock) draws nothing.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/tempBasalDialog/TempBasalDialogScreen.kt`
+
+- The same parameter on `TempBasalDialogScreen` and `TempBasalDialogContent`; the screen passes it on.
+- `topInfo?.invoke()` at the top of the scrolling column, above the editor card.
+
+### `appshell/src/commonMain/kotlin/app/aaps/appshell/navigation/AppNavGraph.kt`
+
+| Hook | Why |
+|---|---|
+| `InsulinDialogScreen(topInfo = if (RedesignFlags.ENABLED) { { RedesignIobLine() } } else null)` | The IOB line. Passed in the route, not by the tile, so it is there from every entry point (Traitements too, on purpose) and survives Back and the death of the process. |
+| `TempBasalDialogScreen(topInfo = if (RedesignFlags.ENABLED) { { RedesignTbrLine(...) } } else null)` | The basal line and the Cancel button. After a confirmed cancel the screen closes; a failed cancel shows the stock "temp basal delivery error". |
+| Imports | `RedesignFlags`, `RedesignIobLine`, `RedesignTbrLine`. |
+
+Each line reads its own `RedesignHomeViewModel` (a new, light instance in the route). The Cancel
+button uses its own `ManageViewModel`: `cancelTempBasal()`, the master's confirmation in
+`ElementConfirmationDialog`, then `commitCancel`, exactly like `ManageSheetHost`.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `redesignTileTaps = if (redesignChrome) rememberRedesignTileTaps(...) else null`, after `masterOrPairedClient` | The tile taps. They go through `onNavigate(NavigationRequest.Element(...))`, so the stock protection (bolus PIN) is asked. They open the screen only where the stock sheets offer it: insulin needs a master or paired client and the role; temp basal also needs Manage to offer "Temp basal" or its Cancel (pump able to set one now). Else: the stock info dialog. |
+| `onTbrChipClick = redesignTileTaps?.onBasalClick ?: mainViewModel::showTbrInfo` and the same for `onIobChipClick` | The redesign tiles get the new taps; the stock chips (flag off, landscape, tablet) keep theirs. |
+| `TreatmentBottomSheet(showCarbs = treatmentState.showCarbs && !redesignChrome)` | Carbs entry is the Carbs tile (SPEC 3.2.4). `TreatmentBottomSheet` already had the parameter, so it is not touched. |
+| `TreatmentBottomSheet(treatmentButtonsDef = if (redesignChrome) treatmentButtonsDef.withoutCarbsButton() else ...)` | The gear of the sheet no longer shows the "show carbs button" switch, which does nothing with the redesign. The switch stays in Settings (its +5/+10/+20 g settings depend on it). |
+| Imports | `rememberRedesignTileTaps`, `withoutCarbsButton`. |
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

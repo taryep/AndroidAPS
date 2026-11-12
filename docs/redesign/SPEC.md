@@ -217,22 +217,23 @@ The accessible name always carries the full stock text ("Boucle : Pause 25 min")
 
 #### 3.2.2 Insuline active tile (new behaviour)
 
-A tap opens **one sheet** with two parts:
+A tap opens **one écran** (the stock full-screen insulin screen) with two parts:
 
 1. **IOB line, one line, on top.** The information of the stock IOB dialog (bolus IOB, basal IOB, IOB,
    screenshot "IOB: Bolus IOB 1.50 U / Basal IOB -1.30 U / IOB 0.20 U"), condensed to a single line,
    for example `Bolus 1,50 U + Basale −1,30 U = 0,20 U` (new string with placeholders; no "·"). Same
-   numbers and same formatting as the stock dialog; **never recompute IOB**. If `ChipsUiState` only
-   holds a preformatted multi-line text, add the three numbers as new defaulted fields filled from the
-   same source as the dialog (no calculation change) rather than parsing text. Single line, auto-shrink
-   to 11 sp, then ellipsize.
+   numbers and same formatting as the stock dialog; **never recompute IOB**. The two parts are read in
+   `RedesignHomeViewModel` (our file) with the same calls and the same rounding as the stock dialog
+   (`ChipsViewModel.showIobInfo`); `ChipsViewModel` and `ChipsUiState` are not changed. Single line,
+   auto-shrink to 11 sp, then ellipsize.
 2. **Below it, the same insulin entry as Traitements › Insuline** (the existing insulin dialog,
    with its BG/IOB/COB strip, "Start Eating soon TT" and "Bolus will be recorded only" switches,
    the stepper, the +0,50 / +1,00 / +2,00 chips and OK). Same confirmations, same pump calls.
 
 Implementation: reuse the existing insulin dialog composable and add **one defaulted parameter**
-(`topInfo: (@Composable () -> Unit)? = null`, rendered above its content). The redesign opens that
-same dialog with the IOB line as `topInfo`. Do not copy the dialog.
+(`topInfo: (@Composable () -> Unit)? = null`, rendered under its BG/IOB/COB strip). `AppNavGraph`
+passes the IOB line as `topInfo` when `RedesignFlags.ENABLED`, so the line is there from every entry
+point, Traitements included (on purpose). Do not copy the dialog.
 
 Permission: apply the **same block as the Treatments item on a client that is not paired**
 (`masterOrPairedClient` and `role.allows(ElementType.INSULIN.role)`; check the exact names in the
@@ -240,7 +241,7 @@ code). When blocked, the tap only shows the stock IOB dialog (today's behaviour)
 
 #### 3.2.3 Basale tile (new behaviour)
 
-A tap opens **one sheet** with two parts:
+A tap opens **one écran** (the stock full-screen temp basal screen) with two parts:
 
 1. **Basal information, one line, on top**: the data of the stock "Temp basal" dialog (rate, start time,
    elapsed / duration), written as in the mockup: **`0,00 U/h @15:58 5/60 min`** (locale decimal, 24 h or
@@ -254,7 +255,7 @@ A tap opens **one sheet** with two parts:
    basal). It sits between the information line and the editor, as a full-width outlined button. It
    runs the **existing cancel-temp-basal action** (the one the stock app already offers, e.g. in
    Traitements / Gestion: find it, reuse it, no new pump logic) with the **same confirmation** as there,
-   then closes the sheet. Content description: "Annuler la basale temporaire en cours". New string FR + EN.
+   then closes the écran. Content description: "Annuler la basale temporaire en cours". New string FR + EN.
 
 Implementation: same pattern as 3.2.2: one defaulted `topInfo` parameter on the existing temporary
 basal dialog composable (the info line and the cancel button are both passed through it). Same permission
@@ -526,7 +527,7 @@ Each must be checked on the phone or in a Compose preview (the mockup has a swit
 - [ ] Not-paired AAPSClient: Glucides, Insuline active and Basale taps follow the same block as before.
 - [ ] Patch pump, panel open: Pompe Patch = time only, Insuline = reservoir only, Capteur = time; the
       collapsed bar agrees (3.5.1).
-- [ ] Basale sheet while a TBR runs: "Annuler la basale temp." shown, confirmation, TBR cancelled; hidden
+- [ ] Basale écran while a TBR runs: "Annuler la basale temp." shown, confirmation, TBR cancelled; hidden
       with no TBR and on a blocked client.
 
 ## 6. Menu screen (new)
@@ -676,7 +677,9 @@ new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the ph
    of the bar; same BG scale on page 2 if it stays minimal. The Settings screen is not touched. Small,
    last of the structural work.
 9. **Themes** (section 7): light theme, the redesign surfaces (including the v2 tokens), the true black
-   option. The glucose palette is done (phase 0): only check its values. Check the light mockups
+   option. The glucose palette is done (phase 0): only check its values. Also fix the stock temp basal
+   colour of the light theme (`LightElementColors.tempBasal` = `#00FFFF`, light cyan, almost unreadable in
+   the "Annuler : Basal temp." dialog; seen in the phase 6 test). Proposed: `#0B6A70`, the teal of the Basale tile. Check the light mockups
    (`Accueil, thème clair`, `Menu, thème clair`, `Graphiques, thème clair`, `Paramètres, thème clair`).
 10. **Nice to have, last**: short animations (≤ 200 ms): BG number cross-fade on a new reading,
     trend arc sliding, new dot appearing. They run only when a real new reading arrives from the

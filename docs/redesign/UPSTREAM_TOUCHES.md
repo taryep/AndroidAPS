@@ -168,6 +168,31 @@ reuses `inspectDataAt` and `GraphInspectPill` (public in `GraphInspect.kt`), `be
 
 Not touched: `TreatmentBottomSheet`, the Treatments item.
 
+## Phase 5 - Home layout v2
+
+One upstream line, in one file. Everything else is in `redesign/` (new files `RedesignRoundSlot.kt`,
+`RedesignConsumablesBar.kt`, `RedesignBottomBarStyle.kt`; the others are our own files from phases 3 and 4).
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `RedesignBottomBarStyle(redesignChrome) { MainNavigationBar(...) }` | The bar reads its colours from `MaterialTheme.colorScheme`, so the redesign colours (SPEC 2.3) and the 1 dp top line are set by a theme wrapper. `MainNavigationBar` has **no new parameter**. |
+| Import | `RedesignBottomBarStyle`. |
+| `onMenuClick`: when the Menu is open, the Menu button also sets `redesignOverview.page = HOME_PAGE` and ends the edit mode | Graphs > Menu > Menu comes back to the home page. Back from the Menu still returns to the page below (unchanged). |
+
+What the theme cannot reach (the sizes are fixed inside the Material 3 navigation bar, and are not changed):
+item height (60 dp), icon size (22 dp), indicator size (56 × 30 dp), semi-bold selected label and the
+11 sp shrink of a long label.
+
+Not touched: `OverviewStatusSection` (the open consumables panel is the stock one; only the closed 26 dp bar is ours).
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `RedesignHomeStock(..., pumpStatusText = pumpStatusText)` (one more argument in the existing hook) | The pump activity slot shows what the pump does in the stock words of the pump status banner (temp basal, reading status, connecting...), not always "Injection". |
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

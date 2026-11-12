@@ -63,9 +63,10 @@ fun RedesignOverviewPager(
     // Android stopped the process. The page lives in `state`, which a new start resets.
     val pagerState = remember { PagerState(currentPage = state.page) { PAGE_COUNT } }
 
-    // A page asked by code (tap on the glucose value, Menu > Edit screen, Back).
+    // A page asked by code (tap on the glucose value, Menu > Edit screen, Back). It changes at once,
+    // with no slide, as the Menu opens.
     LaunchedEffect(state.page) {
-        if (pagerState.currentPage != state.page) pagerState.animateScrollToPage(state.page)
+        if (pagerState.currentPage != state.page) pagerState.scrollToPage(state.page)
     }
     // A page reached by a swipe. Leaving the graphs page ends the edit mode.
     LaunchedEffect(pagerState) {

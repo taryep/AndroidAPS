@@ -247,7 +247,7 @@ fun OverviewScreen(
                         tbrState = tbrState, commandsAllowed = commandsAllowed, statusLightsDef = statusLightsDef,
                         activeSceneState = activeSceneState, sceneExpired = sceneExpired, activeSceneChainTargetName = activeSceneChainTargetName,
                         onEndScene = onEndScene, onDismissScene = onDismissScene, endSceneEnabled = endSceneEnabled, formatDuration = formatDuration,
-                        notifications = notifications, pumpActivity = showPumpFab, bolusState = bolusState
+                        notifications = notifications, pumpActivity = showPumpFab, bolusState = bolusState, pumpStatusText = pumpStatusText
                     ),
                     inputs = redesignHome,
                     paddingValues = paddingValues,

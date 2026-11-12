@@ -17,9 +17,7 @@
 
     <!-- Home page tiles. Labels are short: a tile is about 120 dp wide. -->
     <string name="redesign_tile_profile" comment="Tile label: the active insulin profile">Profile</string>
-    <string name="redesign_tile_target" comment="Tile label: the glucose target">Target</string>
-    <string name="redesign_tile_loop" comment="Tile label: the loop and its running mode">Loop</string>
-    <string name="redesign_tile_insulin" comment="Tile label: insulin on board">Insulin</string>
+    <string name="redesign_tile_active_insulin" comment="Tile label: insulin on board. Short, the tile is about 150 dp wide">Active insulin</string>
     <string name="redesign_tile_carbs" comment="Tile label: carbs on board">Carbs</string>
     <string name="redesign_tile_basal" comment="Tile label: the basal rate of the profile">Basal</string>
     <string name="redesign_tile_temp_basal" comment="Tile label while a temporary basal rate runs. Very short">Temp.</string>
@@ -27,12 +25,9 @@
     <string name="redesign_mode_closed" comment="Loop tile value: closed loop">Closed</string>
     <string name="redesign_mode_open" comment="Loop tile value: open loop">Open</string>
     <string name="redesign_mode_lgs" comment="Loop tile value: low glucose suspend mode">LGS</string>
-    <string name="redesign_mode_paused" comment="Loop tile value: the loop is suspended. %1$s=time left. Example: Paused 25 min">Paused %1$s</string>
     <string name="redesign_mode_paused_no_time" comment="Loop tile value: the loop is suspended, no end time known">Paused</string>
     <string name="redesign_mode_disconnected" comment="Loop tile value: the pump is disconnected">Disconnected</string>
     <string name="redesign_mode_disabled" comment="Loop tile value: the loop is disabled">Disabled</string>
-    <string name="redesign_tile_open_loop" comment="Loop tile label in open loop when the loop suggests a change that waits to be accepted">Open loop</string>
-    <string name="redesign_loop_suggestion_value" comment="Loop tile value under the label Open loop: one suggestion of the loop waits to be accepted">1 suggestion</string>
     <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: 13 required">%1$d required</string>
     <string name="redesign_sensitivity" comment="Label of the sensitivity line on the home page (autosens or dynamic ISF)">Sensitivity</string>
     <string name="redesign_isf" comment="Abbreviation of insulin sensitivity factor, as in the rest of the app">ISF</string>
@@ -46,6 +41,9 @@
     <string name="redesign_meal_now" comment="Eat reminder button when the time to eat has come. Very short">Now</string>
     <string name="redesign_meal_description" comment="Screen reader text of the eat reminder button. %1$s=minutes left or Now. Example: Meal reminder: 12 min. Open">Meal reminder: %1$s. Open</string>
     <string name="redesign_pump_activity_description" comment="Screen reader text of the pump activity button">Pump activity. Open</string>
+    <string name="redesign_pump_activity_status_description" comment="Screen reader text of the pump activity button. %1$s=what the pump does, in the words of the pump status banner. Example: Pump activity: Setting temp basal. Open">Pump activity: %1$s. Open</string>
+    <string name="redesign_target_description" comment="Screen reader text of the Target button. %1$s=target range or value. Example: Target: 120-130">Target: %1$s</string>
+    <string name="redesign_target_description_left" comment="Screen reader text of the Target button during a temporary target. %1$s=target value, %2$s=time left. Example: Target: 140, 45 min left">Target: %1$s, %2$s left</string>
     <string name="redesign_graph_range" comment="Button over the home glucose graph: how many hours it shows. Very short. %1$d=hours. Example: 6 h">%1$d h</string>
     <string name="redesign_graph_range_description" comment="Screen reader name of a range button of the home glucose graph. %1$d=hours, always 3 or more. Example: 6 hours">%1$d hours</string>
     <string name="redesign_graph_ranges" comment="Screen reader name of the row of range buttons (3 h, 6 h, 12 h…) over the home glucose graph">Time shown</string>

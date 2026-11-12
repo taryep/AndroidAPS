@@ -2,7 +2,6 @@ package app.aaps.ui.compose.redesign
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +28,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -105,26 +105,32 @@ fun RedesignHomeGraph(
     modifier: Modifier = Modifier
 ) {
     val colors = redesignColors()
-    val shape = RoundedCornerShape(18.dp)
     var pill by remember { mutableStateOf<InspectData?>(null) }
     var pillX by remember { mutableStateOf(0f) }
+    val sidePx = with(LocalDensity.current) { PLOT_SIDE.toPx() }
+    // Full width, radius 0, a border on the top and the bottom only (SPEC 3.6).
     Box(
         modifier
-            .clip(shape)
             .background(colors.graphCard)
-            .border(1.dp, colors.graphCardBorder, shape)
+            .drawBehind {
+                val line = 1.dp.toPx()
+                drawRect(colors.graphCardBorder, Offset.Zero, Size(size.width, line))
+                drawRect(colors.graphCardBorder, Offset(0f, size.height - line), Size(size.width, line))
+            }
     ) {
-        Column(Modifier.fillMaxSize().padding(top = 4.dp, bottom = 6.dp)) {
+        // 4 dp above and 6 dp under, plus the 1 dp borders.
+        Column(Modifier.fillMaxSize().padding(top = 5.dp, bottom = 7.dp)) {
             RangeButtons(range, onRangeChange, colors)
             HomeGraphPlot(
                 graphViewModel = graphViewModel,
                 range = range,
                 colors = colors,
                 pill = pill,
-                onPill = { data, x -> pill = data; pillX = x },
+                // The plot is 17 dp in from the card edge: the pill is placed in card coordinates.
+                onPill = { data, x -> pill = data; pillX = x + sidePx },
                 onOpenGraphs = onOpenGraphs,
                 targetAccent = targetAccent,
-                modifier = Modifier.fillMaxWidth().weight(1f)
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = PLOT_SIDE)
             )
         }
         // The stock pill, unchanged and with all its lines, over the range buttons, centred on the
@@ -473,10 +479,15 @@ private fun HomeGraphPlot(
 
         // Hour labels under the plot, both edges included, kept inside the canvas.
         val labelTop = size.height - HOUR_LABELS.toPx()
+        // A label that would touch the one before it is not drawn (narrow screen, large text).
+        var lastRight = Float.NEGATIVE_INFINITY
         ticks.forEachIndexed { i, t ->
             val layout = hourLabels[i]
             val x = (g.x(t) - layout.size.width / 2f).coerceIn(0f, size.width - layout.size.width.toFloat())
-            drawText(layout, topLeft = Offset(x, labelTop))
+            if (x >= lastRight + HOUR_LABEL_GAP.toPx()) {
+                drawText(layout, topLeft = Offset(x, labelTop))
+                lastRight = x + layout.size.width
+            }
         }
     }
 }
@@ -568,3 +579,5 @@ private val GRADUATION_SPACING = 32.dp
 private val GREY_LABEL_DISTANCE = 14.dp
 private val PILL_TOP = 8.dp
 private val PILL_EDGE = 4.dp
+private val PLOT_SIDE = 17.dp
+private val HOUR_LABEL_GAP = 4.dp

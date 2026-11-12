@@ -1,12 +1,23 @@
 package app.aaps.ui.compose.redesign
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +80,7 @@ fun RedesignLeftSlotContent(
     inputs: RedesignHomeInputs,
     pumpActivity: Boolean,
     bolusState: BolusProgressState?,
+    pumpStatusText: String,
     onPumpActivityClick: () -> Unit
 ) {
     val colors = redesignColors()
@@ -81,8 +93,8 @@ fun RedesignLeftSlotContent(
             RedesignSlotButton(
                 tint = colors.disabled,
                 icon = Icons.Default.WaterDrop,
-                title = source,
-                caption = reason,
+                line1 = source,
+                line2 = reason,
                 description = stringResource(UiStrings.redesign_bg_problem_description, reason, source),
                 onClick = inputs.onBgSourceClick
             )
@@ -94,8 +106,8 @@ fun RedesignLeftSlotContent(
             RedesignSlotButton(
                 tint = colors.carbsRequired,
                 icon = IcCarbs,
-                title = minutes,
-                caption = stringResource(UiStrings.redesign_meal),
+                line1 = stringResource(UiStrings.redesign_meal),
+                line2 = minutes,
                 description = stringResource(UiStrings.redesign_meal_description, minutes),
                 onClick = { showEatSheet = true }
             )
@@ -103,12 +115,15 @@ fun RedesignLeftSlotContent(
 
         RedesignLeftSlot.PUMP_ACTIVITY -> {
             val percent = bolusState?.takeIf { it.isSMB && it.percent in 1..99 }?.percent
+            // What the pump does, in the stock words (temp basal, reading status, connecting...); the SMB percent while an SMB runs.
+            val activity = percent?.let { stringResource(CoreUiStrings.formatPercent, it.toDouble()) } ?: pumpStatusText
             RedesignSlotButton(
                 tint = colors.insulin,
                 icon = Pump,
-                title = percent?.let { stringResource(CoreUiStrings.formatPercent, it.toDouble()) } ?: stringResource(UiStrings.redesign_tile_pump),
-                caption = if (percent != null) stringResource(UiStrings.redesign_tile_pump) else "",
-                description = stringResource(UiStrings.redesign_pump_activity_description),
+                line1 = stringResource(UiStrings.redesign_tile_pump),
+                line2 = activity,
+                description = if (activity.isNotEmpty()) stringResource(UiStrings.redesign_pump_activity_status_description, activity)
+                else stringResource(UiStrings.redesign_pump_activity_description),
                 onClick = onPumpActivityClick
             )
         }
@@ -155,19 +170,22 @@ private fun RedesignEatReminderSheet(state: EatReminderState, inputs: RedesignHo
     }
 }
 
-/** A 72 × 72 dp button beside the glucose circle: icon, a short title and a caption. */
+/**
+ * An 84 × 84 dp square button (radius 18) left of the glucose circle: an icon, a small first line
+ * and a bold second line (SPEC 3.3).
+ */
 @Composable
 fun RedesignSlotButton(
     tint: RedesignTint,
     icon: ImageVector,
-    title: String,
-    caption: String,
+    line1: String,
+    line2: String,
     description: String,
     onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         color = tint.background,
         border = BorderStroke(1.dp, tint.border),
         modifier = Modifier
@@ -184,26 +202,69 @@ fun RedesignSlotButton(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(4.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(20.dp))
-            Text(
-                title,
-                style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = tint.accent, fontFeatureSettings = "tnum"),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
-            if (caption.isNotEmpty()) {
+            Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.height(2.dp))
+            if (line1.isNotEmpty()) {
                 Text(
-                    caption,
-                    style = TextStyle(fontSize = 10.sp, color = tint.accent),
+                    line1,
+                    style = TextStyle(fontSize = 11.sp, color = tint.accent),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
                 )
             }
+            // Up to two lines (a stock pump status such as "Setting temp basal" is long); it gets smaller
+            // down to 10 sp before it ends with "...".
+            if (line2.isNotEmpty()) BasicText(
+                line2,
+                style = TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, color = tint.accent, fontFeatureSettings = "tnum", textAlign = TextAlign.Center),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 12.sp)
+            )
         }
     }
 }
 
-val SLOT_SIZE = 72.dp
+/**
+ * The notification button right of the glucose circle (SPEC 3.3): a bell with no background and an
+ * 84 dp touch area. The count badge is always red with a white number, whatever the importance.
+ * Nothing is drawn when there are no notifications.
+ */
+@Composable
+fun RedesignBellButton(count: Int, onClick: () -> Unit) {
+    if (count <= 0) return
+    val colors = redesignColors()
+    val description = stringResource(UiStrings.a11y_notifications, count)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(SLOT_SIZE)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = description
+                role = Role.Button
+            }
+    ) {
+        Icon(Icons.Outlined.Notifications, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(36.dp))
+        // 22 dp badge, 20 dp from the right and the bottom of the cell, with a 3 dp ring in the page colour.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp - BELL_RING, bottom = 20.dp - BELL_RING)
+                .size(22.dp + BELL_RING * 2)
+                .background(colors.pageBackground, CircleShape)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(22.dp).background(BELL_BADGE_COLOR, CircleShape)) {
+                Text(count.toString(), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFeatureSettings = "tnum"))
+            }
+        }
+    }
+}
+
+val SLOT_SIZE = 84.dp
+private val BELL_RING = 3.dp
+private val BELL_BADGE_COLOR = Color(0xFFE5484D)
 private const val EAT_TICK_MS = 15_000L

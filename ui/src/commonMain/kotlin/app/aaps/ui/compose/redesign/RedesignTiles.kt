@@ -18,7 +18,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -38,13 +38,7 @@ import app.aaps.core.data.model.RM
 import app.aaps.core.data.model.TT
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.overview.graph.TbrState
-import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.LocalClientRole
-import app.aaps.core.ui.compose.icons.IcTarget
-import app.aaps.core.ui.compose.icons.IcTtActivity
-import app.aaps.core.ui.compose.icons.IcTtEatingSoon
-import app.aaps.core.ui.compose.icons.IcTtHypo
-import app.aaps.core.ui.compose.icons.IcTtManual
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.navigation.icon
 import app.aaps.core.ui.compose.stringResource
@@ -54,7 +48,7 @@ import app.aaps.ui.compose.overview.chips.CobUiState
 import app.aaps.ui.compose.overview.chips.IobUiState
 import app.aaps.ui.compose.overview.chips.toIcon
 
-/** What the six tiles show. Everything comes from the stock overview state and [RedesignHomeData]. */
+/** What the tiles and the round slots show. Everything comes from the stock overview state and [RedesignHomeData]. */
 class RedesignTilesState(
     val profileName: String,
     val isProfileModified: Boolean,
@@ -72,8 +66,9 @@ class RedesignTilesState(
 )
 
 /**
- * The 2 × 3 tile grid of the home page (SPEC 3.2). Each tap does what the matching stock chip does,
- * with the same limits on a client.
+ * The 2 × 2 tile grid of the home page (SPEC 3.2): Profile and Carbs, Active insulin and Basal. Each tap
+ * does what the matching stock chip does, with the same limits on a client. Loop and Target are the
+ * round slots of the circle row.
  */
 @Composable
 fun RedesignTiles(
@@ -82,33 +77,27 @@ fun RedesignTiles(
     onNavigate: (NavigationRequest) -> Unit,
     onIobClick: () -> Unit,
     onBasalClick: () -> Unit,
-    onLoopSuggestionClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = redesignColors()
     val role = LocalClientRole.current
+    // The tiles are about 150 dp wide: their text grows with the system font only up to 1.2 times,
+    // then gets smaller before it ends with "...".
+    RedesignFontScaleCap(TILE_MAX_FONT_SCALE) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(TILE_GAP)) {
         Row(horizontalArrangement = Arrangement.spacedBy(TILE_GAP)) {
             ProfileTile(state, colors, Modifier.weight(1f)) { onNavigate(NavigationRequest.Element(ElementType.PROFILE_MANAGEMENT)) }
-            TargetTile(
-                state, colors, Modifier.weight(1f),
-                enabled = commandsAllowed && role.allows(ElementType.TEMP_TARGET_MANAGEMENT.role)
-            ) { onNavigate(NavigationRequest.Element(ElementType.TEMP_TARGET_MANAGEMENT)) }
-            LoopTile(
-                state, colors, Modifier.weight(1f),
-                enabled = state.loopSuggestion || (commandsAllowed && role.allows(ElementType.RUNNING_MODE.role)),
-                onClick = if (state.loopSuggestion) onLoopSuggestionClick else ({ onNavigate(NavigationRequest.Element(ElementType.RUNNING_MODE)) })
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(TILE_GAP)) {
-            InsulinTile(state, colors, Modifier.weight(1f), onIobClick)
             // Carbs entry, with the block of the Treatments item: nothing on a client that is not paired or has no role for it.
             CarbsTile(
                 state, colors, Modifier.weight(1f),
                 onClick = if (commandsAllowed && role.allows(ElementType.CARBS.role)) ({ onNavigate(NavigationRequest.Element(ElementType.CARBS)) }) else null
             )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(TILE_GAP)) {
+            InsulinTile(state, colors, Modifier.weight(1f), onIobClick)
             BasalTile(state, colors, Modifier.weight(1f), onBasalClick)
         }
+    }
     }
 }
 
@@ -127,95 +116,8 @@ private fun ProfileTile(state: RedesignTilesState, colors: RedesignColors, modif
         tint = if (state.isProfileModified) colors.profileTemp else colors.neutral,
         tinted = state.isProfileModified,
         onClick = onClick,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun TargetTile(state: RedesignTilesState, colors: RedesignColors, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
-    val label = stringResource(UiStrings.redesign_tile_target)
-    val data = state.data
-    val tint = when (state.tempTargetState) {
-        TempTargetChipState.Active   -> colors.targetTemp
-        // Same colour as the stock chip uses for a target the loop has adjusted.
-        TempTargetChipState.Adjusted -> AapsTheme.generalColors.adjusted.let { RedesignTint(it.copy(alpha = 0.2f).compositeOver(colors.surface), it.copy(alpha = 0.5f), it) }
-        TempTargetChipState.None     -> colors.neutral
-    }
-    RedesignTile(
-        label = label,
-        labelTime = if (state.tempTargetState == TempTargetChipState.Active) data.targetTimeLeft else "",
-        value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "—" },
-        icon = if (state.tempTargetState == TempTargetChipState.Active) state.tempTargetReason.toIcon() else IcTarget,
-        tint = tint,
-        tinted = state.tempTargetState != TempTargetChipState.None,
-        stateDescription = if (state.tempTargetState == TempTargetChipState.Adjusted) stringResource(UiStrings.a11y_tt_adjusted) else null,
-        enabled = enabled,
-        onClick = onClick,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun LoopTile(state: RedesignTilesState, colors: RedesignColors, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
-    val mode = state.runningMode
-    val loop = stringResource(UiStrings.redesign_tile_loop)
-    val remaining = state.runningModeRemaining
-    val label: String
-    var labelTime = ""
-    val value: String
-    val tint: RedesignTint
-    when {
-        // An open loop suggestion waits: the tile says so, and a tap opens the sheet to accept it.
-        state.loopSuggestion                      -> {
-            label = stringResource(UiStrings.redesign_tile_open_loop); value = stringResource(UiStrings.redesign_loop_suggestion_value); tint = colors.openLoop
-        }
-
-        mode == RM.Mode.CLOSED_LOOP || mode == RM.Mode.RESUME -> {
-            label = loop; value = stringResource(UiStrings.redesign_mode_closed); tint = colors.closedLoop
-        }
-
-        mode == RM.Mode.OPEN_LOOP                 -> {
-            label = loop; value = stringResource(UiStrings.redesign_mode_open); tint = colors.openLoop
-        }
-
-        mode == RM.Mode.CLOSED_LOOP_LGS           -> {
-            label = loop; value = stringResource(UiStrings.redesign_mode_lgs); tint = colors.lgs
-        }
-
-        mode == RM.Mode.SUSPENDED_BY_USER || mode == RM.Mode.SUSPENDED_BY_PUMP || mode == RM.Mode.SUSPENDED_BY_DST -> {
-            label = loop
-            value = if (remaining.isNotEmpty()) stringResource(UiStrings.redesign_mode_paused, remaining) else stringResource(UiStrings.redesign_mode_paused_no_time)
-            tint = colors.suspended
-        }
-
-        mode == RM.Mode.DISCONNECTED_PUMP         -> {
-            label = stringResource(UiStrings.redesign_tile_pump)
-            labelTime = remaining
-            value = stringResource(UiStrings.redesign_mode_disconnected)
-            tint = colors.disconnected
-        }
-
-        mode == RM.Mode.DISABLED_LOOP             -> {
-            label = loop; value = stringResource(UiStrings.redesign_mode_disabled); tint = colors.disabled
-        }
-
-        // Superbolus, or no mode known yet: the stock text.
-        else                                      -> {
-            label = loop; value = state.runningModeText; tint = if (mode == RM.Mode.SUPER_BOLUS) colors.superBolus else colors.neutral
-        }
-    }
-    RedesignTile(
-        label = label,
-        labelTime = labelTime,
-        value = value,
-        icon = mode?.toIcon() ?: ElementType.RUNNING_MODE.icon(),
-        tint = tint,
-        tinted = tint != colors.neutral,
-        // The full stock text (mode and time left) for the screen reader, as on the chip.
-        stateDescription = state.runningModeText.takeIf { !state.loopSuggestion && it.isNotEmpty() },
-        enabled = enabled,
-        onClick = onClick,
-        modifier = modifier
+        modifier = modifier,
+        horizontalPadding = 14.dp
     )
 }
 
@@ -223,13 +125,14 @@ private fun LoopTile(state: RedesignTilesState, colors: RedesignColors, modifier
 private fun InsulinTile(state: RedesignTilesState, colors: RedesignColors, modifier: Modifier, onClick: () -> Unit) {
     val tinted = state.iob.iobTotal >= REDESIGN_INSULIN_TINT_THRESHOLD_U
     RedesignTile(
-        label = stringResource(UiStrings.redesign_tile_insulin),
+        label = stringResource(UiStrings.redesign_tile_active_insulin),
         value = state.iob.text,
         icon = ElementType.INSULIN.icon(),
         tint = if (tinted) colors.insulin else colors.neutral,
         tinted = tinted,
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier,
+        horizontalPadding = 14.dp
     )
 }
 
@@ -272,13 +175,6 @@ private fun BasalTile(state: RedesignTilesState, colors: RedesignColors, modifie
     )
 }
 
-private fun TT.Reason?.toIcon(): ImageVector = when (this) {
-    TT.Reason.EATING_SOON  -> IcTtEatingSoon
-    TT.Reason.ACTIVITY     -> IcTtActivity
-    TT.Reason.HYPOGLYCEMIA -> IcTtHypo
-    else                   -> IcTtManual
-}
-
 /**
  * One tile: 48 dp, line 1 = icon and label, line 2 = value (and a small part after it). The value
  * never overflows: it gets smaller down to 11 sp first, and only then ends with "…".
@@ -299,10 +195,11 @@ fun RedesignTile(
     tinted: Boolean = false,
     strongBorder: Boolean = false,
     stateDescription: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    horizontalPadding: Dp = 10.dp
 ) {
     val colors = redesignColors()
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(TILE_RADIUS)
     val border = BorderStroke(if (strongBorder) 1.5.dp else 1.dp, tint.border)
     val semantics = Modifier.semantics(mergeDescendants = true) {
         if (stateDescription != null) this.stateDescription = stateDescription
@@ -312,7 +209,7 @@ fun RedesignTile(
         // The icon is as high as the two lines together, on their left.
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 6.dp)
         ) {
             Icon(icon, contentDescription = null, tint = tint.accent, modifier = Modifier.size(TILE_ICON_SIZE))
             Spacer(Modifier.width(6.dp))
@@ -372,6 +269,8 @@ private fun FittingText(text: AnnotatedString, style: TextStyle, minSize: Int) {
 }
 
 private val TILE_HEIGHT = 48.dp
-private val TILE_GAP = 6.dp
+private val TILE_GAP = 16.dp
+private val TILE_RADIUS = 22.dp
 private val TILE_ICON_SIZE = 24.dp
 
+private const val TILE_MAX_FONT_SCALE = 1.2f

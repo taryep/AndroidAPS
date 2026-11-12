@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,13 +25,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -129,12 +126,13 @@ fun RedesignBgCircle(
                 }
             }
             // The ring does not grow with the system font, so the value keeps its size, as in the stock circle.
-            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 1f)) {
+            RedesignFontScaleCap(1f) {
                 Text(
                     text = bgInfo.bgText,
                     style = TextStyle(
-                        fontSize = 78.sp,
-                        lineHeight = 80.sp,
+                        fontSize = 72.sp,
+                        lineHeight = 74.sp,
+                        letterSpacing = (-2).sp,
                         fontWeight = FontWeight.Bold,
                         color = bgColor,
                         fontFeatureSettings = "tnum",
@@ -189,8 +187,8 @@ private fun DrawScope.drawTrendTriangles(indicator: ArcIndicator, color: Color, 
     }
 }
 
-val BG_CIRCLE_SIZE = 200.dp
-private val RING_STROKE = 8.dp
+val BG_CIRCLE_SIZE = 184.dp
+private val RING_STROKE = 7.4.dp
 private const val RING_ALPHA = 0.22f
 
 /**

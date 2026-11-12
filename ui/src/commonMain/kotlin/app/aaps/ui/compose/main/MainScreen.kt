@@ -79,6 +79,7 @@ import app.aaps.ui.compose.overview.statusLights.StatusViewModel
 import app.aaps.ui.compose.quickLaunch.QuickLaunchAction
 import app.aaps.ui.compose.quickLaunch.QuickLaunchToolbar
 import app.aaps.ui.compose.quickLaunch.ResolvedQuickLaunchItem
+import app.aaps.ui.compose.redesign.RedesignBottomBarStyle
 import app.aaps.ui.compose.redesign.RedesignFlags
 import app.aaps.ui.compose.redesign.RedesignHomeData
 import app.aaps.ui.compose.redesign.RedesignHomeInputs
@@ -530,6 +531,8 @@ fun MainScreen(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = scaffoldPadding.calculateBottomPadding())
                     ) {
+                        // Redesign: the bar colours and its top line, through the theme (no change in the bar itself).
+                        RedesignBottomBarStyle(redesignChrome) {
                         MainNavigationBar(
                             onManageClick = { manageSheetState.show() },
                             onTreatmentClick = {
@@ -563,7 +566,12 @@ fun MainScreen(
                             onLoopActionClick = { showLoopActionSheet = true },
                             onMenuClick = if (redesignChrome) {
                                 {
-                                    if (showRedesignMenu) closeRedesignMenu() else {
+                                    if (showRedesignMenu) {
+                                        // Redesign: the Menu button closes the Menu on the home page (Back returns to the page below).
+                                        closeRedesignMenu()
+                                        redesignOverview.editMode = false
+                                        redesignOverview.page = HOME_PAGE
+                                    } else {
                                         showRedesignMenu = true
                                     }
                                 }
@@ -587,6 +595,7 @@ fun MainScreen(
                                 if (it.height > 0 && it.height != bottomBarHeightPx) bottomBarHeightPx = it.height
                             }
                         )
+                        }
                     }
 
                     // Quick launch toolbar overlay

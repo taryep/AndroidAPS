@@ -2,7 +2,10 @@ package app.aaps.ui.compose.redesign
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -114,13 +117,17 @@ class RedesignTilesTest {
             MaterialTheme(colorScheme = if (shown.dark) darkColorScheme() else lightColorScheme()) {
                 val colors = redesignColors()
                 Column(Modifier.width(412.dp).background(colors.pageBackground).padding(16.dp).testTag(TILES)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        RedesignLoopSlot(shown.state, shown.commandsAllowed, { requests += it }, { suggestionClicks++ })
+                        RedesignTargetSlot(shown.state, shown.commandsAllowed, { requests += it })
+                    }
+                    Spacer(Modifier.height(16.dp))
                     RedesignTiles(
                         state = shown.state,
                         commandsAllowed = shown.commandsAllowed,
                         onNavigate = { requests += it },
                         onIobClick = { iobClicks++ },
-                        onBasalClick = { basalClicks++ },
-                        onLoopSuggestionClick = { suggestionClicks++ }
+                        onBasalClick = { basalClicks++ }
                     )
                     Spacer(Modifier.height(4.dp))
                 }
@@ -140,9 +147,9 @@ class RedesignTilesTest {
     fun eachTileDoesWhatItsChipDoes() {
         show(tiles())
         tap(string(R.string.redesign_tile_profile))
-        tap(string(R.string.redesign_tile_target))
-        tap(string(R.string.redesign_tile_loop))
-        tap(string(R.string.redesign_tile_insulin))
+        tap("120–130")
+        tap(string(R.string.redesign_mode_closed))
+        tap(string(R.string.redesign_tile_active_insulin))
         tap(string(R.string.redesign_tile_basal))
         tap(string(R.string.redesign_tile_carbs))
         assertThat(requests).containsExactly(
@@ -159,7 +166,7 @@ class RedesignTilesTest {
     @Test
     fun aWaitingLoopSuggestionOpensTheSheetToAcceptIt() {
         show(tiles(runningMode = RM.Mode.OPEN_LOOP, loopSuggestion = true))
-        compose.onNode(hasText(string(R.string.redesign_loop_suggestion_value), substring = true)).performClick()
+        compose.onNode(hasText(string(R.string.redesign_mode_open), substring = true) and hasClickAction()).performClick()
         assertThat(suggestionClicks).isEqualTo(1)
         assertThat(requests).isEmpty()
         picture("loop_suggestion")
@@ -168,8 +175,8 @@ class RedesignTilesTest {
     @Test
     fun onAnUnpairedClientTheCommandTilesAreOff() {
         show(tiles(), commandsAllowed = false)
-        compose.onNode(hasText(string(R.string.redesign_tile_target), substring = true) and hasClickAction()).assertIsNotEnabled()
-        compose.onNode(hasText(string(R.string.redesign_tile_loop), substring = true) and hasClickAction()).assertIsNotEnabled()
+        compose.onNode(hasText("120–130", substring = true) and hasClickAction()).assertIsNotEnabled()
+        compose.onNode(hasText(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).assertIsNotEnabled()
         // Carbs entry is blocked like the Treatments item: the tile has no action at all.
         assertThat(compose.onAllNodes(hasText(string(R.string.redesign_tile_carbs), substring = true) and hasClickAction()).fetchSemanticsNodes()).isEmpty()
         // Profile management opens read-only there, as with the stock chip.

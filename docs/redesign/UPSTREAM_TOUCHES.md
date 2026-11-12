@@ -198,6 +198,14 @@ reads the setting once in `onCreate` and starts again when it changes, so no scr
 | `app/.../ComposeMainActivity.kt` | Field `redesignOn = redesignEnabled(preferences)` set in `onCreate`; `CompositionLocalProvider(LocalRedesignEnabled provides redesignOn)` around `MainContent()`; in `observePreferences`, a collector of the key that calls `recreate()` (with `rebuildingForRestart`, so the view models are new) when the value differs from `redesignOn`. Imports. | One value for the whole life of the activity, the same for every screen (main screen, sheets, portrait lock). |
 | `appshell/.../AppNavGraph.kt` | `RedesignFlags.ENABLED` became `LocalRedesignEnabled.current` in the two `topInfo` hooks. | The insulin and basal lines follow the setting. |
 
+## Step 5 - Medtrum priming bar
+
+### `pump/medtrum/src/main/kotlin/app/aaps/pump/medtrum/compose/steps/PrimeStep.kt`
+
+- The priming `LinearProgressIndicator` gets `gapSize = 0.dp` and `drawStopIndicator = {}`: a plain bar like the
+  consumables bar, without the Material 3 dot at the end. Display only, no pump logic. Not behind the redesign
+  switch: it is a fix of the look, the same in both interfaces.
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

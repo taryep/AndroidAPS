@@ -158,6 +158,10 @@ internal fun PrimeStepContent(
                 LinearProgressIndicator(
                     progress = { (primeProgress / PRIME_MAX_PROGRESS).coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth(),
+                    // Display only (redesign step 5): a plain bar like the consumables bar, without the
+                    // Material dot at the end, which looked like a second, wrong end of the progress.
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(

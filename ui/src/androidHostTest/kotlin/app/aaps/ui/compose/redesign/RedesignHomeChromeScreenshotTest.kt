@@ -225,9 +225,11 @@ class RedesignHomeChromeScreenshotTest {
     }
 
 
-    /** Bottom of the "BAS" legend, at the top of the IOB graph: it moves when the graphs above it change height. */
+    /** Bottom of the IOB legend, at the top of the IOB graph: it moves when the graphs above it change height. */
     private fun iobGraphNameBottom(): Float =
-        compose.onNode(hasText("BAS"), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
+        // The home tile has the same words but sits on the page to the left, outside the screen.
+        compose.onAllNodes(hasText(RuntimeEnvironment.getApplication().getString(R.string.redesign_legend_iob).replace(' ', ' '), substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes().filter { it.boundsInRoot.left >= 0f }.maxOf { it.boundsInRoot.bottom }
 
     private fun picture(
         name: String,

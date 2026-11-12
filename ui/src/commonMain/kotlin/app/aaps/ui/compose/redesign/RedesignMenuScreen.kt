@@ -144,8 +144,7 @@ fun RedesignMenuScreen(
                 isActive = searchUiState.isSearchActive,
                 onQueryChange = onSearchQueryChange,
                 onClearClick = onSearchClear,
-                onActiveChange = onSearchActiveChange,
-                placeholder = stringResource(UiStrings.redesign_search_placeholder)
+                onActiveChange = onSearchActiveChange
             )
 
             if (searchUiState.isSearchActive) {

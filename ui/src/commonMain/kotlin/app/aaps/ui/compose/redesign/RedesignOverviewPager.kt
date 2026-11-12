@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -126,7 +128,12 @@ private fun RedesignEditPill(onDone: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(UiStrings.redesign_edit_mode), style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.width(12.dp))
-                Button(onClick = onDone, modifier = Modifier.height(32.dp), contentPadding = PILL_BUTTON_PADDING) {
+                Button(
+                    onClick = onDone,
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PILL_BUTTON_PADDING,
+                    colors = ButtonDefaults.buttonColors(containerColor = DONE_BUTTON_COLOR, contentColor = DONE_BUTTON_TEXT_COLOR)
+                ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(UiStrings.redesign_edit_done))
@@ -137,3 +144,7 @@ private fun RedesignEditPill(onDone: () -> Unit) {
 }
 
 private val PILL_BUTTON_PADDING = PaddingValues(horizontal = 12.dp)
+
+/** The "Done" button of the edit pill: sky blue with dark text (SPEC 7). */
+private val DONE_BUTTON_COLOR = Color(0xFF56B4E9)
+private val DONE_BUTTON_TEXT_COLOR = Color(0xFF06263A)

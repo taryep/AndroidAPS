@@ -57,9 +57,7 @@ fun M3SearchBar(
     onQueryChange: (String) -> Unit,
     onClearClick: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    /** Text shown in the empty field. Null keeps the stock "Search". */
-    placeholder: String? = null
+    modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -124,7 +122,7 @@ fun M3SearchBar(
                     interactionSource = interactionSource,
                     placeholder = {
                         Text(
-                            text = placeholder ?: stringResource(CoreUiStrings.search),
+                            text = stringResource(CoreUiStrings.search),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

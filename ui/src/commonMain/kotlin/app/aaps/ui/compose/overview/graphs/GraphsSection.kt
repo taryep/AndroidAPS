@@ -605,7 +605,7 @@ fun GraphsSection(
                     .fillMaxWidth()
                     .then(
                         if (redesignLayout == null) Modifier.height(graphConfig.bgHeight.dp)
-                        else Modifier.padding(top = legendHeight).height(blockHeight(graphConfig.bgHeight) - BG_BELT_VISIBLE - legendHeight)
+                        else Modifier.height(blockHeight(graphConfig.bgHeight) - BG_BELT_VISIBLE)
                     )
                     .onScrollOrZoomGesture(graphViewModel::onGraphInteraction)
                     .then(
@@ -621,13 +621,6 @@ fun GraphsSection(
                         else Modifier
                     )
             )
-            if (redesignLayout != null) {
-                RedesignGraphLegend(
-                    items = listOf(GraphLegendItem(stringResource(CoreUiStrings.glucose), AapsTheme.generalColors.originalBgValue)),
-                    height = legendHeight,
-                    modifier = Modifier.align(Alignment.TopCenter)
-                )
-            }
             if (canEdit) {
                 GraphEditButton(
                     onClick = { editingBgOverlays = true },
@@ -680,6 +673,8 @@ fun GraphsSection(
         }
         // Fixed IOB graph (Graph 1) with optional Activity overlay
         var editingIobOverlays by remember { mutableStateOf(false) }
+        // The measured height of the IOB legend (more than one line for a large font); the plot gives it the space.
+        var iobLegendMeasured by remember { mutableStateOf(legendHeight) }
         Box(
             modifier = Modifier
                 .then(if (redesignLayout == null) Modifier.pullUp(IOB_GRAPH_PULL_UP) else Modifier)
@@ -702,16 +697,17 @@ fun GraphsSection(
                     .fillMaxWidth()
                     .then(
                         if (redesignLayout == null) Modifier.height(graphConfig.iobHeight.dp - REMOVED_TIME_LABELS_HEIGHT)
-                        else Modifier.padding(top = legendHeight).height(blockHeight(graphConfig.iobHeight) - legendHeight)
+                        else Modifier.padding(top = iobLegendMeasured).height(blockHeight(graphConfig.iobHeight) - iobLegendMeasured)
                     )
             )
             if (redesignLayout != null) {
                 RedesignGraphLegend(
                     items = listOf(
-                        GraphLegendItem(stringResource(CoreUiStrings.iob), seriesColors.iob),
-                        GraphLegendItem(stringResource(CoreUiStrings.basal_shortname), AapsTheme.elementColors.tempBasal)
+                        GraphLegendItem(stringResource(UiStrings.redesign_legend_iob), seriesColors.iob),
+                        GraphLegendItem(stringResource(UiStrings.redesign_tile_basal), AapsTheme.elementColors.tempBasal)
                     ),
-                    height = legendHeight,
+                    minHeight = legendHeight,
+                    onHeightChange = { iobLegendMeasured = it },
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
@@ -746,6 +742,7 @@ fun GraphsSection(
         var editingGraphIndex by remember { mutableIntStateOf(-1) }
         for (i in 0 until activeCount) {
             val secondary = graphConfig.secondaryGraphs[i]
+            var legendMeasured by remember { mutableStateOf(legendHeight) }
             Box(
                 modifier = Modifier
                     .then(if (redesignLayout == null) Modifier.pullUp(GRAPH_OVERLAP) else Modifier)
@@ -765,13 +762,14 @@ fun GraphsSection(
                         .fillMaxWidth()
                         .then(
                             if (redesignLayout == null) Modifier.height(secondary.height.dp - REMOVED_TIME_LABELS_HEIGHT)
-                            else Modifier.padding(top = legendHeight).height(blockHeight(secondary.height) - legendHeight)
+                            else Modifier.padding(top = legendMeasured).height(blockHeight(secondary.height) - legendMeasured)
                         )
                 )
                 if (redesignLayout != null) {
                     RedesignGraphLegend(
-                        items = secondary.series.map { GraphLegendItem(stringResource(seriesShortNameId(it)), seriesColors.colorFor(it)) },
-                        height = legendHeight,
+                        items = secondary.series.map { GraphLegendItem(stringResource(seriesNameId(it)), seriesColors.colorFor(it)) },
+                        minHeight = legendHeight,
+                        onHeightChange = { legendMeasured = it },
                         modifier = Modifier.align(Alignment.TopCenter)
                     )
                 }

@@ -113,7 +113,10 @@ private fun RedesignGraphsPage(
         // In edit mode the pager shows its edit pill over the page instead of this title.
         if (!editMode) RedesignGraphsTitleRow(canEdit = !isSimpleMode, onEdit = onEdit)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            val layout = GraphsRedesignLayout(smallHeight = GraphHeights.small(maxHeight.value, GRAPH_GAP.value).dp, graphGap = GRAPH_GAP)
+            val layout = GraphsRedesignLayout(
+                smallHeight = GraphHeights.small(maxHeight.value, GRAPH_GAP.value).dp,
+                graphGap = GRAPH_GAP
+            )
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 GraphsSection(
                     graphViewModel = graphViewModel,
@@ -129,7 +132,7 @@ private fun RedesignGraphsPage(
     }
 }
 
-private val GRAPH_GAP = 12.dp
+private val GRAPH_GAP = 6.dp
 private val TITLE_ROW_HEIGHT = 64.dp
 private val EDIT_BUTTON_SIZE = 44.dp
 private val EDIT_BUTTON_TOUCH_SIZE = 48.dp

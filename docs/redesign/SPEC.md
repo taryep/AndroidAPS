@@ -488,8 +488,11 @@ than that, stop and tell me instead of doing it.
 - Under the title: the graphs, 12 dp between two graphs, 0 dp under the last one. No QuickLaunch space,
   **no floating buttons** (neither pump activity nor notifications). The long-press line stays at the
   same time in every graph.
-- **Legends**: every graph has its legend centred at the top, on its own line, the BG graph included
-  ("● Glycémie"). Same style as the existing secondary graph legends.
+- **Legends**: every secondary graph has its legend centred at the top, on its own line. **The BG graph
+  has no legend** (decided after the phone test: it only added space above the treatment belt).
+  Full series names (existing `graph_series_*` strings, in the app language), not the abbreviations.
+  Legend line 32 dp for the secondary graphs. If the line is too long, the text shrinks down to
+  **10 sp minimum**, then wraps to a second line; never cut.
 - **Same BG scale as Home** (fixed 40–280 with the adaptive rule of 3.6, same threshold lines and left
   labels): wanted, only through existing parameters or one defaulted parameter on `BgGraphCompose`
   (phase 8c, optional).
@@ -577,7 +580,8 @@ bar is selected (2.3).
 1. Title "Menu" (28 sp bold).
 2. Search field: reuse the existing search (`ui/search/SearchBar.kt`, `M3SearchBar`,
    `SearchUiState`) with the same behaviour as in the old top bar. Mockup: 48 dp high, radius 14, label
-   "Rechercher" (accessible), placeholder "Rechercher un réglage, un écran, la doc" (new string).
+   "Rechercher" (accessible), placeholder: the stock "Rechercher" (decided in 8a: the longer text of the mockup needed an upstream
+   change of `M3SearchBar`, not worth it).
 3. **"À régler"** (as coded, `redesignAttentionItems`): the items that left the bottom bar so it
    keeps at most 5 items. First in the Menu, under the search field, because they need the user;
    the whole section is hidden when it is empty. Each row keeps the label, icon, badge and action
@@ -771,7 +775,7 @@ The notes under each image below are commentary, not UI text.
 | `sheet-treatments.png` | Traitements sheet without the carbs entry (other stock entries unchanged, not drawn) | 6 |
 | `panel-patch.png` | Consumables panel, patch pump: Patch = time, Insuline = reservoir, Capteur = time + (+) | 7 |
 | `menu.png` | Menu with "À régler" (Objectifs 9/10), shortcuts Paramètres / Historique / Statistiques in one row (no "Mode édition"), 4b bottom bar, Menu selected | 8a |
-| `graphs-p8-normal.png` | Graphiques page: title + grey edit button, BG Grand, IOB Petit, COB Petit, legends | 8a |
+| `graphs-p8-normal.png` | Graphiques page: title + grey edit button, BG Grand, IOB Petit, COB Petit, legends on the secondary graphs | 8a |
 | `graphs-p8-edit.png` | Edit mode: pill (✕) Mode édition (+) (✓), dimmed graphs, size control, ✎, ↑ ↓ delete | 8b |
 | `graphs-p8-menu.png` | Edit mode, ✎ menu of the BG graph (Prédictions, Activité, cannot be deleted) | 8b |
 | `graphs-p8-added.png` | A graph added: at the bottom in Petit, page scrolled, others unchanged | 8b |

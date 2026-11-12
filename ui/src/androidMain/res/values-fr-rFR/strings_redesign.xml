@@ -4,7 +4,7 @@
     <string name="redesign_menu">Menu</string>
     <string name="redesign_tools">Outils</string>
     <string name="redesign_needs_attention">À régler</string>
-    <string name="redesign_search_placeholder">Rechercher un réglage, un écran, la doc</string>
+    <string name="redesign_legend_iob">Insuline active</string>
     <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
     <string name="redesign_edit_mode">Mode édition</string>
     <string name="redesign_edit_done">Terminer</string>

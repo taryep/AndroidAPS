@@ -103,12 +103,8 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
   gives the dp. The height **includes the legend**. Nothing is measured: the phase 3 `fixedPart`,
   `graphScale`, `reportFilledPart`, `SectionBox`, `FILL_GRAPH_COUNT` and their imports are removed.
   `GraphConfig` and the saved format are not changed.
-- **Legends**: with a layout, each graph shows `RedesignGraphLegend` (in `redesign/`) centred at the top,
-  BG included. The plot gets `padding(top = legendHeight)`. The name row stays only for the pencil in
-  edit mode (empty name).
-- **No stock overlaps in the layout**: the BG box uses `pullUp(16 dp)` instead of `offset(y = -16.dp)`,
-  and the IOB and secondary boxes skip their `pullUp`, so the blocks add up exactly. Without a layout
-  the stock modifiers are used as before.
+- **Legends**: with a layout, each graph below BG has its own legend line (`RedesignGraphLegend`, in `redesign/`) just above its plot, not drawn on it: 12 sp (font scale capped at 1.3), else 10 sp, else wrapped between entries. The BG graph has none (SPEC 4.1). The line height is measured and taken from the plot of the same graph. The name row stays only for the pencil in edit mode (empty name).
+- **Pull-ups in the layout**: the BG box uses `pullUp(16 dp)` instead of `offset(y = -16.dp)` (the treatment belt overlap); the IOB and secondary boxes skip their stock `pullUp`. The internal padding of the stock graphs is accepted as it is. Without a layout the stock modifiers are used as before.
 - **Gap**: `.padding(top = graphGap)` at the end of the modifier chain of the IOB graph and of each
   secondary graph, after the touch modifiers, so a drag in a gap still scrolls the graphs and does
   not swipe the page. Only vertical: the long-press line, the hour lines and the "now" line keep
@@ -254,10 +250,6 @@ same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesi
 | Hook | Why |
 |---|---|
 | `RedesignMenuScreen(...)` without `onEditScreenClick` | Menu > "Mode édition" is removed: the edit mode starts from the pencil button of the graphs page. |
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/search/SearchBar.kt`
-
-- One new parameter with a default: `placeholder: String? = null`. Null keeps the stock "Search" text. The Menu passes its own hint.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphViewModel.kt`
 

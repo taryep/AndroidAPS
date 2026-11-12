@@ -18,14 +18,14 @@ import androidx.compose.ui.unit.dp
  * @param bottomPadding space under the last graph: 0, so the graphs end at the bottom bar
  * @param quickLaunchSpace keep the space the stock overview leaves at the end for the QuickLaunch
  *   toolbar (a spacer and the hidden "Add graph" button). The redesign has no such toolbar.
- * @param legendHeight height of the legend line at the top of every graph
+ * @param legendHeight least height of the legend line at the top of a graph; a longer legend (large font) takes more, from its own plot
  */
 @Immutable
 data class GraphsRedesignLayout(
     val smallHeight: Dp,
-    val graphGap: Dp = 12.dp,
+    val graphGap: Dp = 6.dp,
     val topPadding: Dp = 0.dp,
     val bottomPadding: Dp = 0.dp,
     val quickLaunchSpace: Boolean = false,
-    val legendHeight: Dp = 24.dp
+    val legendHeight: Dp = 22.dp
 )

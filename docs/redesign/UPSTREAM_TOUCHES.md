@@ -250,6 +250,7 @@ same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesi
 | Hook | Why |
 |---|---|
 | `RedesignMenuScreen(...)` without `onEditScreenClick` | Menu > "Mode édition" is removed: the edit mode starts from the pencil button of the graphs page. |
+| Menu button while the Menu is open | Asks for the home page first and closes the Menu in `redesignOverview.afterPageShown`, so the graphs page is not seen for a moment. |
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphViewModel.kt`
 

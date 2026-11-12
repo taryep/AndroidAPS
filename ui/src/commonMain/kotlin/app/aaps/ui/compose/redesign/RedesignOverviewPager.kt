@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -26,11 +24,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -43,13 +41,12 @@ import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
 import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.GRAPHS_PAGE
 import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
-import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.PAGE_COUNT
 
 /**
- * The redesign overview: two pages side by side, home and graphs, changed by buttons only (no swipe).
+ * The redesign overview: the home page and the graphs page, one shown at a time, changed by buttons only (no swipe).
  * No page indicator; each page has a name for the screen reader.
  *
- * The graphs keep every sideways drag (it scrolls the history); the pager never takes one.
+ * The graphs keep every sideways drag (it scrolls the history).
  *
  * @param homePage the content of the home page; it scrolls by itself
  * @param graphsPage the content of the graphs page; gets the edit mode, scrolls by itself
@@ -61,21 +58,9 @@ fun RedesignOverviewPager(
     graphsPage: @Composable (editMode: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Not rememberPagerState: that one is saved state and would bring the graphs page back after
-    // Android stopped the process. The page lives in `state`, which a new start resets.
-    val pagerState = remember { PagerState(currentPage = state.page) { PAGE_COUNT } }
-
-    // A page asked by code (tap on the glucose value, Menu > Edit screen, Back). It changes at once,
-    // with no slide, as the Menu opens.
+    // Leaving the graphs page ends the edit mode.
     LaunchedEffect(state.page) {
-        if (pagerState.currentPage != state.page) pagerState.scrollToPage(state.page)
-    }
-    // A page reached by a swipe. Leaving the graphs page ends the edit mode.
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page ->
-            state.page = page
-            if (page == HOME_PAGE) state.editMode = false
-        }
+        if (state.page == HOME_PAGE) state.editMode = false
     }
     // The edit mode never stays on while the app is in the background.
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { state.editMode = false }
@@ -89,24 +74,31 @@ fun RedesignOverviewPager(
 
     val homeName = stringResource(UiStrings.redesign_page_home)
     val graphsName = stringResource(UiStrings.redesign_page_graphs)
-    HorizontalPager(
-        state = pagerState,
-        modifier = modifier.fillMaxSize(),
-        // Only the buttons change the page (the Graphs item of the bottom bar, a tap on the glucose
-        // circle or the home graph, Menu > Edit mode, Back). No swipe, so the graphs keep every drag.
-        userScrollEnabled = false,
-        // Both pages stay composed, so the graphs do not load again at each change of page.
-        beyondViewportPageCount = 1
-    ) { page ->
-        when (page) {
-            HOME_PAGE -> Box(Modifier.fillMaxSize().semantics { paneTitle = homeName }) { homePage() }
-            else      -> Column(Modifier.fillMaxSize().semantics { paneTitle = graphsName }) {
-                if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
-                Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
-            }
+    // A plain switch of content, no pager: the page changes in the same frame as the state, so there is never a
+    // moment with the wrong page (for example under the Menu). Only the buttons change the page (the Graphs item of
+    // the bottom bar, a tap on the glucose circle or the home graph, Back). Both pages stay composed, so the graphs
+    // keep their state and do not load again at each change of page.
+    Box(modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().hiddenWhen(state.page != HOME_PAGE).semantics { paneTitle = homeName }) { homePage() }
+        Column(Modifier.fillMaxSize().hiddenWhen(state.page != GRAPHS_PAGE).semantics { paneTitle = graphsName }) {
+            if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
+            Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
         }
     }
 }
+
+/**
+ * Keeps the content composed but not placed: nothing is drawn, nothing is touched and the screen reader skips it.
+ * It is measured as usual, so the content keeps its size and its state.
+ */
+private fun Modifier.hiddenWhen(hidden: Boolean): Modifier =
+    if (!hidden) this
+    else this
+        .layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, placeable.height) { }
+        }
+        .clearAndSetSemantics { }
 
 /** Top of the graphs page in edit mode: "Edit mode" and a "Done" button. */
 @Composable

@@ -20,7 +20,10 @@ class RedesignOverviewState : ViewModel() {
     /** True while the graphs page shows the buttons to add, change and remove graphs. */
     var editMode by mutableStateOf(false)
 
-    /** True while the Menu screen is open over the overview. The Menu handles Back then. */
+    /**
+     * True while the Menu is the chosen item of the bottom bar. [page] stays the screen below it, so Back from the Menu
+     * returns to the previous screen, and the edit mode and the graphs are kept.
+     */
     var menuOpen by mutableStateOf(false)
 
     /**
@@ -29,7 +32,27 @@ class RedesignOverviewState : ViewModel() {
      */
     var homeGraphRange by mutableStateOf(HomeGraphRange.DEFAULT)
 
-    /** Menu > "Edit mode": the graphs page, in edit mode. */
+    /** Home item of the bar, or a re-tap on Graphs or Menu: the home page, no Menu, no edit mode. */
+    fun showHome() {
+        menuOpen = false
+        editMode = false
+        page = HOME_PAGE
+    }
+
+    /** Graphs item: show the graphs page; a re-tap while it is shown goes home. */
+    fun toggleGraphs() {
+        if (page == GRAPHS_PAGE && !menuOpen) showHome() else {
+            menuOpen = false
+            page = GRAPHS_PAGE
+        }
+    }
+
+    /** Menu item: open the Menu; a re-tap while it is open goes home. */
+    fun toggleMenu() {
+        if (menuOpen) showHome() else menuOpen = true
+    }
+
+    /** Menu > "Edit mode":the graphs page, in edit mode. */
     fun editScreen() {
         editMode = true
         page = GRAPHS_PAGE
@@ -44,6 +67,5 @@ class RedesignOverviewState : ViewModel() {
 
         const val HOME_PAGE = 0
         const val GRAPHS_PAGE = 1
-        const val PAGE_COUNT = 2
     }
 }

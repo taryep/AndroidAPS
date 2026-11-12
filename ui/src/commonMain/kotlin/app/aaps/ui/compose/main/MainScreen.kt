@@ -187,25 +187,23 @@ fun MainScreen(
     // Redesign (docs/redesign/SPEC.md): phone portrait only, the other layouts keep the stock chrome.
     val redesignChrome = RedesignFlags.ENABLED &&
         isRedesignPhoneLayout(with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() })
-    // Saveable, so Back from a screen opened in the Menu comes back to the Menu.
-    var showRedesignMenu by rememberSaveable { mutableStateOf(false) }
+    // Chosen item of the bar (home, graphs, Menu) and edit mode. A view model: kept over a rotation and while a screen
+    // opened in the Menu is shown (Back comes back to the Menu), reset by a new start.
+    val redesignOverview: RedesignOverviewState = viewModel { RedesignOverviewState() }
+    val showRedesignMenu = redesignOverview.menuOpen
     val closeRedesignMenu = {
         if (searchUiState.isSearchActive) {
             onSearchClear()
             onSearchActiveChange(false)
         }
-        showRedesignMenu = false
+        redesignOverview.menuOpen = false
     }
-    // Page and edit mode of the redesign overview. A view model: kept over a rotation, reset by a new start.
-    val redesignOverview: RedesignOverviewState = viewModel { RedesignOverviewState() }
     LaunchedEffect(redesignChrome) {
         if (!redesignChrome) {
-            showRedesignMenu = false
+            redesignOverview.menuOpen = false
             redesignOverview.editMode = false
         }
     }
-    // While the Menu is open it takes Back, not the graphs page under it.
-    SideEffect { redesignOverview.menuOpen = showRedesignMenu }
     // Tile values the stock state has not as separate texts (time left, basal rates).
     val redesignHomeData = if (redesignChrome) metroViewModel<RedesignHomeViewModel>().data.collectAsStateWithLifecycle().value else RedesignHomeData()
     // Redesign: objectives, pump set-up and permissions move from the bottom bar to the Menu, so the bar
@@ -568,14 +566,11 @@ fun MainScreen(
                             onLoopActionClick = { showLoopActionSheet = true },
                             onMenuClick = if (redesignChrome) {
                                 {
+                                    // A re-tap on the open Menu goes home. Menu and page change in one state: no flash.
                                     if (showRedesignMenu) {
-                                        // Redesign: the Menu button closes the Menu on the home page (Back returns to the page below).
                                         closeRedesignMenu()
-                                        redesignOverview.editMode = false
-                                        redesignOverview.page = HOME_PAGE
-                                    } else {
-                                        showRedesignMenu = true
-                                    }
+                                        redesignOverview.showHome()
+                                    } else redesignOverview.toggleMenu()
                                 }
                             } else null,
                             menuSelected = showRedesignMenu,
@@ -583,13 +578,10 @@ fun MainScreen(
                             menuBadge = redesignAttentionItems.any { it.needsAction },
                             onGraphsClick = if (redesignChrome) {
                                 {
+                                    // Read the state before closing the Menu: a re-tap on Graphs (Menu closed) goes home.
                                     val menuWasOpen = showRedesignMenu
                                     closeRedesignMenu()
-                                    if (redesignOverview.page == GRAPHS_PAGE && !menuWasOpen) {
-                                        // Second tap: back to the home page, which also ends the edit mode.
-                                        redesignOverview.editMode = false
-                                        redesignOverview.page = HOME_PAGE
-                                    } else redesignOverview.page = GRAPHS_PAGE
+                                    if (menuWasOpen) redesignOverview.page = GRAPHS_PAGE else redesignOverview.toggleGraphs()
                                 }
                             } else null,
                             graphsSelected = redesignOverview.page == GRAPHS_PAGE && !showRedesignMenu,

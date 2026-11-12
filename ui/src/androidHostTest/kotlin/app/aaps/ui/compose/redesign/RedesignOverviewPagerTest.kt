@@ -254,6 +254,33 @@ class RedesignOverviewPagerTest {
     }
 
     @Test
+    fun aRetapOnMenuOrGraphsGoesHomeAndKeepsNoEditMode() {
+        state.editScreen()
+        state.toggleMenu()
+        assertThat(state.menuOpen).isTrue()
+        assertThat(state.page).isEqualTo(GRAPHS_PAGE)
+        assertThat(state.editMode).isTrue()
+
+        state.toggleMenu()
+        assertThat(state.menuOpen).isFalse()
+        assertThat(state.page).isEqualTo(HOME_PAGE)
+        assertThat(state.editMode).isFalse()
+
+        state.toggleGraphs()
+        assertThat(state.page).isEqualTo(GRAPHS_PAGE)
+        state.toggleGraphs()
+        assertThat(state.page).isEqualTo(HOME_PAGE)
+    }
+
+    @Test
+    fun graphsKeepTheirPlaceWhileTheMenuIsOpen() {
+        state.page = GRAPHS_PAGE
+        state.toggleMenu()
+        state.menuOpen = false // Back from the Menu: the previous screen
+        assertThat(state.page).isEqualTo(GRAPHS_PAGE)
+    }
+
+    @Test
     fun simpleModeHasNoTitleEditButton() {
         state.page = GRAPHS_PAGE
         show(isSimpleMode = true)

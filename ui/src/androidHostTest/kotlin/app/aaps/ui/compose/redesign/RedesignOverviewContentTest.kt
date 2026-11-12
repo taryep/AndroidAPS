@@ -62,7 +62,7 @@ import app.aaps.core.ui.R as CoreUiR
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w412dp-h891dp-xxhdpi")
-class RedesignOverviewPagerTest {
+class RedesignOverviewContentTest {
 
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()

@@ -52,7 +52,7 @@ import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
  * @param graphsPage the content of the graphs page; gets the edit mode, scrolls by itself
  */
 @Composable
-fun RedesignOverviewPager(
+fun RedesignOverviewContent(
     state: RedesignOverviewState,
     homePage: @Composable () -> Unit,
     graphsPage: @Composable (editMode: Boolean) -> Unit,
@@ -91,7 +91,7 @@ fun RedesignOverviewPager(
  * Keeps the content composed but not placed: nothing is drawn, nothing is touched and the screen reader skips it.
  * It is measured as usual, so the content keeps its size and its state.
  */
-private fun Modifier.hiddenWhen(hidden: Boolean): Modifier =
+internal fun Modifier.hiddenWhen(hidden: Boolean): Modifier =
     if (!hidden) this
     else this
         .layout { measurable, constraints ->

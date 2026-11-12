@@ -65,7 +65,7 @@ fun RedesignOverview(
     onNotificationsClick: () -> Unit,
     onPumpActivityClick: () -> Unit
 ) {
-    RedesignOverviewPager(
+    RedesignOverviewContent(
         state = redesign,
         modifier = Modifier.padding(paddingValues),
         homePage = {
@@ -110,7 +110,7 @@ private fun RedesignGraphsPage(
     // Once per install: the stock default BG height 100 becomes Grand (SPEC 4.2).
     LaunchedEffect(Unit) { graphViewModel.migrateRedesignGraphHeights() }
     Column(Modifier.fillMaxSize()) {
-        // In edit mode the pager shows its edit pill over the page instead of this title.
+        // In edit mode the content shows its edit pill over the page instead of this title.
         if (!editMode) RedesignGraphsTitleRow(canEdit = !isSimpleMode, onEdit = onEdit)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             val layout = GraphsRedesignLayout(

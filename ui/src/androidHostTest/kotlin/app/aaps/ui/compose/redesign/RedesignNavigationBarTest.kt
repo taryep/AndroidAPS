@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -28,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import app.aaps.core.interfaces.resources.TextRefIdRegistry
 import app.aaps.ui.R
 import app.aaps.ui.UiStringIds
-import app.aaps.ui.compose.main.MainNavigationBar
+import app.aaps.ui.compose.redesign.RedesignBottomBar
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -42,7 +43,7 @@ import java.io.File
 import kotlin.math.roundToInt
 
 /**
- * The Menu item the redesign adds to [MainNavigationBar], and the bar with every item shown at once.
+ * The Menu item the redesign adds to [RedesignBottomBar], and the bar with every item shown at once.
  *
  * The worst case writes a picture of the bar to `ui/build/reports/redesign/` and lists every label
  * that is cut or broken inside a word. It does not fail on those: whether the bar is still usable
@@ -61,20 +62,26 @@ class RedesignNavigationBarTest {
         TextRefIdRegistry.register("ui") { name -> UiStringIds.idOf(name) }
     }
 
+    @Composable
+    private fun TestBar(
+        onGraphsClick: () -> Unit = {},
+        onMenuClick: () -> Unit = {},
+        graphsSelected: Boolean = false,
+        menuSelected: Boolean = false,
+        menuBadge: Boolean = false
+    ) = RedesignBottomBar(
+        onTreatmentClick = {}, onAutomationClick = {}, onManageClick = {}, onGraphsClick = onGraphsClick, onMenuClick = onMenuClick,
+        graphsSelected = graphsSelected, menuSelected = menuSelected, menuBadge = menuBadge
+    )
+
     private val menuLabel get() = RuntimeEnvironment.getApplication().getString(R.string.redesign_menu)
     private val graphsLabel get() = RuntimeEnvironment.getApplication().getString(R.string.redesign_graphs)
-
-    @Test
-    fun theStockBarHasNoMenuItem() {
-        compose.setContent { MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}) } }
-        assertThat(compose.onAllNodes(hasText(menuLabel)).fetchSemanticsNodes()).isEmpty()
-    }
 
     @Test
     fun theMenuItemIsLastAndShowsWhenTheMenuIsOpen() {
         var clicks = 0
         compose.setContent {
-            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onMenuClick = { clicks++ }, menuSelected = true) }
+            MaterialTheme { TestBar(onMenuClick = { clicks++ }, menuSelected = true) }
         }
         compose.onNode(hasText(menuLabel)).assertIsSelected()
         // While open, the screen reader says that the tap closes the menu.
@@ -83,16 +90,10 @@ class RedesignNavigationBarTest {
     }
 
     @Test
-    fun theStockBarHasNoGraphsItem() {
-        compose.setContent { MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}) } }
-        compose.onNode(hasText(graphsLabel)).assertDoesNotExist()
-    }
-
-    @Test
     fun theGraphsItemIsBeforeTheMenuAndWorks() {
         var clicks = 0
         compose.setContent {
-            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onGraphsClick = { clicks++ }, onMenuClick = {}) }
+            MaterialTheme { TestBar(onGraphsClick = { clicks++ }, onMenuClick = {}) }
         }
         compose.onNode(hasText(graphsLabel)).assertIsNotSelected().performClick()
         assertThat(clicks).isEqualTo(1)
@@ -105,7 +106,7 @@ class RedesignNavigationBarTest {
     @Test
     fun whileTheGraphsAreShownTheItemIsSelectedAndSaysItGoesBack() {
         compose.setContent {
-            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onGraphsClick = {}, graphsSelected = true) }
+            MaterialTheme { TestBar(onGraphsClick = {}, graphsSelected = true) }
         }
         compose.onNode(hasText(graphsLabel)).assertIsSelected()
         val backLabel = RuntimeEnvironment.getApplication().getString(R.string.redesign_close_graphs)
@@ -115,7 +116,7 @@ class RedesignNavigationBarTest {
     @Test
     fun aBadgeOnTheMenuIsSpokenAsActionNeeded() {
         compose.setContent {
-            MaterialTheme { MainNavigationBar(onManageClick = {}, onTreatmentClick = {}, onMenuClick = {}, menuBadge = true) }
+            MaterialTheme { TestBar(onMenuClick = {}, menuBadge = true) }
         }
         val actionNeeded = RuntimeEnvironment.getApplication().getString(R.string.a11y_badge_attention)
         compose.onNode(hasText(menuLabel) and hasStateDescription(actionNeeded)).assertExists()
@@ -138,14 +139,14 @@ class RedesignNavigationBarTest {
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Box(Modifier.width(412.dp).testTag(BAR)) {
-                    MainNavigationBar(
-                        onManageClick = {},
+                    RedesignBottomBar(
+                        onManageClick = {}, onAutomationClick = {},
                         onTreatmentClick = {},
                         quickWizardCount = 3,
                         automationTotal = 4,
                         automationCount = 2,
                         // BG source warning, loop accept, objectives, pump set-up and permissions are not here: with
-                        // the redesign they are in the Menu, which gets a badge instead (see MainScreen).
+                        // the redesign they are in the Menu, which gets a badge instead (see RedesignMainScreen).
                         onGraphsClick = {},
                         onMenuClick = {},
                         menuBadge = true

@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -45,6 +46,9 @@ import app.aaps.ui.compose.overview.toColor
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+
+/** Test tag of the glucose circle. */
+const val REDESIGN_BG_CIRCLE_TAG = "redesign_bg_circle"
 
 /**
  * The glucose circle of the home page (SPEC 3.3): the same data and trend arc as the stock
@@ -86,7 +90,10 @@ fun RedesignBgCircle(
         modifier = modifier
             .padding(vertical = TRIANGLE_OVERFLOW)
             .size(size)
-            .semantics(mergeDescendants = true) { contentDescription = description }
+            .semantics(mergeDescendants = true) {
+                contentDescription = description
+                testTag = REDESIGN_BG_CIRCLE_TAG
+            }
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = RING_STROKE.toPx()

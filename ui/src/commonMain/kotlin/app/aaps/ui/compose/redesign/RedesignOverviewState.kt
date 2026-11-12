@@ -14,7 +14,7 @@ import androidx.lifecycle.ViewModel
  */
 class RedesignOverviewState : ViewModel() {
 
-    /** The page shown, [HOME_PAGE] or [GRAPHS_PAGE]. Set it to change the page; the pager follows. */
+    /** The page shown, [HOME_PAGE] or [GRAPHS_PAGE]. Set it to change the page; the content follows. */
     var page by mutableIntStateOf(HOME_PAGE)
 
     /** True while the graphs page shows the buttons to add, change and remove graphs. */

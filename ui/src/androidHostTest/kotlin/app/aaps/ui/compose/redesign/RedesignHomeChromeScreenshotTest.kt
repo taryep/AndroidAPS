@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
@@ -49,7 +50,7 @@ import app.aaps.core.interfaces.resources.TextRefIdRegistry
 import app.aaps.core.ui.compose.preference.PreferenceSubScreenDef
 import app.aaps.ui.R
 import app.aaps.ui.UiStringIds
-import app.aaps.ui.compose.main.MainNavigationBar
+
 import app.aaps.ui.compose.main.TempTargetChipState
 import app.aaps.ui.compose.overview.OverviewScreen
 import app.aaps.ui.compose.testing.AapsScreenFixture
@@ -128,6 +129,20 @@ class RedesignHomeChromeScreenshotTest {
 
     @Test
     fun homeWithPumpActivity() = picture("home_pump_activity", RedesignOverviewState(), pumpActivity = true)
+
+    @Test
+    fun theBarIsAtTheBottomAndTheTopOfTheCircleIsShown() {
+        picture("home_bar_position", RedesignOverviewState())
+        val screenBounds = compose.onNodeWithTag(SCREEN).fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNode(hasText(RuntimeEnvironment.getApplication().getString(R.string.redesign_menu))).fetchSemanticsNode().boundsInRoot
+        // The bar is in the lower part of the screen, above the gesture bar, and is not at the top.
+        assertThat(menu.bottom).isAtMost(screenBounds.bottom - GESTURE_BAR.value * compose.density.density + 1f)
+        assertThat(menu.top).isGreaterThan(screenBounds.height * 0.8f)
+        // The circle starts under the status bar, not under the top of the screen, and is fully on the screen.
+        val circle = compose.onNode(hasTestTag(REDESIGN_BG_CIRCLE_TAG), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertThat(circle.top).isAtLeast(STATUS_BAR.value * compose.density.density - 1f)
+        assertThat(circle.bottom).isLessThan(menu.top)
+    }
 
     @Test
     fun graphsPageHasNoFloatingButtons() {
@@ -269,15 +284,15 @@ class RedesignHomeChromeScreenshotTest {
                             redesignHome = inputs,
                             isPumpCommunicating = pumpActivity
                         )
-                        MainNavigationBar(
-                            onManageClick = {},
-                            onTreatmentClick = {},
-                            onMenuClick = {},
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = GESTURE_BAR)
-                                .onSizeChanged { barHeightPx = it.height }
-                        )
+                        RedesignBottomBarArea(bottomInset = GESTURE_BAR, onHeightChange = { barHeightPx = it }) {
+                            RedesignBottomBar(
+                                onManageClick = {},
+                                onTreatmentClick = {},
+                                onAutomationClick = {},
+                                onGraphsClick = {},
+                                onMenuClick = {}
+                            )
+                        }
                     }
                 }
             }

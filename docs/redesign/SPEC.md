@@ -491,8 +491,11 @@ than that, stop and tell me instead of doing it.
 - **Legends**: every secondary graph has its legend centred at the top, on its own line. **The BG graph
   has no legend** (decided after the phone test: it only added space above the treatment belt).
   Full series names (existing `graph_series_*` strings, in the app language), not the abbreviations.
-  Legend line 32 dp for the secondary graphs. If the line is too long, the text shrinks down to
-  **10 sp minimum**, then wraps to a second line; never cut.
+  **Final rule (decided after several phone tries, do not iterate further):** the legend is a row of its
+  own directly above its graph, never drawn over a graph, no pull-up / shift constants. Text 12 sp with
+  the font scale clamped at 1.3 (it must not grow with the largest system font), one line; if it does
+  not fit, shrink to 10 sp, then wrap **only between entries** (each "● name" is non-breaking, names
+  included). 6 dp between graphs. The stock inner padding of the graphs is accepted as it is.
 - **Same BG scale as Home** (fixed 40–280 with the adaptive rule of 3.6, same threshold lines and left
   labels): wanted, only through existing parameters or one defaulted parameter on `BgGraphCompose`
   (phase 8c, optional).

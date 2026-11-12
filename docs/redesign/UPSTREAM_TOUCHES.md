@@ -5,38 +5,28 @@ Every change in a file that also exists on `master`, and why. All of them check
 `false` the app behaves like stock 4.0. New files in `redesign/` and new resource files are not
 listed here.
 
-## Phase 1 - Chrome
+## Main screen and bottom bar (current)
+
+The whole redesign chrome lives in `redesign/RedesignMainScreen.kt` (content area Home | Graphs | Menu, its own
+bottom bar `RedesignBottomBar`, sheets and dialogs). The older per-phase notes about `MainScreen` and
+`MainNavigationBar` are removed: those hooks are gone.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainNavigationBar.kt`
 
-- Three new parameters with defaults that keep the stock bar: `onMenuClick: (() -> Unit)? = null`,
-  `menuSelected: Boolean = false` and `menuBadge: Boolean = false`.
-- One call at the end of the bar: `RedesignMenuNavigationItem(...)`, only when `onMenuClick` is not null.
-- One import.
+No change. Identical to `master`.
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
 
-All hooks use `redesignChrome` = flag on **and** stacked phone layout (`isRedesignPhoneLayout`).
-Split and tablet layouts keep the stock chrome.
-
 | Hook | Why |
 |---|---|
-| `redesignChrome`, `showRedesignMenu` (`rememberSaveable`), `closeRedesignMenu` at the top | Menu state. Saveable, so Back from a screen opened in the Menu returns to the Menu. |
-| `ModalNavigationDrawer(gesturesEnabled = !redesignChrome)` | The drawer is replaced by the Menu; the edge swipe must not open it (and would fight the pager in phase 2). |
-| `hasToolbar = ... && !redesignChrome` | Hides the QuickLaunch toolbar and drops its 56 dp FAB offset. |
-| `topBarHeight = if (redesignChrome) 0.dp else ...` | No top bar. A height measured before a rotation must not stay as a gap. |
-| `OverviewScreen(modifier = clearAndSetSemantics {} while the Menu is open)` | The screen reader must not read the home screen under the Menu. |
-| Search results overlay `&& !redesignChrome` | Search results are shown inside the Menu. |
-| `VersionOverlay` only when `!redesignChrome` | The version moves to Menu > About. |
-| `RedesignMenuScreen(...)` before the top bar | The Menu screen, over the overview, under the bottom bar. |
-| Top bar `visible = showChrome && !redesignChrome` | Top bar removed. |
-| `MainNavigationBar(onMenuClick = ..., menuSelected = ..., menuBadge = ...)` | Adds the Menu item (only with the redesign chrome), with a dot when something needs setting up. |
-| `loopActionAvailable` collected at the top (was collected just before the bar) and `redesignAttentionItems(...)`, passed to the Menu | Loop accept, pump set-up and missing permissions are listed at the top of the Menu. (The BG source warning was there in phase 1 and moved beside the glucose circle in phase 3.) |
-| `MainNavigationBar(bgSetupPlugin = null, loopActionAvailable = false, pumpSetupPlugin = null, permissionsMissing = false)` with the redesign chrome | Those four items leave the bar, which keeps at most five: Treatments, Scenes, Manage, Objectives, Menu. With all nine items shown, every label broke inside a word. In phase 3 the BG warning and loop accept also go next to the BG circle. |
-| Imports | `rememberSaveable`, `LocalWindowInfo`, `clearAndSetSemantics`, redesign symbols. |
+| `if (redesignChromeActive()) { RedesignMainScreen(...); return }` at the start of the function | The one hook. The flag is on and the layout is the phone layout; split and tablet layouts keep the stock screen below it. |
+| New parameter `bgQualityState: BgQualityCheck.State? = null` | Passed on to `RedesignMainScreen` (the BG source warning beside the glucose circle). Its caller (`main/OverviewScreen.kt`) passes it. |
+| Three imports | `BgQualityCheck`, `RedesignMainScreen`, `redesignChromeActive`. |
 
-Not touched: `MainTopBar.kt`, `MainDrawer.kt`, `QuickLaunchToolbar.kt`, `overview/OverviewScreen.kt`,
-`appshell`.
+The redesign screen has no drawer, no top bar, no QuickLaunch toolbar and no preview mode (the phone layout is
+upright, so the height is always above the preview limit).
+
+## Phase 1 - Chrome
 
 ## Phase 2 - Pager
 
@@ -48,17 +38,6 @@ Not touched: `MainTopBar.kt`, `MainDrawer.kt`, `QuickLaunchToolbar.kt`, `overvie
 
 `OverviewScreenStacked.kt` had two parameters in phase 2 (page 1 was the stock screen without its
 graphs). Phase 3 replaced page 1, so the file is back to stock.
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| `redesignOverview = viewModel { RedesignOverviewState() }` | Page and edit mode. A view model: kept over a rotation, but a new start of the app opens on the home page. |
-| `LaunchedEffect(redesignChrome)` also ends the edit mode | Landscape shows the stock screen. |
-| `SideEffect { redesignOverview.menuOpen = showRedesignMenu }` | While the Menu is open, Back is for the Menu, not for the graphs page under it. |
-| `OverviewScreen(redesign = ...)` with the redesign chrome | The two pages. |
-| `RedesignMenuScreen(onEditScreenClick = ...)`, null in simple mode | Menu > "Edit screen": graphs page in edit mode. |
-| Imports | `SideEffect`, `viewModel`, `RedesignOverviewState`. |
 
 ## Phase 3 - Home blocks A and B
 
@@ -75,16 +54,6 @@ graphs). Phase 3 replaced page 1, so the file is back to stock.
   (The `fabBottomOffset = -56 dp` hook of phases 1–3 in `MainScreen` is gone for the same reason:
   `MainScreen` passes the stock value again.)
 - Imports.
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| New parameter `bgQualityState: BgQualityCheck.State? = null` | The reason ("Duplicates", "Flat data") on the BG source button. Only a spoken sentence was passed before, and a localized text must not be cut up. |
-| `metroViewModel<RedesignHomeViewModel>()` with the redesign chrome | Tile values the stock state has not as separate texts: time left of profile and target, basal rate, temporary basal rate, percent and time left. It reads the same sources as `MainViewModel`, which is not touched. |
-| `OverviewScreen(redesignHome = RedesignHomeInputs(...))` | BG source warning, eat reminder and open loop suggestion for the home page. |
-| `redesignAttentionItems(...)` without the BG source | The BG source warning left the Menu for the home page. |
-| Imports | `BgQualityCheck`, `metroViewModel`, redesign symbols. |
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/OverviewScreen.kt`
 
@@ -142,41 +111,10 @@ reuses `inspectDataAt` and `GraphInspectPill` (public in `GraphInspect.kt`), `be
 
 ## Phase 4b - Graphs item, Carbs tile, Objectives in the Menu
 
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainNavigationBar.kt`
-
-- Two new parameters with defaults that keep the stock bar: `onGraphsClick: (() -> Unit)? = null` (null
-  hides the item) and `graphsSelected: Boolean = false`.
-- One call just before the Menu item: `RedesignGraphsNavigationItem(...)`, only when `onGraphsClick`
-  is not null. One import.
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| `MainNavigationBar(onGraphsClick = ..., graphsSelected = ...)` with the redesign chrome | A tap shows the graphs page; while it is shown the same tap goes back to the home page and ends the edit mode. Selected while the page is shown and the Menu is closed. |
-| `MainNavigationBar(objectivesSetupPlugin = null)` with the redesign chrome | Objectives leaves the bar (at most five items). |
-| `redesignAttentionItems(objectivesSetupPlugin, objectivesProgressText, objectivesProgressDescription, ...)` | Objectives is the first row of "À régler". The open loop suggestion row is gone: the Loop tile does it. |
-| `menuBadge = redesignAttentionItems.any { it.needsAction }` | Objectives is a progress and does not light the dot of the Menu item. |
-| Imports | `GRAPHS_PAGE`, `HOME_PAGE`. |
-
-Not touched: `TreatmentBottomSheet`, the Treatments item.
-
 ## Phase 5 - Home layout v2
 
 One upstream line, in one file. Everything else is in `redesign/` (new files `RedesignRoundSlot.kt`,
 `RedesignConsumablesBar.kt`, `RedesignBottomBarStyle.kt`; the others are our own files from phases 3 and 4).
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| `RedesignBottomBarStyle(redesignChrome) { MainNavigationBar(...) }` | The bar reads its colours from `MaterialTheme.colorScheme`, so the redesign colours (SPEC 2.3) and the 1 dp top line are set by a theme wrapper. `MainNavigationBar` has **no new parameter**. |
-| Import | `RedesignBottomBarStyle`. |
-| `onMenuClick`: when the Menu is open, the Menu button also sets `redesignOverview.page = HOME_PAGE` and ends the edit mode | Graphs > Menu > Menu comes back to the home page. Back from the Menu still returns to the page below (unchanged). |
-
-What the theme cannot reach (the sizes are fixed inside the Material 3 navigation bar, and are not changed):
-item height (60 dp), icon size (22 dp), indicator size (56 × 30 dp), semi-bold selected label and the
-11 sp shrink of a long label.
 
 ### Phase 7: consumables panel of a patch pump (SPEC 3.5.1)
 
@@ -227,16 +165,6 @@ Each line reads its own `RedesignHomeViewModel` (a new, light instance in the ro
 button uses its own `ManageViewModel`: `cancelTempBasal()`, the master's confirmation in
 `ElementConfirmationDialog`, then `commitCancel`, exactly like `ManageSheetHost`.
 
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| `redesignTileTaps = if (redesignChrome) rememberRedesignTileTaps(...) else null`, after `masterOrPairedClient` | The tile taps. They go through `onNavigate(NavigationRequest.Element(...))`, so the stock protection (bolus PIN) is asked. They open the screen only where the stock sheets offer it: insulin needs a master or paired client and the role; temp basal also needs Manage to offer "Temp basal" or its Cancel (pump able to set one now). Else: the stock info dialog. |
-| `onTbrChipClick = redesignTileTaps?.onBasalClick ?: mainViewModel::showTbrInfo` and the same for `onIobChipClick` | The redesign tiles get the new taps; the stock chips (flag off, landscape, tablet) keep theirs. |
-| `TreatmentBottomSheet(showCarbs = treatmentState.showCarbs && !redesignChrome)` | Carbs entry is the Carbs tile (SPEC 3.2.4). `TreatmentBottomSheet` already had the parameter, so it is not touched. |
-| `TreatmentBottomSheet(treatmentButtonsDef = if (redesignChrome) treatmentButtonsDef.withoutCarbsButton() else ...)` | The gear of the sheet no longer shows the "show carbs button" switch, which does nothing with the redesign. The switch stays in Settings (its +5/+10/+20 g settings depend on it). |
-| Imports | `rememberRedesignTileTaps`, `withoutCarbsButton`. |
-
 ## Phase 8a - Graphs page title, heights, Menu
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
@@ -244,13 +172,6 @@ button uses its own `ManageViewModel`: `cancelTempBasal()`, the master's confirm
 See "Graphs page layout" above: the fixed heights and legends all hang on the existing
 `redesignLayout` parameter. No new parameter. With `redesignLayout == null` every stock modifier is the
 same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesign>)` branches).
-
-### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
-
-| Hook | Why |
-|---|---|
-| `RedesignMenuScreen(...)` without `onEditScreenClick` | Menu > "Mode édition" is removed: the edit mode starts from the pencil button of the graphs page. |
-| Menu button while the Menu is open | Asks for the home page first and closes the Menu in `redesignOverview.afterPageShown`, so the graphs page is not seen for a moment. |
 
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphViewModel.kt`
 

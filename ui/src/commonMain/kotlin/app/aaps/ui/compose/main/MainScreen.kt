@@ -25,13 +25,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,15 +38,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import app.aaps.core.interfaces.bgQualityCheck.BgQualityCheck
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.notifications.AapsNotification
@@ -59,7 +54,6 @@ import app.aaps.core.ui.compose.LocalDateUtil
 import app.aaps.core.ui.compose.LocalSnackbarHostState
 import app.aaps.core.ui.compose.dialogs.OkCancelDialog
 import app.aaps.core.ui.compose.dialogs.ThreeButtonDialog
-import app.aaps.core.ui.compose.metroViewModel
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.preference.PreferenceSubScreenDef
 import app.aaps.core.ui.compose.stringResource
@@ -79,19 +73,8 @@ import app.aaps.ui.compose.overview.statusLights.StatusViewModel
 import app.aaps.ui.compose.quickLaunch.QuickLaunchAction
 import app.aaps.ui.compose.quickLaunch.QuickLaunchToolbar
 import app.aaps.ui.compose.quickLaunch.ResolvedQuickLaunchItem
-import app.aaps.ui.compose.redesign.RedesignBottomBarStyle
-import app.aaps.ui.compose.redesign.RedesignFlags
-import app.aaps.ui.compose.redesign.RedesignHomeData
-import app.aaps.ui.compose.redesign.RedesignHomeInputs
-import app.aaps.ui.compose.redesign.RedesignHomeViewModel
-import app.aaps.ui.compose.redesign.RedesignMenuScreen
-import app.aaps.ui.compose.redesign.RedesignOverviewState
-import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.GRAPHS_PAGE
-import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
-import app.aaps.ui.compose.redesign.rememberRedesignTileTaps
-import app.aaps.ui.compose.redesign.withoutCarbsButton
-import app.aaps.ui.compose.redesign.isRedesignPhoneLayout
-import app.aaps.ui.compose.redesign.redesignAttentionItems
+import app.aaps.ui.compose.redesign.RedesignMainScreen
+import app.aaps.ui.compose.redesign.redesignChromeActive
 import app.aaps.ui.compose.scenesSheet.ScenesBottomSheet
 import app.aaps.ui.compose.scenesSheet.ScenesViewModel
 import app.aaps.ui.compose.treatmentsSheet.TreatmentBottomSheet
@@ -176,6 +159,34 @@ fun MainScreen(
     onStopBolus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Redesign (docs/redesign/SPEC.md): the phone layout has its own screen, the rest of this function is the stock one.
+    if (redesignChromeActive()) {
+        RedesignMainScreen(
+            mainViewModel = mainViewModel, uiState = uiState, aboutDialogData = aboutDialogData,
+            manageSheetState = manageSheetState, manageViewModel = manageViewModel, maintenanceViewModel = maintenanceViewModel,
+            statusViewModel = statusViewModel, treatmentViewModel = treatmentViewModel, scenesViewModel = scenesViewModel,
+            loopActionViewModel = loopActionViewModel, searchUiState = searchUiState,
+            onSearchQueryChange = onSearchQueryChange, onSearchClear = onSearchClear, onSearchActiveChange = onSearchActiveChange,
+            onSearchResultClick = onSearchResultClick, onSearchPluginToggle = onSearchPluginToggle,
+            onConfirmSearchPluginSwitch = onConfirmSearchPluginSwitch, onDismissSearchPluginSwitch = onDismissSearchPluginSwitch,
+            onConfirmSearchHardwarePump = onConfirmSearchHardwarePump, onDismissSearchHardwarePump = onDismissSearchHardwarePump,
+            onNavigate = onNavigate, onDrawerClosed = onDrawerClosed, onAboutDialogDismiss = onAboutDialogDismiss,
+            onOpenBatteryHelp = onOpenBatteryHelp, onMaintenanceSheetDismiss = onMaintenanceSheetDismiss,
+            onDirectoryClick = onDirectoryClick, onLaunchBrowser = onLaunchBrowser, onBringToForeground = onBringToForeground,
+            onImportSettingsNavigate = onImportSettingsNavigate, onRecreateActivity = onRecreateActivity,
+            notifications = notifications, onDismissNotification = onDismissNotification,
+            onNotificationActionClick = onNotificationActionClick, autoShowNotificationSheet = autoShowNotificationSheet,
+            onAutoShowConsumed = onAutoShowConsumed, pumpSetupPlugin = pumpSetupPlugin, bgSetupPlugin = bgSetupPlugin,
+            bgQualityState = bgQualityState, objectivesSetupPlugin = objectivesSetupPlugin,
+            objectivesProgressText = objectivesProgressText, objectivesProgressDescription = objectivesProgressDescription,
+            permissionsMissing = permissionsMissing, onPermissionsClick = onPermissionsClick, calcProgress = calcProgress,
+            graphViewModel = graphViewModel, chipsViewModel = chipsViewModel, statusLightsDef = statusLightsDef,
+            treatmentButtonsDef = treatmentButtonsDef, bolusState = bolusState, pumpStatusText = pumpStatusText,
+            queueStatusText = queueStatusText, isPumpCommunicating = isPumpCommunicating, onStopBolus = onStopBolus,
+            modifier = modifier
+        )
+        return
+    }
     LocalDateUtil.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -184,43 +195,6 @@ fun MainScreen(
     var showLoopActionSheet by remember { mutableStateOf(false) }
     val automationState by scenesViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
-    // Redesign (docs/redesign/SPEC.md): phone portrait only, the other layouts keep the stock chrome.
-    val redesignChrome = RedesignFlags.ENABLED &&
-        isRedesignPhoneLayout(with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() })
-    // Chosen item of the bar (home, graphs, Menu) and edit mode. A view model: kept over a rotation and while a screen
-    // opened in the Menu is shown (Back comes back to the Menu), reset by a new start.
-    val redesignOverview: RedesignOverviewState = viewModel { RedesignOverviewState() }
-    val showRedesignMenu = redesignOverview.menuOpen
-    val closeRedesignMenu = {
-        if (searchUiState.isSearchActive) {
-            onSearchClear()
-            onSearchActiveChange(false)
-        }
-        redesignOverview.menuOpen = false
-    }
-    LaunchedEffect(redesignChrome) {
-        if (!redesignChrome) {
-            redesignOverview.menuOpen = false
-            redesignOverview.editMode = false
-        }
-    }
-    // Tile values the stock state has not as separate texts (time left, basal rates).
-    val redesignHomeData = if (redesignChrome) metroViewModel<RedesignHomeViewModel>().data.collectAsStateWithLifecycle().value else RedesignHomeData()
-    // Redesign: objectives, pump set-up and permissions move from the bottom bar to the Menu, so the bar
-    // keeps at most five items. The BG source warning goes beside the glucose circle (RedesignHomeInputs),
-    // and the loop suggestion is the Loop tile.
-    val loopActionAvailable = loopActionViewModel.uiState.collectAsStateWithLifecycle().value.actionAvailable
-    val redesignAttentionItems = if (redesignChrome) {
-        redesignAttentionItems(
-            objectivesSetupPlugin = objectivesSetupPlugin,
-            objectivesProgressText = objectivesProgressText,
-            objectivesProgressDescription = objectivesProgressDescription,
-            pumpSetupPlugin = pumpSetupPlugin,
-            permissionsMissing = permissionsMissing,
-            onNavigate = onNavigate,
-            onPermissionsClick = onPermissionsClick
-        )
-    } else emptyList()
 
     // Sync drawer state with ui state
     LaunchedEffect(uiState.isDrawerOpen) {
@@ -257,8 +231,7 @@ fun MainScreen(
                 showExit = mainViewModel.showExit
             )
         },
-        // Redesign: the drawer is replaced by the Menu screen, so the edge swipe must not open it.
-        gesturesEnabled = !redesignChrome,
+        gesturesEnabled = true,
         modifier = modifier
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -294,14 +267,13 @@ fun MainScreen(
             // WindowInsets.statusBars / navigationBars, which would be consumed
             // (returning zero height) if those Scaffold slots were populated.
             Scaffold { scaffoldPadding ->
-                val hasToolbar = quickLaunchItems.isNotEmpty() && !redesignChrome
+                val hasToolbar = quickLaunchItems.isNotEmpty()
 
                 // Content padding: in preview mode use only system bars;
                 // in normal mode add measured bar heights
                 val contentPadding = if (previewMode) scaffoldPadding
                 else {
-                    // Redesign: no top bar. Its last measured height stays set after a rotation, so ignore it.
-                    val topBarHeight = if (redesignChrome) 0.dp else with(density) { topBarHeightPx.toDp() }
+                    val topBarHeight = with(density) { topBarHeightPx.toDp() }
                     val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
                     PaddingValues(
                         top = scaffoldPadding.calculateTopPadding() + topBarHeight,
@@ -316,10 +288,6 @@ fun MainScreen(
                 val masterReachable by mainViewModel.masterReachable.collectAsStateWithLifecycle()
                 // Stable pairing signal — hides the mutating nav buttons on an unpaired client.
                 val masterOrPairedClient by mainViewModel.masterOrPairedClient.collectAsStateWithLifecycle()
-                // Redesign: the Active insulin and Basal tiles open the insulin and temp basal screens (SPEC 3.2.2, 3.2.3).
-                val redesignTileTaps = if (redesignChrome) {
-                    rememberRedesignTileTaps(manageViewModel, masterOrPairedClient, onNavigate, chipsViewModel::showIobInfo, mainViewModel::showTbrInfo)
-                } else null
                 // (Probe-while-offline is now global — see ComposeMainActivity. This screen still reads
                 // masterReachable for its own gating.)
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -349,8 +317,8 @@ fun MainScreen(
                         statusViewModel = statusViewModel,
                         statusLightsDef = statusLightsDef,
                         onNavigate = onNavigate,
-                        onTbrChipClick = redesignTileTaps?.onBasalClick ?: mainViewModel::showTbrInfo,
-                        onIobChipClick = redesignTileTaps?.onIobClick ?: chipsViewModel::showIobInfo,
+                        onTbrChipClick = mainViewModel::showTbrInfo,
+                        onIobChipClick = chipsViewModel::showIobInfo,
                         notifications = notifications,
                         onDismissNotification = onDismissNotification,
                         onNotificationActionClick = onNotificationActionClick,
@@ -379,30 +347,15 @@ fun MainScreen(
                         // column needs its height too. The height is kept once measured, so the columns do not move each
                         // time the bars show and hide.
                         overlaidBarsHeight = if (previewMode) with(density) { bottomBarHeightPx.toDp() } else 0.dp,
-                        redesign = if (redesignChrome) redesignOverview else null,
-                        redesignHome = RedesignHomeInputs(
-                            data = redesignHomeData,
-                            bgSourceName = bgSetupPlugin?.let { plugin -> plugin.pluginDescription.pluginName?.let { stringResource(it) } ?: plugin.name },
-                            bgQualityState = bgQualityState,
-                            onBgSourceClick = { bgSetupPlugin?.let { onNavigate(NavigationRequest.Plugin(it::class.simpleName.orEmpty())) } },
-                            eatReminder = eatReminderState,
-                            onEatReminderStop = mainViewModel::stopEatReminder,
-                            onEatReminderExtend = mainViewModel::extendEatReminder,
-                            eatReminderControlsEnabled = masterReachable,
-                            loopSuggestion = loopActionAvailable,
-                            onLoopSuggestionClick = { showLoopActionSheet = true }
-                        ),
                         bolusState = bolusState,
                         pumpStatusText = pumpStatusText,
                         queueStatusText = queueStatusText,
                         isPumpCommunicating = isPumpCommunicating,
-                        onStopBolus = onStopBolus,
-                        // Redesign: under the open Menu the overview must not be read by a screen reader.
-                        modifier = if (showRedesignMenu) Modifier.clearAndSetSemantics {} else Modifier
+                        onStopBolus = onStopBolus
                     )
 
-                    // Search results overlay (with the redesign they are shown inside the Menu)
-                    if (searchUiState.isSearchActive && !redesignChrome) {
+                    // Search results overlay
+                    if (searchUiState.isSearchActive) {
                         SearchResults(
                             results = searchUiState.results,
                             wikiResults = searchUiState.wikiResults,
@@ -444,8 +397,7 @@ fun MainScreen(
                     // bar shown it is lifted into the bar's empty band under the search bar, so it sits
                     // above the profile chip instead of level with the chip's text. In preview mode the
                     // content starts right under the status bar, so there it stays at the content's edge.
-                    // Redesign: the version is shown in Menu > About instead.
-                    if (!redesignChrome) VersionOverlay(
+                    VersionOverlay(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(contentPadding)
@@ -471,29 +423,9 @@ fun MainScreen(
                             .background(MaterialTheme.colorScheme.surface)
                     )
 
-                    // Redesign: the Menu screen, over the overview and under the bottom bar
-                    if (redesignChrome && showRedesignMenu) {
-                        RedesignMenuScreen(
-                            versionName = mainViewModel.versionName,
-                            isSimpleMode = uiState.isSimpleMode,
-                            isTreatmentsEnabled = uiState.isProfileLoaded,
-                            showExit = mainViewModel.showExit,
-                            searchUiState = searchUiState,
-                            onSearchQueryChange = onSearchQueryChange,
-                            onSearchClear = onSearchClear,
-                            onSearchActiveChange = onSearchActiveChange,
-                            onSearchResultClick = onSearchResultClick,
-                            onSearchPluginToggle = onSearchPluginToggle,
-                            onNavigate = onNavigate,
-                            onClose = closeRedesignMenu,
-                            bottomPadding = contentPadding.calculateBottomPadding(),
-                            attentionItems = redesignAttentionItems
-                        )
-                    }
-
                     // Top bar overlay
                     AnimatedVisibility(
-                        visible = showChrome && !redesignChrome,
+                        visible = showChrome,
                         enter = slideInVertically { -it },
                         exit = slideOutVertically { -it },
                         modifier = Modifier
@@ -531,8 +463,7 @@ fun MainScreen(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = scaffoldPadding.calculateBottomPadding())
                     ) {
-                        // Redesign: the bar colours and its top line, through the theme (no change in the bar itself).
-                        RedesignBottomBarStyle(redesignChrome) {
+                        val loopActionState = loopActionViewModel.uiState.collectAsStateWithLifecycle().value
                         MainNavigationBar(
                             onManageClick = { manageSheetState.show() },
                             onTreatmentClick = {
@@ -551,45 +482,23 @@ fun MainScreen(
                             automationTotal = automationState.items.size + automationState.sceneItems.size,
                             automationCount = automationState.items.count { it.activationReason == null } +
                                 automationState.sceneItems.count { it.activationReason == null },
-                            pumpSetupPlugin = if (redesignChrome) null else pumpSetupPlugin,
-                            bgSetupPlugin = if (redesignChrome) null else bgSetupPlugin,
+                            pumpSetupPlugin = pumpSetupPlugin,
+                            bgSetupPlugin = bgSetupPlugin,
                             bgQualityBadgeIcon = bgQualityBadgeIcon,
                             bgQualityBadgeTint = bgQualityBadgeTint,
                             bgQualityBadgeDescription = bgQualityBadgeDescription,
-                            objectivesSetupPlugin = if (redesignChrome) null else objectivesSetupPlugin,
+                            objectivesSetupPlugin = objectivesSetupPlugin,
                             objectivesProgressText = objectivesProgressText,
                             objectivesProgressDescription = objectivesProgressDescription,
                             onNavigate = onNavigate,
-                            permissionsMissing = permissionsMissing && !redesignChrome,
+                            permissionsMissing = permissionsMissing,
                             onPermissionsClick = onPermissionsClick,
-                            loopActionAvailable = loopActionAvailable && !redesignChrome,
+                            loopActionAvailable = loopActionState.actionAvailable,
                             onLoopActionClick = { showLoopActionSheet = true },
-                            onMenuClick = if (redesignChrome) {
-                                {
-                                    // A re-tap on the open Menu goes home. Menu and page change in one state: no flash.
-                                    if (showRedesignMenu) {
-                                        closeRedesignMenu()
-                                        redesignOverview.showHome()
-                                    } else redesignOverview.toggleMenu()
-                                }
-                            } else null,
-                            menuSelected = showRedesignMenu,
-                            // Only what needs the user lights the dot: Objectives is a progress and does not.
-                            menuBadge = redesignAttentionItems.any { it.needsAction },
-                            onGraphsClick = if (redesignChrome) {
-                                {
-                                    // Read the state before closing the Menu: a re-tap on Graphs (Menu closed) goes home.
-                                    val menuWasOpen = showRedesignMenu
-                                    closeRedesignMenu()
-                                    if (menuWasOpen) redesignOverview.page = GRAPHS_PAGE else redesignOverview.toggleGraphs()
-                                }
-                            } else null,
-                            graphsSelected = redesignOverview.page == GRAPHS_PAGE && !showRedesignMenu,
                             modifier = Modifier.onSizeChanged {
                                 if (it.height > 0 && it.height != bottomBarHeightPx) bottomBarHeightPx = it.height
                             }
                         )
-                        }
                     }
 
                     // Quick launch toolbar overlay
@@ -639,15 +548,13 @@ fun MainScreen(
             showCalibration = treatmentState.showCalibration,
             showTreatment = treatmentState.showTreatment,
             showInsulin = treatmentState.showInsulin,
-            // Redesign: carbs entry is the Carbs tile (SPEC 3.2.4).
-            showCarbs = treatmentState.showCarbs && !redesignChrome,
+            showCarbs = treatmentState.showCarbs,
             showCalculator = treatmentState.showCalculator,
             isDexcomSource = treatmentState.isDexcomSource,
             showSettingsIcon = treatmentState.showSettingsIcon,
             quickWizardItems = treatmentState.quickWizardItems,
             onNavigate = onNavigate,
-            // Redesign: no carbs switch in the gear either, it would do nothing.
-            treatmentButtonsDef = if (redesignChrome) treatmentButtonsDef.withoutCarbsButton() else treatmentButtonsDef,
+            treatmentButtonsDef = treatmentButtonsDef,
         )
     }
 

@@ -13,7 +13,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 1 | Accueil : bugs | Code fait, à tester |
 | 1b | Interrupteur nouvelle / ancienne interface | Code fait, à tester |
 | 2 | Accueil : affichage | Code fait, à tester |
-| 3 | Accueil : défilement du graphique | À faire |
+| 3 | Accueil : défilement du graphique | Code fait, à tester |
 | 4 | Feuilles Insuline et Basale : barre du haut | À faire |
 | 5 | Medtrum et barres de progression | À faire |
 | 6 | Écran d'injection : texte | À faire |
@@ -49,7 +49,7 @@ Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`
 - [ ] Valeurs des bolus (au-dessus du triangle) et des glucides (en dessous), échelles 3 h et 6 h seulement, pas de valeur pour les SMB
 
 ### 3. Accueil : défilement du graphique
-- [ ] Diagnostic (`RedesignHomeGraph`, `RedesignHomeGraphScale.kt` ; aucune donnée nouvelle, le graphique lit déjà les 24 h)
+- [x] Diagnostic (`RedesignHomeGraph`, `RedesignHomeGraphScale.kt` ; aucune donnée nouvelle, le graphique lit déjà les 24 h). Les heures du bas gardent la grille de « maintenant » pendant le défilement ; les points restent comptés depuis la dernière lecture ; une zone reculée n'a pas de point creux
 - [ ] Glissement horizontal dans les 24 dernières heures, pour les échelles 3, 6, 12 et 18 h (en 24 h tout est visible)
 - [ ] Un changement d'échelle ramène toujours la zone sur maintenant, sans bouton « maintenant ». Une nouvelle lecture ne déplace pas une zone reculée
 - [ ] Pendant le glissement l'axe des valeurs ne bouge pas ; il s'adapte à la zone visible après le relâchement, comme les graphiques déjà dans l'app

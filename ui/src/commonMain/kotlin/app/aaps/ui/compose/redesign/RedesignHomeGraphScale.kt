@@ -66,10 +66,6 @@ fun homeGraphWindowEnd(now: Long, timeZone: TimeZone): Long {
     return if (hourStart == now) now else hourStart + HOUR_MS
 }
 
-/** Times of the hour labels, both edges included, from the start of the window to [end]. */
-fun homeGraphHourTicks(end: Long, range: HomeGraphRange): List<Long> =
-    (0..range.hours step range.labelStepHours).map { end - (range.hours - it) * HOUR_MS }
-
 /** Top of the Y axis: [HOME_GRAPH_MAX_MGDL], or the next multiple of 50 above the highest reading. */
 fun homeGraphMaxMgdl(readingsMgdl: List<Double>): Double {
     val highest = readingsMgdl.maxOrNull() ?: return HOME_GRAPH_MAX_MGDL
@@ -218,4 +214,43 @@ fun targetLineSegments(points: List<Pair<Long, Double>>, start: Long, end: Long,
         if (to > from) segments += TargetLineSegment(from, mgdl, to, mgdl, current)
     }
     return segments
+}
+
+/** The home graph can be scrolled back inside this many hours (step 3). */
+const val HOME_GRAPH_SCROLL_HOURS = 24
+
+/**
+ * End of the visible window (step 3). [nowEnd] is the end when the graph follows now
+ * ([homeGraphWindowEnd]); [scrolledEnd] is where the user scrolled it, or null. The window stays inside
+ * the last [HOME_GRAPH_SCROLL_HOURS] hours, so on 24 h it never moves.
+ */
+fun homeGraphScrolledEnd(nowEnd: Long, scrolledEnd: Long?, range: HomeGraphRange): Long {
+    if (scrolledEnd == null) return nowEnd
+    val earliest = nowEnd - (HOME_GRAPH_SCROLL_HOURS - range.hours).coerceAtLeast(0) * HOUR_MS
+    return scrolledEnd.coerceIn(earliest, nowEnd)
+}
+
+/**
+ * The window end after a horizontal drag of [dragPx] on a plot [plotWidthPx] wide (step 3). A drag to the
+ * right shows older data. Null when the window is back at now: it then follows now again.
+ */
+fun homeGraphDraggedEnd(nowEnd: Long, scrolledEnd: Long?, range: HomeGraphRange, dragPx: Float, plotWidthPx: Float): Long? {
+    if (plotWidthPx <= 0f) return scrolledEnd
+    val from = homeGraphScrolledEnd(nowEnd, scrolledEnd, range)
+    val moved = from - (dragPx / plotWidthPx * range.hours * HOUR_MS).toLong()
+    val end = homeGraphScrolledEnd(nowEnd, moved, range)
+    return if (end >= nowEnd) null else end
+}
+
+/**
+ * Times of the hour labels of a window that ends at [end] (step 3). They keep the grid of the window that
+ * follows now (every `labelStepHours` back from [nowEnd]), so they do not change while the user scrolls.
+ * Not scrolled ([end] == [nowEnd]), both edges are included.
+ */
+fun homeGraphScrolledTicks(nowEnd: Long, end: Long, range: HomeGraphRange): List<Long> {
+    val step = range.labelStepHours * HOUR_MS
+    val start = end - range.hours * HOUR_MS
+    val newest = ceil((nowEnd - end).toDouble() / step).toLong()
+    val oldest = floor((nowEnd - start).toDouble() / step).toLong()
+    return (oldest downTo newest).map { nowEnd - it * step }
 }

@@ -3,6 +3,7 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,14 +78,14 @@ import app.aaps.ui.compose.overview.graphs.InspectData
 import app.aaps.ui.compose.overview.graphs.beltColor
 import app.aaps.ui.compose.overview.graphs.inspectDataAt
 import app.aaps.ui.compose.overview.toColor
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.time.Instant
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * The simplified glucose graph of the home page (SPEC 3.6): range buttons, one dot per reading on a
@@ -235,16 +236,27 @@ private fun HomeGraphPlot(
     }
     val now = remember(tick, readings) { max(tick, dateUtil.now()) }
     val timeZone = TimeZone.currentSystemDefault()
-    val end = homeGraphWindowEnd(now, timeZone)
+    val nowEnd = homeGraphWindowEnd(now, timeZone)
+    // Step 3: a horizontal drag moves the window inside the last 24 hours (not on 24 h). Null = the window
+    // follows now. Kept per range, so a change of range always brings it back to now. It is a time, not
+    // a distance from now, so a new reading does not move a window the user scrolled back.
+    var scrolledEnd by remember(range) { mutableStateOf<Long?>(null) }
+    val end = homeGraphScrolledEnd(nowEnd, scrolledEnd, range)
     val start = end - range.hours * HOUR_MS
-    val ticks = homeGraphHourTicks(end, range)
+    val ticks = homeGraphScrolledTicks(nowEnd, end, range)
     val tickLabels = ticks.map { stringResource(UiStrings.redesign_graph_hour, Instant.fromEpochMilliseconds(it).toLocalDateTime(timeZone).hour) }
 
-    val shown = remember(readings, start, end) { readings.filter { it.timestamp in start..end }.sortedBy { it.timestamp } }
-    // The axis is 40 to 280 mg/dL and grows on either side only when a reading is outside it.
+    val allSorted = remember(readings) { readings.sortedBy { it.timestamp } }
+    val firstShown = remember(allSorted, start) { allSorted.indexOfFirst { it.timestamp >= start }.let { if (it < 0) allSorted.size else it } }
+    val shown = remember(allSorted, start, end) { allSorted.filter { it.timestamp in start..end } }
+    // The axis is 40 to 280 mg/dL and grows on either side only when a reading is outside it. While the
+    // finger drags, it stays as it was; after the release it adapts to the visible window (decided 12 Nov).
     val shownMgdl = shown.map { toMgdl(it.value, units) }
-    val maxMgdl = homeGraphMaxMgdl(shownMgdl)
-    val minMgdl = homeGraphMinMgdl(shownMgdl)
+    var frozenAxis by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    val maxMgdl = frozenAxis?.second ?: homeGraphMaxMgdl(shownMgdl)
+    val minMgdl = frozenAxis?.first ?: homeGraphMinMgdl(shownMgdl)
+    val currentAxis by rememberUpdatedState(minMgdl to maxMgdl)
+    val currentNowEnd by rememberUpdatedState(nowEnd)
     var size by remember { mutableStateOf(IntSize.Zero) }
     fun label(valueInUnits: Double): String =
         if (units == GlucoseUnit.MMOL) decimalFormatter.to1Decimal(valueInUnits) else decimalFormatter.to0Decimal(valueInUnits)
@@ -330,7 +342,8 @@ private fun HomeGraphPlot(
         }
     }
 
-    val description = shown.lastOrNull()?.let { last ->
+    // "Now" is the newest reading, also when the window is scrolled back.
+    val description = allSorted.lastOrNull()?.let { last ->
         stringResource(
             UiStrings.redesign_graph_description,
             stringResource(UiStrings.redesign_graph_range_description, range.hours),
@@ -343,6 +356,22 @@ private fun HomeGraphPlot(
             .onSizeChanged { size = it }
             .semantics {
                 contentDescription = description
+            }
+            // Step 3: a horizontal drag scrolls the window. It starts after the touch slop and consumes the
+            // moves, so the long press below is cancelled; once the long press has started, it consumes the
+            // moves and this drag does not start. 24 h shows everything, so it does not scroll.
+            .pointerInput(range) {
+                if (range.hours >= HOME_GRAPH_SCROLL_HOURS) return@pointerInput
+                detectHorizontalDragGestures(
+                    onDragStart = { frozenAxis = currentAxis },
+                    onDragEnd = { frozenAxis = null },
+                    onDragCancel = { frozenAxis = null },
+                    onHorizontalDrag = { change, dragPx ->
+                        change.consume()
+                        val g = currentGeometry
+                        scrolledEnd = homeGraphDraggedEnd(currentNowEnd, scrolledEnd, range, dragPx, g.right - g.left)
+                    }
+                )
             }
             .pointerInput(Unit) {
                 detectDragGesturesAfterLongPress(
@@ -428,15 +457,18 @@ private fun HomeGraphPlot(
             }
         }
 
-        // Dots: every reading up to 6 h, fewer on the long ranges. The newest is always there, and hollow.
+        // Dots: every reading up to 6 h, fewer on the long ranges, counted back from the newest reading of all
+        // (not of the window), so they do not jump while the window scrolls. The newest is always there, and
+        // hollow; a window scrolled back has no hollow dot.
         val dotStep = homeGraphDotStep(range)
         val radius = homeGraphDotRadius(g.right - g.left, range, MAX_DOT.toPx())
         shown.forEachIndexed { i, reading ->
             val color = rangeColors.getValue(reading.range)
-            if (i == shown.lastIndex) {
+            val fromNewest = allSorted.lastIndex - (firstShown + i)
+            if (fromNewest == 0) {
                 drawCircle(colors.graphCard, LAST_DOT.toPx(), centres[i])
                 drawCircle(color, LAST_DOT.toPx(), centres[i], style = Stroke(LAST_DOT_STROKE.toPx()))
-            } else if ((shown.lastIndex - i) % dotStep == 0) drawCircle(color, radius, centres[i])
+            } else if (fromNewest % dotStep == 0) drawCircle(color, radius, centres[i])
         }
 
         // Treatments, as on the stock BG graph: a manual bolus points down at the reading from above,
@@ -526,7 +558,7 @@ private fun DrawScope.drawTargetLine(points: List<Pair<Long, Double>>, g: PlotGe
     }
 }
 
-/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 × as high. */
+/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 Ã— as high. */
 private fun DrawScope.drawTriangle(tip: Offset, up: Boolean, width: Float, color: Color) {
     val height = width * 1.1f
     val baseY = if (up) tip.y + height else tip.y - height

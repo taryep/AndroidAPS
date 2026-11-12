@@ -39,14 +39,45 @@ class RedesignHomeGraphScaleTest {
     @Test
     fun hourLabelsIncludeBothEdgesWithTheStepOfTheRange() {
         val end = at(1, 0)
-        val six = homeGraphHourTicks(end, HomeGraphRange.H6)
+        val six = homeGraphScrolledTicks(end, end, HomeGraphRange.H6)
         assertEquals(7, six.size)
         assertEquals(end - 6 * HOUR, six.first())
         assertEquals(end, six.last())
         // 1 h, 1 h, 2 h, 3 h, 4 h steps: always 4 to 7 labels.
-        assertEquals(listOf(4, 7, 7, 7, 7), HomeGraphRange.entries.map { homeGraphHourTicks(end, it).size })
-        val day = homeGraphHourTicks(end, HomeGraphRange.H24)
+        assertEquals(listOf(4, 7, 7, 7, 7), HomeGraphRange.entries.map { homeGraphScrolledTicks(end, end, it).size })
+        val day = homeGraphScrolledTicks(end, end, HomeGraphRange.H24)
         assertTrue(day.zipWithNext().all { (a, b) -> b - a == 4 * HOUR })
+    }
+
+    @Test
+    fun theWindowScrollsInsideTheLast24HoursOnly() {
+        val nowEnd = at(12, 0)
+        // 6 h: back at most 18 h. Further back stops there; later than now follows now again.
+        assertEquals(nowEnd - 18 * HOUR, homeGraphScrolledEnd(nowEnd, nowEnd - 30 * HOUR, HomeGraphRange.H6))
+        assertEquals(nowEnd - 2 * HOUR, homeGraphScrolledEnd(nowEnd, nowEnd - 2 * HOUR, HomeGraphRange.H6))
+        assertEquals(nowEnd, homeGraphScrolledEnd(nowEnd, nowEnd + HOUR, HomeGraphRange.H6))
+        // 24 h never moves.
+        assertEquals(nowEnd, homeGraphScrolledEnd(nowEnd, nowEnd - 5 * HOUR, HomeGraphRange.H24))
+    }
+
+    @Test
+    fun aDragToTheRightShowsOlderDataAndBackToNowFollowsNowAgain() {
+        val nowEnd = at(12, 0)
+        // Half the plot width on 6 h is 3 hours.
+        val back = homeGraphDraggedEnd(nowEnd, null, HomeGraphRange.H6, dragPx = 200f, plotWidthPx = 400f)
+        assertEquals(nowEnd - 3 * HOUR, back)
+        // Dragging to the left past now gives null: the window follows now, so new readings move it again.
+        assertEquals(null, homeGraphDraggedEnd(nowEnd, back, HomeGraphRange.H6, dragPx = -400f, plotWidthPx = 400f))
+        // The window of a scrolled graph is a time: when now moves on, it stays where it is.
+        assertEquals(back, homeGraphScrolledEnd(nowEnd + HOUR, back, HomeGraphRange.H6))
+    }
+
+    @Test
+    fun scrolledHourLabelsKeepTheGridOfNow() {
+        val nowEnd = at(12, 0)
+        // 12 h, labels every 2 h counted back from 12:00; the window ends at 10:30.
+        val ticks = homeGraphScrolledTicks(nowEnd, at(10, 30), HomeGraphRange.H12)
+        assertEquals(listOf(at(0, 0), at(2, 0), at(4, 0), at(6, 0), at(8, 0), at(10, 0)), ticks)
     }
 
     @Test

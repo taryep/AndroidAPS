@@ -206,6 +206,22 @@ reads the setting once in `onCreate` and starts again when it changes, so no scr
   consumables bar, without the Material 3 dot at the end. Display only, no pump logic. Not behind the redesign
   switch: it is a fix of the look, the same in both interfaces.
 
+## Step 9 - Graphs page edit mode
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
+
+| Hook | Why |
+|---|---|
+| `redesignLayout?.blockOverlay?.invoke(this, GraphBlock(...) { <open the stock menu> })` at the end of the BG, IOB / basal and each other graph block | The redesign edit controls over each graph (size, pencil, ↑ ↓ delete). The lambda opens the stock menu of that graph (it sets the existing `editingBgOverlays` / `editingIobOverlays` / `editingGraphIndex`). Null in stock. |
+| `val locked = redesignLayout?.locked == true`; `graphInspectTouch` and `scrollsBgGraph` become `.then(if (locked) Modifier else ...)` (belt and three blocks) | In edit mode no inspect pill and no sideways scroll. False in stock: same modifiers as before. |
+| `GraphSeriesBottomSheet` gets `showHeight: Boolean = true`; the three edit sheets pass `showHeight = redesignLayout == null` | The redesign sets sizes with − / +; the dp height row would break Small / Medium / Grand. Stock: the row is shown as before. |
+| `CONFIGURABLE_SERIES` is `internal` (was `private`) | The redesign (+) picks the first series no graph shows, from the same list, instead of a copy. |
+| One import (`GraphBlock`) | |
+
+Move up / down, delete, add and the size are plain changes of `GraphConfig.secondaryGraphs` through the public
+`GraphViewModel.updateGraphConfig`: no new stock function. Optional "same BG scale on page 2" is dropped (it needs
+more than one defaulted parameter on `BgGraphCompose`).
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

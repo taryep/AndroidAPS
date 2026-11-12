@@ -1,32 +1,12 @@
 package app.aaps.ui.compose.redesign
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
@@ -50,13 +30,17 @@ import app.aaps.ui.compose.redesign.RedesignOverviewState.Companion.HOME_PAGE
  *
  * @param homePage the content of the home page; it scrolls by itself
  * @param graphsPage the content of the graphs page; gets the edit mode, scrolls by itself
+ * @param canAddGraph false greys the (+) of the edit pill (the stock maximum of graphs is reached)
+ * @param onAddGraph the (+) of the edit pill: one more graph at the bottom, in Small
  */
 @Composable
 fun RedesignOverviewContent(
     state: RedesignOverviewState,
     homePage: @Composable () -> Unit,
     graphsPage: @Composable (editMode: Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canAddGraph: Boolean = true,
+    onAddGraph: () -> Unit = {}
 ) {
     // Leaving the graphs page ends the edit mode.
     LaunchedEffect(state.page) {
@@ -76,13 +60,20 @@ fun RedesignOverviewContent(
     val graphsName = stringResource(UiStrings.redesign_page_graphs)
     // A plain switch of content, no pager: the page changes in the same frame as the state, so there is never a
     // moment with the wrong page (for example under the Menu). Only the buttons change the page (the Graphs item of
-    // the bottom bar, a tap on the glucose circle or the home graph, Back). Both pages stay composed, so the graphs
-    // keep their state and do not load again at each change of page.
+    // the bottom bar, Back). Both pages stay composed, so the graphs keep their state and do not load again at each
+    // change of page.
     Box(modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().hiddenWhen(state.page != HOME_PAGE).semantics { paneTitle = homeName }) { homePage() }
-        Column(Modifier.fillMaxSize().hiddenWhen(state.page != GRAPHS_PAGE).semantics { paneTitle = graphsName }) {
-            if (state.editMode) RedesignEditPill(onDone = { state.editMode = false })
-            Box(Modifier.weight(1f)) { graphsPage(state.editMode) }
+        Box(Modifier.fillMaxSize().hiddenWhen(state.page != GRAPHS_PAGE).semantics { paneTitle = graphsName }) {
+            graphsPage(state.editMode)
+            // Step 9 (SPEC 4.3): the edit pill floats, centred over the title row (64 dp; the pill is 52 dp).
+            if (state.editMode) RedesignEditPill(
+                canAdd = canAddGraph,
+                onCancel = { state.cancelEdit() },
+                onAdd = onAddGraph,
+                onDone = { state.editMode = false },
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 6.dp)
+            )
         }
     }
 }
@@ -100,43 +91,3 @@ internal fun Modifier.hiddenWhen(hidden: Boolean): Modifier =
         }
         .clearAndSetSemantics { }
 
-/** Top of the graphs page in edit mode: "Edit mode" and a "Done" button. */
-@Composable
-private fun RedesignEditPill(onDone: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-            Row(
-                modifier = Modifier
-                    .height(40.dp)
-                    .padding(start = 16.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(UiStrings.redesign_edit_mode), style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.width(12.dp))
-                Button(
-                    onClick = onDone,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PILL_BUTTON_PADDING,
-                    colors = ButtonDefaults.buttonColors(containerColor = DONE_BUTTON_COLOR, contentColor = DONE_BUTTON_TEXT_COLOR)
-                ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(UiStrings.redesign_edit_done))
-                }
-            }
-        }
-    }
-}
-
-private val PILL_BUTTON_PADDING = PaddingValues(horizontal = 12.dp)
-
-/** The "Done" button of the edit pill: sky blue with dark text (SPEC 7). */
-private val DONE_BUTTON_COLOR = Color(0xFF56B4E9)
-private val DONE_BUTTON_TEXT_COLOR = Color(0xFF06263A)

@@ -166,13 +166,14 @@ class RedesignOverviewContentTest {
     fun theEditButtonsShowOnlyInEditMode() {
         state.page = GRAPHS_PAGE
         show()
-        assertThat(compose.onAllNodes(hasText(addGraph)).fetchSemanticsNodes()).isEmpty()
+        // Step 9: "add a graph" is the (+) icon of the pill, so it is found by its screen reader name.
+        assertThat(compose.onAllNodes(hasContentDescription(addGraph)).fetchSemanticsNodes()).isEmpty()
         assertThat(compose.onAllNodes(hasText(editModeLabel)).fetchSemanticsNodes()).isEmpty()
 
         compose.runOnUiThread { state.editScreen() }
         compose.waitForIdle()
         compose.onNode(hasText(editModeLabel)).assertIsDisplayed()
-        assertThat(compose.onAllNodes(hasText(addGraph)).fetchSemanticsNodes()).isNotEmpty()
+        assertThat(compose.onAllNodes(hasContentDescription(addGraph)).fetchSemanticsNodes()).isNotEmpty()
     }
 
     @Test
@@ -190,10 +191,10 @@ class RedesignOverviewContentTest {
         show()
         compose.runOnUiThread { state.editScreen() }
         compose.waitForIdle()
-        compose.onNode(hasText(string(R.string.redesign_edit_done))).performClick()
+        compose.onNode(hasContentDescription(string(R.string.redesign_edit_done))).performClick()
         compose.waitForIdle()
         assertThat(state.editMode).isFalse()
-        assertThat(compose.onAllNodes(hasText(addGraph)).fetchSemanticsNodes()).isEmpty()
+        assertThat(compose.onAllNodes(hasContentDescription(addGraph)).fetchSemanticsNodes()).isEmpty()
     }
 
     @Test
@@ -288,7 +289,7 @@ class RedesignOverviewContentTest {
     fun simpleModeHasNoEditButtonsEvenInEditMode() {
         state.editScreen()
         show(isSimpleMode = true)
-        assertThat(compose.onAllNodes(hasText(addGraph)).fetchSemanticsNodes()).isEmpty()
+        assertThat(compose.onAllNodes(hasContentDescription(addGraph)).fetchSemanticsNodes()).isEmpty()
     }
 
     @Test

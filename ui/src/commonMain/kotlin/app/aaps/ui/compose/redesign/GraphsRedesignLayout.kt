@@ -1,5 +1,7 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -19,6 +21,9 @@ import androidx.compose.ui.unit.dp
  * @param quickLaunchSpace keep the space the stock overview leaves at the end for the QuickLaunch
  *   toolbar (a spacer and the hidden "Add graph" button). The redesign has no such toolbar.
  * @param legendHeight least height of the legend line at the top of a graph; a longer legend (large font) takes more, from its own plot
+ * @param locked edit mode (step 9): no inspect pill and no sideways scroll on the graphs. The page still scrolls.
+ * @param blockOverlay edit mode (step 9): drawn over each graph block, on top of it. It dims the graph, takes
+ *   its touches and holds its controls. Null: nothing is drawn.
  */
 @Immutable
 data class GraphsRedesignLayout(
@@ -27,5 +32,19 @@ data class GraphsRedesignLayout(
     val topPadding: Dp = 0.dp,
     val bottomPadding: Dp = 0.dp,
     val quickLaunchSpace: Boolean = false,
-    val legendHeight: Dp = 22.dp
+    val legendHeight: Dp = 22.dp,
+    val locked: Boolean = false,
+    val blockOverlay: (@Composable BoxScope.(GraphBlock) -> Unit)? = null
 )
+
+/**
+ * The graph a [GraphsRedesignLayout.blockOverlay] is drawn over.
+ *
+ * @param kind the BG graph, the IOB / basal graph, or one of the other graphs
+ * @param index for [Kind.OTHER], its place in `GraphConfig.secondaryGraphs`; 0 for the two fixed graphs
+ * @param openMenu opens the stock menu of this graph (series, overlays), the one its pencil opened
+ */
+class GraphBlock(val kind: Kind, val index: Int, val openMenu: () -> Unit) {
+
+    enum class Kind { BG, IOB, OTHER }
+}

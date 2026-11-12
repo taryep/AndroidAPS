@@ -72,4 +72,13 @@
     <string name="redesign_badge_tbr" comment="Short badge before the running temporary basal on the temp basal screen. TBR = temporary basal rate. Keep it 3 to 4 letters">TBR</string>
     <string name="redesign_classic_interface_title">Go back to the classic interface?</string>
     <string name="redesign_classic_interface_message">The screen restarts in the classic AAPS interface. To come back: Settings › Appearance › New interface.</string>
+    <string name="redesign_size_small" comment="Size of a graph on the graphs page, shown between − and + in edit mode. Short">Small</string>
+    <string name="redesign_size_medium" comment="Size of a graph on the graphs page, shown between − and + in edit mode. Short">Medium</string>
+    <string name="redesign_size_grand" comment="Size of a graph on the graphs page (the largest), shown between − and + in edit mode. Short">Large</string>
+    <string name="redesign_size_smaller" comment="Screen reader name of the − button that makes a graph smaller">Make smaller</string>
+    <string name="redesign_size_bigger" comment="Screen reader name of the + button that makes a graph larger">Make larger</string>
+    <string name="redesign_graph_options" comment="Screen reader name of the pencil button on a graph in edit mode: it opens what the graph shows">Graph options</string>
+    <string name="redesign_graph_up" comment="Screen reader name of the ↑ button that moves a graph one place up">Move up</string>
+    <string name="redesign_graph_down" comment="Screen reader name of the ↓ button that moves a graph one place down">Move down</string>
+    <string name="redesign_graph_delete" comment="Screen reader name of the trash button that removes a graph">Delete the graph</string>
 </resources>

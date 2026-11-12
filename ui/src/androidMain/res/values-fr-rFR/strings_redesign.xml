@@ -64,4 +64,13 @@
     <string name="redesign_badge_tbr">TBR</string>
     <string name="redesign_classic_interface_title">Revenir à l\'interface classique ?</string>
     <string name="redesign_classic_interface_message">L\'écran redémarre dans l\'interface classique d\'AAPS. Pour revenir : Paramètres › Apparence › Nouvelle interface.</string>
+    <string name="redesign_size_small">Petit</string>
+    <string name="redesign_size_medium">Moyen</string>
+    <string name="redesign_size_grand">Grand</string>
+    <string name="redesign_size_smaller">Réduire</string>
+    <string name="redesign_size_bigger">Agrandir</string>
+    <string name="redesign_graph_options">Options du graphique</string>
+    <string name="redesign_graph_up">Monter</string>
+    <string name="redesign_graph_down">Descendre</string>
+    <string name="redesign_graph_delete">Supprimer le graphique</string>
 </resources>

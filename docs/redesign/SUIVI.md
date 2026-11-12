@@ -19,7 +19,7 @@ Un seul document de suivi, mis à jour le 12 novembre 2026. Il vit dans `docs/re
 | 6 | Écran d'injection : texte | Code fait, à tester |
 | 7 | Boucle | Code fait, à tester |
 | 8 | Notifications | Code fait, à tester (pas de popup : voir diagnostic) |
-| 9 | Page Graphiques : mode édition | À faire |
+| 9 | Page Graphiques : mode édition | Code fait, à tester (échelle commune abandonnée) |
 | 10 | Thème clair | À faire |
 | 11 | Animations | À faire (en dernier) |
 
@@ -107,9 +107,9 @@ Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin le
 - [ ] Aperçu du message pour toutes les notifications
 
 ### 9. Page Graphiques : mode édition
-- [ ] Diagnostic d'abord, pour chaque action (menu des séries, ajouter, supprimer, monter / descendre, taille, restaurer pour ✕) : le code d'origine l'offre-t-il, par quel appel, quels points d'accroche ? Si monter / descendre n'existe pas dans 4.0 et demande plus qu'un paramètre par défaut, s'arrêter et me le dire
+- [x] Diagnostic d'abord, pour chaque action (menu des séries, ajouter, supprimer, monter / descendre, taille, restaurer pour ✕) : le code d'origine l'offre-t-il, par quel appel, quels points d'accroche ? Si monter / descendre n'existe pas dans 4.0 et demande plus qu'un paramètre par défaut, s'arrêter et me le dire. Trouvé : tout passe par `GraphConfig` et `GraphViewModel.updateGraphConfig` (public) ; monter / descendre = changer l'ordre de la liste `secondaryGraphs`, aucun code d'origine nouveau. Points d'accroche : un calque par graphique (`GraphsRedesignLayout.blockOverlay`), `locked`, pas de ligne de hauteur dans les menus du redesign (voir UPSTREAM_TOUCHES). Le texte « Ce graphique ne peut pas être supprimé » n'est pas ajouté au menu d'origine du graphique BG (il faudrait un autre point d'accroche) ; le BG et IOB n'ont simplement pas de bouton supprimer
 - [ ] Pilule (✕) Mode édition (+) (✓), graphiques atténués et verrouillés, contrôles sur chaque graphique, Retour = annuler, nouveau graphique en bas en Petit
-- [ ] Optionnel : même échelle de glycémie que l'accueil sur la page 2 (seulement par un paramètre par défaut sur `BgGraphCompose`, sinon on abandonne)
+- [x] Optionnel : même échelle de glycémie que l'accueil sur la page 2 (seulement par un paramètre par défaut sur `BgGraphCompose`, sinon on abandonne). **Abandonné** : il faut un paramètre sur `BgGraphCompose` et un autre point d'accroche dans `GraphsSection` pour le passer
 
 ### 10. Thème clair
 - [ ] Diagnostic : tour des couleurs de toutes les pages en thème clair

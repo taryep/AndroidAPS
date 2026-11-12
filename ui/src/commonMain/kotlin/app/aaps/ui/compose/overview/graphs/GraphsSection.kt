@@ -70,6 +70,7 @@ import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.ui.compose.redesign.GraphHeights
+import app.aaps.ui.compose.redesign.GraphBlock
 import app.aaps.ui.compose.redesign.GraphLegendItem
 import app.aaps.ui.compose.redesign.GraphsRedesignLayout
 import app.aaps.ui.compose.redesign.RedesignGraphLegend
@@ -220,7 +221,7 @@ private val PREDICTION_SPOKEN_ORDER = listOf(
 private val BG_OVERLAY_SERIES = listOf(SeriesType.ACTIVITY, SeriesType.PREDICTIONS)
 
 /** Series types available for user-configurable secondary graphs (IOB + UI-only overlays excluded) */
-private val CONFIGURABLE_SERIES = SeriesType.entries.filter {
+internal val CONFIGURABLE_SERIES = SeriesType.entries.filter {
     it != SeriesType.IOB && it != SeriesType.PREDICTIONS
 }
 
@@ -249,13 +250,13 @@ fun GraphsSection(
     val canEdit = !isSimpleMode && editMode
     val dateUtil = LocalDateUtil.current
     val savedGraphConfig by graphViewModel.graphConfigFlow.collectAsStateWithLifecycle()
-    // In simple mode: fixed layout (BG, IOB+BAS, COB — no overlays, no editing)
+    // In simple mode: fixed layout (BG, IOB+BAS, COB â€” no overlays, no editing)
     val graphConfig = if (isSimpleMode) SIMPLE_MODE_CONFIG else savedGraphConfig
 
     // Zoom.x(...) allocates a fresh (non-equal, unmemoized) lambda instance on every call.
     // rememberVicoZoomState's underlying rememberSaveable is keyed on initialZoom/minZoom/maxZoom
     // by reference, so passing a freshly-allocated Zoom on every recomposition of this composable
-    // tears down and recreates the VicoZoomState — resetting the zoom level back to initialZoom.
+    // tears down and recreates the VicoZoomState â€” resetting the zoom level back to initialZoom.
     // Memoize these once so all zoom states below stay stable across recompositions.
     val defaultZoom = remember { Zoom.x(DEFAULT_GRAPH_ZOOM_MINUTES) }
     val bgMinZoom = remember { Zoom.x(Constants.GRAPH_TIME_RANGE_HOURS * 60.0) }
@@ -276,12 +277,12 @@ fun GraphsSection(
     // states from scratch, snapping them back to their initial values (Scroll.Absolute.End /
     // startZoom). This is deliberate: VicoZoomState.zoom(Zoom) is pinch-gesture-oriented
     // (it applies a ratio anchored on the current canvas center via an async pendingScroll flow)
-    // and produced a wrong end state when used to "reset to a fixed default" — recreating the
+    // and produced a wrong end state when used to "reset to a fixed default" â€” recreating the
     // state objects is simpler and matches the exact positioning Vico itself already uses on first
     // composition. Only reset on real inactivity (rare, never mid-gesture), so this doesn't
     // reintroduce the "churn during an active gesture" issues found elsewhere in this file.
     // IMPORTANT: every effect below that reads bgScrollState/bgZoomState.value MUST be keyed on
-    // them (not just Unit) — otherwise it keeps a stale reference to the abandoned pre-reset
+    // them (not just Unit) â€” otherwise it keeps a stale reference to the abandoned pre-reset
     // objects forever, comparing live secondary-graph state against a frozen stale value and
     // firing wrong corrections (this caused the secondary graphs to visibly "dance"/flash on the
     // first attempt at this).
@@ -323,13 +324,13 @@ fun GraphsSection(
 
     // Collect time range ONCE so all graphs use the exact same values in the same frame.
     // Without this, each graph independently collects derivedTimeRange via
-    // collectAsStateWithLifecycle(), which can recompose in different frames —
+    // collectAsStateWithLifecycle(), which can recompose in different frames â€”
     // causing minTimestamp divergence and scroll misalignment (pixel position
     // maps to different time when x-axis ranges differ).
     val derivedTimeRange by graphViewModel.derivedTimeRange.collectAsStateWithLifecycle()
 
     // BG's own visible window, sourced from the fixed IOB graph's already-computed visible range
-    // (its scroll/zoom are synced to BG's, see the sync LaunchedEffect below) — not from a
+    // (its scroll/zoom are synced to BG's, see the sync LaunchedEffect below) â€” not from a
     // decoration on BG's own chart, since that was tried and found to break BG's pinch-zoom
     // gesture handling (BG is the only graph with live scrollEnabled/zoomEnabled = true).
     var iobVisibleRange by remember { mutableStateOf<Pair<Double, Double>?>(null) }
@@ -366,7 +367,7 @@ fun GraphsSection(
     val iobScrollState = rememberVicoScrollState(scrollEnabled = false, initialScroll = Scroll.Absolute.End)
     val iobZoomState = rememberVicoZoomState(zoomEnabled = false, initialZoom = startZoom)
 
-    // Active graph count — rememberUpdatedState so coroutines always read the latest value
+    // Active graph count â€” rememberUpdatedState so coroutines always read the latest value
     // without writing to state during composition. Unattached states are no-ops for
     // .zoom()/.scroll(), but we skip them to avoid redundant calls.
     val activeCount by rememberUpdatedState(
@@ -458,7 +459,7 @@ fun GraphsSection(
 
     // After a reset, the recreated bgScrollState defaults to Scroll.Absolute.End. If predictions
     // are visible, nudge it further so "now + 2h" sits at the right edge instead, leaving room to
-    // see the forecast — same positioning as before, reapplied once the fresh scrollState (a new
+    // see the forecast â€” same positioning as before, reapplied once the fresh scrollState (a new
     // instance, since it's keyed on bgViewportResetTrigger too) is composed and ready.
     // Once per reset: the trigger survives a trip to another screen (see above), and so must the
     // fact that this reset was handled, or coming back would nudge the restored scroll away from
@@ -494,6 +495,10 @@ fun GraphsSection(
     val graphGap = redesignLayout?.graphGap ?: 0.dp
     val sectionBottomPadding = redesignLayout?.bottomPadding ?: SECTION_BOTTOM_PADDING
     val legendHeight = redesignLayout?.legendHeight ?: 0.dp
+    // Redesign edit mode (step 9): no inspect pill and no sideways scroll on the graphs. False in stock.
+    val locked = redesignLayout?.locked == true
+    // The redesign sets the graph sizes with its own controls, so its sheets have no height row.
+    val showHeightInSheets = redesignLayout == null
     /** Height of a graph block (legend + plot) for a saved height. Redesign layout only. */
     fun blockHeight(saved: Int): Dp =
         redesignLayout!!.let { GraphHeights.ofSaved(saved, it.smallHeight.value, it.graphGap.value).dp }
@@ -516,7 +521,7 @@ fun GraphsSection(
             nowTimestamp = nowTimestamp,
             modifier = Modifier
                 .fillMaxWidth()
-                .graphInspectTouch(inspect)
+                .then(if (locked) Modifier else Modifier.graphInspectTouch(inspect))
         )
         // BG Graph - primary interactive graph
         var editingBgOverlays by remember { mutableStateOf(false) }
@@ -590,7 +595,7 @@ fun GraphsSection(
         Box(
             modifier = Modifier
                 .then(if (redesignLayout == null) Modifier.offset(y = (-16).dp) else Modifier.pullUp(BG_BELT_OVERLAP))
-                .graphInspectTouch(inspect)
+                .then(if (locked) Modifier else Modifier.graphInspectTouch(inspect))
         ) {
             BgGraphCompose(
                 viewModel = graphViewModel,
@@ -641,6 +646,8 @@ fun GraphsSection(
                     .offset(y = INSPECT_PILL_OFFSET)
                     .padding(top = 2.dp, start = 36.dp, end = 36.dp)
             )
+            // Redesign edit mode (step 9): its controls over this graph. Null in stock.
+            redesignLayout?.blockOverlay?.invoke(this, GraphBlock(GraphBlock.Kind.BG, 0) { editingBgOverlays = true })
         }
         // A node of its own rather than more text on the graph above, so a listener reaches the
         // readings first and swipes once to decide whether she wants the forecast, instead of having
@@ -668,7 +675,8 @@ fun GraphsSection(
                     if (type in current) current.remove(type) else current.add(type)
                     graphViewModel.updateGraphConfig(graphConfig.copy(bgOverlays = current))
                 },
-                onDismiss = { editingBgOverlays = false }
+                onDismiss = { editingBgOverlays = false },
+                showHeight = showHeightInSheets
             )
         }
         // Fixed IOB graph (Graph 1) with optional Activity overlay
@@ -678,8 +686,8 @@ fun GraphsSection(
         Box(
             modifier = Modifier
                 .then(if (redesignLayout == null) Modifier.pullUp(IOB_GRAPH_PULL_UP) else Modifier)
-                .graphInspectTouch(inspect)
-                .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
+                .then(if (locked) Modifier else Modifier.graphInspectTouch(inspect))
+                .then(if (locked) Modifier else Modifier.scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction))
                 // Redesign gap: inside the touch area, so a drag in the gap still scrolls the graphs.
                 .padding(top = graphGap)
         ) {
@@ -719,6 +727,8 @@ fun GraphsSection(
                     .align(Alignment.BottomEnd)
                     .padding(end = 4.dp, bottom = GRAPH_NAME_BOTTOM_PADDING)
             )
+            // Redesign edit mode (step 9): its controls over this graph. Null in stock.
+            redesignLayout?.blockOverlay?.invoke(this, GraphBlock(GraphBlock.Kind.IOB, 0) { editingIobOverlays = true })
         }
         if (editingIobOverlays) {
             GraphSeriesBottomSheet(
@@ -734,11 +744,12 @@ fun GraphsSection(
                     if (type in current) current.remove(type) else current.add(type)
                     graphViewModel.updateGraphConfig(graphConfig.copy(iobOverlays = current))
                 },
-                onDismiss = { editingIobOverlays = false }
+                onDismiss = { editingIobOverlays = false },
+                showHeight = showHeightInSheets
             )
         }
 
-        // Secondary graphs — config-driven (labels start at "Graph 2")
+        // Secondary graphs â€” config-driven (labels start at "Graph 2")
         var editingGraphIndex by remember { mutableIntStateOf(-1) }
         for (i in 0 until activeCount) {
             val secondary = graphConfig.secondaryGraphs[i]
@@ -746,8 +757,8 @@ fun GraphsSection(
             Box(
                 modifier = Modifier
                     .then(if (redesignLayout == null) Modifier.pullUp(GRAPH_OVERLAP) else Modifier)
-                    .graphInspectTouch(inspect)
-                    .scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction)
+                    .then(if (locked) Modifier else Modifier.graphInspectTouch(inspect))
+                    .then(if (locked) Modifier else Modifier.scrollsBgGraph(bgScrollForwarder, inspect, graphViewModel::onGraphInteraction))
                     .padding(top = graphGap)
             ) {
                 SecondaryGraphCompose(
@@ -781,6 +792,8 @@ fun GraphsSection(
                         .align(Alignment.BottomEnd)
                         .padding(end = 4.dp, bottom = GRAPH_NAME_BOTTOM_PADDING)
                 )
+                // Redesign edit mode (step 9): its controls over this graph. Null in stock.
+                redesignLayout?.blockOverlay?.invoke(this, GraphBlock(GraphBlock.Kind.OTHER, i) { editingGraphIndex = i })
             }
         }
         if (editingGraphIndex >= 0 && editingGraphIndex < activeCount) {
@@ -823,7 +836,8 @@ fun GraphsSection(
                     editingGraphIndex = -1
                     graphViewModel.updateGraphConfig(graphConfig.copy(secondaryGraphs = graphs))
                 },
-                onDismiss = { editingGraphIndex = -1 }
+                onDismiss = { editingGraphIndex = -1 },
+                showHeight = showHeightInSheets
             )
         }
         // Add graph button. In simple mode, outside the edit mode, or with all graphs added, it stays as an invisible placeholder: its height
@@ -1013,7 +1027,9 @@ private fun GraphSeriesBottomSheet(
     onHeightChange: (Int) -> Unit,
     onToggle: (SeriesType) -> Unit,
     onDismiss: () -> Unit,
-    onRemoveGraph: (() -> Unit)? = null
+    onRemoveGraph: (() -> Unit)? = null,
+    /** False hides the height row (the redesign graphs page sets the sizes with its own controls). */
+    showHeight: Boolean = true
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
@@ -1043,7 +1059,7 @@ private fun GraphSeriesBottomSheet(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            NumberInputRow(
+            if (showHeight) NumberInputRow(
                 labelRef = CoreUiStrings.graph_height,
                 value = height.toDouble(),
                 onValueChange = { onHeightChange(it.toInt()) },
@@ -1051,7 +1067,7 @@ private fun GraphSeriesBottomSheet(
                 step = 10.0,
                 formatAsInt = true
             )
-            Spacer(Modifier.height(8.dp))
+            if (showHeight) Spacer(Modifier.height(8.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),

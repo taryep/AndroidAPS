@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import app.aaps.core.interfaces.overview.graph.GraphConfig
 
 /**
  * State of the redesign overview: which page is shown and whether the graphs can be edited.
@@ -32,6 +33,21 @@ class RedesignOverviewState : ViewModel() {
      */
     var homeGraphRange by mutableStateOf(HomeGraphRange.DEFAULT)
 
+    /**
+     * Step 9: the graph settings when the edit mode started. The changes apply at once; (âœ•) and Back put
+     * these back, (âœ“) and leaving the page keep the changes. Set by the graphs page.
+     */
+    var editSnapshot by mutableStateOf<GraphConfig?>(null)
+
+    /** Set by (âœ•) and Back: the graphs page writes these settings back, then clears it. */
+    var restoreGraphs by mutableStateOf<GraphConfig?>(null)
+
+    /** (âœ•) and Back in edit mode: leave it and put the graphs back as they were. */
+    fun cancelEdit() {
+        restoreGraphs = editSnapshot
+        editMode = false
+    }
+
     /** Home item of the bar, or a re-tap on Graphs or Menu: the home page, no Menu, no edit mode. */
     fun showHome() {
         menuOpen = false
@@ -58,9 +74,9 @@ class RedesignOverviewState : ViewModel() {
         page = GRAPHS_PAGE
     }
 
-    /** Back on the graphs page: first leave the edit mode, then go back to the home page. */
+    /** Back on the graphs page: first leave the edit mode (as (âœ•): the changes are undone), then go back to the home page. */
     fun back() {
-        if (editMode) editMode = false else page = HOME_PAGE
+        if (editMode) cancelEdit() else page = HOME_PAGE
     }
 
     companion object {

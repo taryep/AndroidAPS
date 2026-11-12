@@ -23,11 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -64,9 +67,15 @@ fun RedesignOverview(
     onNotificationsClick: () -> Unit,
     onPumpActivityClick: () -> Unit
 ) {
+    val graphConfig by graphViewModel.graphConfigFlow.collectAsStateWithLifecycle()
+    // Simple mode has no edit mode (as the stock graphs): turning it on ends an open edit mode.
+    LaunchedEffect(isSimpleMode) { if (isSimpleMode) redesign.editMode = false }
     RedesignOverviewContent(
         state = redesign,
         modifier = Modifier.padding(paddingValues),
+        // Step 9: the (+) of the edit pill adds a Small graph at the bottom, up to the stock maximum.
+        canAddGraph = RedesignGraphEdit.canAdd(graphConfig),
+        onAddGraph = { graphViewModel.updateGraphConfig(RedesignGraphEdit.add(graphViewModel.graphConfigFlow.value)) },
         homePage = {
             RedesignHomePage(
                 stock = stock,
@@ -84,7 +93,7 @@ fun RedesignOverview(
             )
         },
         graphsPage = { editMode ->
-            RedesignGraphsPage(graphViewModel, chipsViewModel, isSimpleMode, editMode, onEdit = { redesign.editScreen() }, endSpace = overlaidBarsHeight)
+            RedesignGraphsPage(graphViewModel, chipsViewModel, isSimpleMode, editMode, redesign, endSpace = overlaidBarsHeight)
         }
     )
 }
@@ -92,6 +101,10 @@ fun RedesignOverview(
 /**
  * Page 2: the title row with the edit button, then the stock 4.0 graphs (SPEC 4). The graph heights come from
  * [GraphHeights]: Small is a quarter of the page, Medium and Grand are worth 1.5 and 2 Small.
+ *
+ * Edit mode (step 9, SPEC 4.3): the edit pill floats over the title, which turns grey. The graphs are dimmed and
+ * locked, each with its controls (see [RedesignGraphEditOverlay]). The changes apply at once; the settings of the
+ * start are kept in [RedesignOverviewState.editSnapshot] so (âœ•) and Back can put them back.
  */
 @Composable
 private fun RedesignGraphsPage(
@@ -99,30 +112,53 @@ private fun RedesignGraphsPage(
     chipsViewModel: ChipsViewModel,
     isSimpleMode: Boolean,
     editMode: Boolean,
-    onEdit: () -> Unit,
+    redesign: RedesignOverviewState,
     /** Space to leave after the last graph: the bars drawn over the end of the page (preview mode only). */
     endSpace: Dp
 ) {
     val iobUiState by chipsViewModel.iobUiState.collectAsStateWithLifecycle()
     val cobUiState by chipsViewModel.cobUiState.collectAsStateWithLifecycle()
+    val graphConfig by graphViewModel.graphConfigFlow.collectAsStateWithLifecycle()
+    val scrollState = rememberScrollState()
     // Once per install: the stock default BG height 100 becomes Grand (SPEC 4.2).
     LaunchedEffect(Unit) { graphViewModel.migrateRedesignGraphHeights() }
+    // The settings when the edit mode starts, for (âœ•) and Back.
+    LaunchedEffect(editMode) { if (editMode) redesign.editSnapshot = graphViewModel.graphConfigFlow.value }
+    LaunchedEffect(redesign.restoreGraphs) {
+        redesign.restoreGraphs?.let {
+            graphViewModel.updateGraphConfig(it)
+            redesign.restoreGraphs = null
+        }
+    }
+    // A graph added with (+) is at the bottom: the page scrolls to it.
+    var graphCount by remember { mutableIntStateOf(graphConfig.secondaryGraphs.size) }
+    LaunchedEffect(graphConfig.secondaryGraphs.size) {
+        val added = graphConfig.secondaryGraphs.size > graphCount
+        graphCount = graphConfig.secondaryGraphs.size
+        if (added && editMode) scrollState.animateScrollTo(scrollState.maxValue)
+    }
     Column(Modifier.fillMaxSize()) {
-        // In edit mode the content shows its edit pill over the page instead of this title.
-        if (!editMode) RedesignGraphsTitleRow(canEdit = !isSimpleMode, onEdit = onEdit)
+        RedesignGraphsTitleRow(canEdit = !isSimpleMode && !editMode, dimmed = editMode, onEdit = { redesign.editScreen() })
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             val layout = GraphsRedesignLayout(
                 smallHeight = GraphHeights.small(maxHeight.value, GRAPH_GAP.value).dp,
-                graphGap = GRAPH_GAP
+                graphGap = GRAPH_GAP,
+                locked = editMode,
+                blockOverlay = if (editMode) {
+                    { block ->
+                        RedesignGraphEditOverlay(block, graphConfig, graphConfig.secondaryGraphs.size) { graphViewModel.updateGraphConfig(it) }
+                    }
+                } else null
             )
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
                 GraphsSection(
                     graphViewModel = graphViewModel,
                     isSimpleMode = isSimpleMode,
                     iobText = iobUiState.text,
                     cobText = cobUiState.text,
                     overlaidBarsHeight = endSpace,
-                    editMode = editMode,
+                    // The stock pencils and "Add graph" stay hidden: the redesign controls replace them.
+                    editMode = false,
                     redesignLayout = layout
                 )
             }
@@ -135,9 +171,9 @@ private val TITLE_ROW_HEIGHT = 64.dp
 private val EDIT_BUTTON_SIZE = 44.dp
 private val EDIT_BUTTON_TOUCH_SIZE = 48.dp
 
-/** "Graphiques" and the grey round edit button on the right. The button is hidden in simple mode. */
+/** "Graphiques" and the grey round edit button on the right. The button is hidden in simple mode and in edit mode; in edit mode the title is grey under the edit pill ([dimmed]). */
 @Composable
-private fun RedesignGraphsTitleRow(canEdit: Boolean, onEdit: () -> Unit) {
+private fun RedesignGraphsTitleRow(canEdit: Boolean, dimmed: Boolean, onEdit: () -> Unit) {
     val colors = redesignColors()
     Row(
         modifier = Modifier
@@ -150,7 +186,8 @@ private fun RedesignGraphsTitleRow(canEdit: Boolean, onEdit: () -> Unit) {
             text = stringResource(UiStrings.redesign_graphs_title),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = colors.textPrimary,
+            // Grey under the edit pill (SPEC 4.3).
+            color = if (dimmed) colors.textPrimary.copy(alpha = 0.25f) else colors.textPrimary,
             modifier = Modifier
                 .weight(1f)
                 .semantics { heading() }

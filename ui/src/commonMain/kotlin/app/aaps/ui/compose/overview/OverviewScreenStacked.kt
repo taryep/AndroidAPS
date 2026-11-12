@@ -75,6 +75,10 @@ fun OverviewScreenStacked(
     eatReminderBanner: @Composable () -> Unit = {},
     /** Height of the bars drawn over the content in preview mode (a short window, e.g. split screen); added to the end space. */
     overlaidBarsHeight: Dp = 0.dp,
+    /** Redesign (docs/redesign/SPEC.md): false when the graphs are on a page of their own. */
+    showGraphs: Boolean = true,
+    /** Redesign: makes the glucose value open the graphs page. */
+    bgModifier: Modifier = Modifier,
     modifier: Modifier = Modifier
 ) {
     val config = LocalConfig.current
@@ -113,7 +117,8 @@ fun OverviewScreenStacked(
             ) {
                 BgInfoSection(
                     bgInfo = bgInfoState.bgInfo,
-                    timeAgoText = bgInfoState.timeAgoText
+                    timeAgoText = bgInfoState.timeAgoText,
+                    modifier = bgModifier
                 )
             }
 
@@ -174,7 +179,7 @@ fun OverviewScreenStacked(
             )
         }
 
-        GraphsSection(
+        if (showGraphs) GraphsSection(
             graphViewModel = graphViewModel, isSimpleMode = isSimpleMode, iobText = iobUiState.text, cobText = cobUiState.text,
             overlaidBarsHeight = overlaidBarsHeight
         )

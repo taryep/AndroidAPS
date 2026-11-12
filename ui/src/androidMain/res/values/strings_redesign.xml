@@ -9,5 +9,11 @@
     <string name="redesign_tools" comment="Heading of the list of tools on the Menu screen (history, maintenance, configuration...)">Tools</string>
     <string name="redesign_needs_attention" comment="Heading on the Menu screen over the things the user must set up (pump, missing permissions)">Needs your attention</string>
     <string name="redesign_close_menu" comment="Screen reader action of the Menu button while the Menu screen is open">Close the menu and go back to the home screen</string>
-    <string name="redesign_loop_suggestion" comment="Row on the Menu screen in open loop: the loop suggests a change that the user must accept or not">Suggestion to accept</string>
+    <string name="redesign_loop_suggestion" comment="Row on the Menu screen in open loop: the loop suggests a change that the user must accept or not">Loop suggestion</string>
+    <string name="redesign_edit_screen" comment="Menu shortcut that shows the graphs page with the buttons to add, change and remove graphs">Edit screen</string>
+    <string name="redesign_edit_mode" comment="Label at the top of the graphs page while the graphs can be added, changed and removed">Edit mode</string>
+    <string name="redesign_edit_done" comment="Button that leaves the edit mode of the graphs page">Done</string>
+    <string name="redesign_page_home" comment="Screen reader name of the first page of the overview">Home, page 1 of 2</string>
+    <string name="redesign_page_graphs" comment="Screen reader name of the second page of the overview">Graphs, page 2 of 2</string>
+    <string name="redesign_open_graphs" comment="Screen reader action of the glucose value on the home page: it shows the graphs page">Open the graphs</string>
 </resources>

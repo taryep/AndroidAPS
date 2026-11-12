@@ -5,5 +5,11 @@
     <string name="redesign_tools">Outils</string>
     <string name="redesign_needs_attention">À régler</string>
     <string name="redesign_close_menu">Fermer le menu et revenir à l\'accueil</string>
-    <string name="redesign_loop_suggestion">Proposition à accepter</string>
+    <string name="redesign_loop_suggestion">Proposition de la boucle</string>
+    <string name="redesign_edit_screen">Modifier l\'écran</string>
+    <string name="redesign_edit_mode">Mode édition</string>
+    <string name="redesign_edit_done">Terminer</string>
+    <string name="redesign_page_home">Accueil, page 1 sur 2</string>
+    <string name="redesign_page_graphs">Graphiques, page 2 sur 2</string>
+    <string name="redesign_open_graphs">Ouvrir les graphiques</string>
 </resources>

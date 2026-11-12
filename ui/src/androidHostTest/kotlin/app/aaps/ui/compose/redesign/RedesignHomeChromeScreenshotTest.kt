@@ -51,13 +51,13 @@ import java.io.File
 import app.aaps.core.ui.R as CoreUiR
 
 /**
- * A picture of the phone home screen with the redesign chrome of phase 1: no top bar, no QuickLaunch
+ * Pictures of the phone overview with the redesign of phases 1 and 2: no top bar, no QuickLaunch
  * toolbar, the Menu item in the bottom bar, and a notification, to check where the notification
  * button lands now that the toolbar is gone.
  *
  * The overview and the bar are placed the way `MainScreen` places them: the content gets the bar's
- * height as bottom padding, and `fabBottomOffset` is 0 because there is no toolbar. It writes
- * `ui/build/reports/redesign/home_chrome.png`.
+ * height as bottom padding, and `fabBottomOffset` is -56 dp, as with the redesign chrome. It writes
+ * `home_chrome.png`, `graphs_page.png` and `graphs_page_edit.png` to `ui/build/reports/redesign/`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -84,7 +84,15 @@ class RedesignHomeChromeScreenshotTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun homeWithANotification() {
+    fun homeWithANotification() = picture("home_chrome", RedesignOverviewState())
+
+    @Test
+    fun graphsPageWithANotification() = picture("graphs_page", RedesignOverviewState().apply { page = RedesignOverviewState.GRAPHS_PAGE })
+
+    @Test
+    fun graphsPageInEditMode() = picture("graphs_page_edit", RedesignOverviewState().apply { editScreen() })
+
+    private fun picture(name: String, state: RedesignOverviewState) {
         val status = viewModels.awaitStatusItems()
         val notification = AapsNotification(
             id = NotificationId.PROFILE_SET_OK,
@@ -112,7 +120,9 @@ class RedesignHomeChromeScreenshotTest {
                             notifications = listOf(notification), onDismissNotification = {}, onNotificationActionClick = {},
                             autoShowNotificationSheet = false, onAutoShowConsumed = {},
                             paddingValues = PaddingValues(top = STATUS_BAR, bottom = GESTURE_BAR + barHeight),
-                            fabBottomOffset = 0.dp
+                            // As MainScreen with the redesign chrome.
+                            fabBottomOffset = (-56).dp,
+                            redesign = state
                         )
                         MainNavigationBar(
                             onManageClick = {},
@@ -131,7 +141,7 @@ class RedesignHomeChromeScreenshotTest {
 
         val dir = File("build/reports/redesign").apply { mkdirs() }
         val bitmap = compose.onNodeWithTag(SCREEN).captureToImage().asAndroidBitmap()
-        File(dir, "home_chrome.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     private companion object {

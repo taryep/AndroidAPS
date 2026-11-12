@@ -61,7 +61,12 @@ class RedesignMenuScreenTest {
 
     private fun string(id: Int) = RuntimeEnvironment.getApplication().getString(id)
 
-    private fun show(showExit: Boolean = true, isTreatmentsEnabled: Boolean = true, attentionItems: List<RedesignAttentionItem> = emptyList()) {
+    private fun show(
+        showExit: Boolean = true,
+        isTreatmentsEnabled: Boolean = true,
+        attentionItems: List<RedesignAttentionItem> = emptyList(),
+        onEditScreenClick: (() -> Unit)? = null
+    ) {
         compose.setContent {
             MaterialTheme {
                 RedesignMenuScreen(
@@ -78,7 +83,8 @@ class RedesignMenuScreenTest {
                     onNavigate = { requests += it },
                     onClose = { closed++ },
                     bottomPadding = 80.dp,
-                    attentionItems = attentionItems
+                    attentionItems = attentionItems,
+                    onEditScreenClick = onEditScreenClick
                 )
             }
         }
@@ -170,6 +176,21 @@ class RedesignMenuScreenTest {
             whenever(it.pluginDescription).thenReturn(PluginDescription().icon(Icons.Default.Settings))
             whenever(it.name).thenReturn(name)
         }
+
+    @Test
+    fun editScreenIsAShortcutWhenItCanBeUsed() {
+        var clicks = 0
+        show(onEditScreenClick = { clicks++ })
+        clickEntry(string(R.string.redesign_edit_screen))
+        assertThat(clicks).isEqualTo(1)
+    }
+
+    @Test
+    fun editScreenIsHiddenInSimpleMode() {
+        // MainScreen passes no callback in simple mode, where the graphs are preset.
+        show(onEditScreenClick = null)
+        assertThat(compose.onAllNodes(hasText(string(R.string.redesign_edit_screen))).fetchSemanticsNodes()).isEmpty()
+    }
 
     @Test
     fun withNothingToSetUpThereIsNoSection() {

@@ -44,6 +44,8 @@ import app.aaps.ui.compose.notificationsSheet.NotificationFab
 import app.aaps.ui.compose.overview.chips.ChipsViewModel
 import app.aaps.ui.compose.overview.graphs.GraphViewModel
 import app.aaps.ui.compose.overview.statusLights.StatusViewModel
+import app.aaps.ui.compose.redesign.RedesignOverviewOrStock
+import app.aaps.ui.compose.redesign.RedesignOverviewState
 import kotlinx.coroutines.delay
 
 private val SPLIT_LAYOUT_MIN_WIDTH: Dp = (2 * PHONE_COLUMN_MIN_WIDTH_DP).dp
@@ -99,6 +101,8 @@ fun OverviewScreen(
      * space at their end, so their last row can be scrolled clear of the bars and the toolbar while these show.
      */
     overlaidBarsHeight: Dp = 0.dp,
+    /** Redesign (docs/redesign/SPEC.md): on a phone held upright, home and graphs on two pages. Null keeps the stock screen. */
+    redesign: RedesignOverviewState? = null,
     bolusState: BolusProgressState? = null,
     pumpStatusText: String = "",
     queueStatusText: AnnotatedString? = null,
@@ -229,7 +233,9 @@ fun OverviewScreen(
                     eatReminderBanner = eatReminderBanner,
                     overlaidBarsHeight = overlaidBarsHeight
                 )
-            } else {
+            } else RedesignOverviewOrStock(
+                redesign, paddingValues, graphViewModel, chipsViewModel, isSimpleMode, overlaidBarsHeight, pumpButtonShown = showPumpFab
+            ) { stackedPadding, showGraphs, bgModifier ->
                 OverviewScreenStacked(
                     profileName = profileName,
                     isProfileModified = isProfileModified,
@@ -256,7 +262,7 @@ fun OverviewScreen(
                     onNavigate = onNavigate,
                     onTbrChipClick = onTbrChipClick,
                     onIobChipClick = onIobChipClick,
-                    paddingValues = paddingValues,
+                    paddingValues = stackedPadding,
                     activeSceneState = activeSceneState,
                     sceneExpired = sceneExpired,
                     activeSceneChainTargetName = activeSceneChainTargetName,
@@ -266,7 +272,9 @@ fun OverviewScreen(
                     commandsAllowed = commandsAllowed,
                     formatDuration = formatDuration,
                     eatReminderBanner = eatReminderBanner,
-                    overlaidBarsHeight = overlaidBarsHeight
+                    overlaidBarsHeight = overlaidBarsHeight,
+                    showGraphs = showGraphs,
+                    bgModifier = bgModifier
                 )
             }
         }

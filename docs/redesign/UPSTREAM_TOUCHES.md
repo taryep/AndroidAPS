@@ -39,6 +39,40 @@ Split and tablet layouts keep the stock chrome.
 Not touched: `MainTopBar.kt`, `MainDrawer.kt`, `QuickLaunchToolbar.kt`, `overview/OverviewScreen.kt`,
 `appshell`.
 
+## Phase 2 - Pager
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
+
+- New parameter `editMode: Boolean = true` (stock: always editable).
+- `canEdit = !isSimpleMode && editMode` replaces `!isSimpleMode` at the four places that show a
+  pencil or "Add graph". Two comments updated.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreenStacked.kt`
+
+- New parameters `showGraphs: Boolean = true` and `bgModifier: Modifier = Modifier`.
+- `if (showGraphs)` before `GraphsSection(...)`; `modifier = bgModifier` on `BgInfoSection(...)`.
+  The redesign uses the stock stacked screen without graphs as page 1 until phase 3.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/OverviewScreen.kt`
+
+- New parameter `redesign: RedesignOverviewState? = null`.
+- The stacked branch calls `RedesignOverviewOrStock(...) { ... OverviewScreenStacked(...) }`: with
+  `redesign` null it draws the stock screen as before. It also gets `showPumpFab`, so the end of
+  the graphs page leaves room for the pump activity button while it shows (128 dp, else 72 dp). The call to `OverviewScreenStacked` keeps
+  its lines, with the padding from the lambda and the two new parameters.
+- Two imports.
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/main/MainScreen.kt`
+
+| Hook | Why |
+|---|---|
+| `redesignOverview = viewModel { RedesignOverviewState() }` | Page and edit mode. A view model: kept over a rotation, but a new start of the app opens on the home page. |
+| `LaunchedEffect(redesignChrome)` also ends the edit mode | Landscape shows the stock screen. |
+| `SideEffect { redesignOverview.menuOpen = showRedesignMenu }` | While the Menu is open, Back is for the Menu, not for the graphs page under it. |
+| `OverviewScreen(redesign = ...)` with the redesign chrome | The two pages. |
+| `RedesignMenuScreen(onEditScreenClick = ...)`, null in simple mode | Menu > "Edit screen": graphs page in edit mode. |
+| Imports | `SideEffect`, `viewModel`, `RedesignOverviewState`. |
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

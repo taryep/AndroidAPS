@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.notifications.AapsNotification
 import app.aaps.core.interfaces.plugin.PluginBase
@@ -77,6 +79,7 @@ import app.aaps.ui.compose.quickLaunch.QuickLaunchToolbar
 import app.aaps.ui.compose.quickLaunch.ResolvedQuickLaunchItem
 import app.aaps.ui.compose.redesign.RedesignFlags
 import app.aaps.ui.compose.redesign.RedesignMenuScreen
+import app.aaps.ui.compose.redesign.RedesignOverviewState
 import app.aaps.ui.compose.redesign.isRedesignPhoneLayout
 import app.aaps.ui.compose.redesign.redesignAttentionItems
 import app.aaps.ui.compose.scenesSheet.ScenesBottomSheet
@@ -181,7 +184,16 @@ fun MainScreen(
         }
         showRedesignMenu = false
     }
-    LaunchedEffect(redesignChrome) { if (!redesignChrome) showRedesignMenu = false }
+    // Page and edit mode of the redesign overview. A view model: kept over a rotation, reset by a new start.
+    val redesignOverview: RedesignOverviewState = viewModel { RedesignOverviewState() }
+    LaunchedEffect(redesignChrome) {
+        if (!redesignChrome) {
+            showRedesignMenu = false
+            redesignOverview.editMode = false
+        }
+    }
+    // While the Menu is open it takes Back, not the graphs page under it.
+    SideEffect { redesignOverview.menuOpen = showRedesignMenu }
     // Redesign: BG source warning, loop accept, pump set-up and permissions move from the bottom bar
     // to the Menu, so the bar keeps at most five items.
     val loopActionAvailable = loopActionViewModel.uiState.collectAsStateWithLifecycle().value.actionAvailable
@@ -355,6 +367,7 @@ fun MainScreen(
                         // column needs its height too. The height is kept once measured, so the columns do not move each
                         // time the bars show and hide.
                         overlaidBarsHeight = if (previewMode) with(density) { bottomBarHeightPx.toDp() } else 0.dp,
+                        redesign = if (redesignChrome) redesignOverview else null,
                         bolusState = bolusState,
                         pumpStatusText = pumpStatusText,
                         queueStatusText = queueStatusText,
@@ -450,7 +463,11 @@ fun MainScreen(
                             onNavigate = onNavigate,
                             onClose = closeRedesignMenu,
                             bottomPadding = contentPadding.calculateBottomPadding(),
-                            attentionItems = redesignAttentionItems
+                            attentionItems = redesignAttentionItems,
+                            onEditScreenClick = if (uiState.isSimpleMode) null else ({
+                                closeRedesignMenu()
+                                redesignOverview.editScreen()
+                            })
                         )
                     }
 

@@ -227,8 +227,12 @@ fun GraphsSection(
     iobText: String? = null,
     cobText: String? = null,
     /** Height of the bars drawn over the end of this section (the overview's preview mode), added to the space at its end. */
-    overlaidBarsHeight: Dp = 0.dp
+    overlaidBarsHeight: Dp = 0.dp,
+    /** False hides the edit buttons (pencils) and "Add graph". The redesign shows them only in its edit mode. */
+    editMode: Boolean = true
 ) {
+    // In simple mode the graphs are preset and cannot be edited.
+    val canEdit = !isSimpleMode && editMode
     val dateUtil = LocalDateUtil.current
     val savedGraphConfig by graphViewModel.graphConfigFlow.collectAsStateWithLifecycle()
     // In simple mode: fixed layout (BG, IOB+BAS, COB — no overlays, no editing)
@@ -590,7 +594,7 @@ fun GraphsSection(
                         else Modifier
                     )
             )
-            if (!isSimpleMode) {
+            if (canEdit) {
                 GraphEditButton(
                     onClick = { editingBgOverlays = true },
                     graphName = stringResource(CoreUiStrings.glucose),
@@ -665,7 +669,7 @@ fun GraphsSection(
             GraphNameRow(
                 name = stringResource(InterfacesStrings.values_with_slash, stringResource(CoreUiStrings.iob), stringResource(CoreUiStrings.basal_shortname)),
                 editName = stringResource(CoreUiStrings.iob),
-                onEdit = if (isSimpleMode) null else ({ editingIobOverlays = true }),
+                onEdit = if (canEdit) ({ editingIobOverlays = true }) else null,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 4.dp, bottom = GRAPH_NAME_BOTTOM_PADDING)
@@ -714,7 +718,7 @@ fun GraphsSection(
                 GraphNameRow(
                     name = seriesListLabel(secondary.series),
                     editName = seriesListLabel(secondary.series),
-                    onEdit = if (isSimpleMode) null else ({ editingGraphIndex = i }),
+                    onEdit = if (canEdit) ({ editingGraphIndex = i }) else null,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 4.dp, bottom = GRAPH_NAME_BOTTOM_PADDING)
@@ -764,9 +768,9 @@ fun GraphsSection(
                 onDismiss = { editingGraphIndex = -1 }
             )
         }
-        // Add graph button. In simple mode, or with all graphs added, it stays as an invisible placeholder: its height
+        // Add graph button. In simple mode, outside the edit mode, or with all graphs added, it stays as an invisible placeholder: its height
         // is part of the space below the last graph, and the spacer alone is lower than the QuickLaunch toolbar.
-        val canAddGraph = !isSimpleMode && activeCount < GraphConfig.MAX_SECONDARY_GRAPHS
+        val canAddGraph = canEdit && activeCount < GraphConfig.MAX_SECONDARY_GRAPHS
         var showAddSheet by remember { mutableStateOf(false) }
         TextButton(
             onClick = { showAddSheet = true },
@@ -890,7 +894,8 @@ private fun seriesNameId(type: SeriesType): TextRef = when (type) {
 // =========================================================================
 
 /**
- * Name of a graph below BG, with its edit button (pencil) to the right of it. [onEdit] is null in simple mode,
+ * Name of a graph below BG, with its edit button (pencil) to the right of it. [onEdit] is null in simple mode
+ * and outside the redesign edit mode,
  * where graphs cannot be edited. The row is at least as tall as the edit button, also without it, so the name
  * stays at the same height in both modes.
  */

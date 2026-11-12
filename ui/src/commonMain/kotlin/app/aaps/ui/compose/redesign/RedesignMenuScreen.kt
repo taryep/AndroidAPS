@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +75,7 @@ import app.aaps.ui.search.SearchUiState
  * @param isTreatmentsEnabled same rule as the drawer: the treatments list needs a loaded profile
  * @param showExit false on iOS, where the app may not close itself
  * @param onClose closes this screen (Back)
+ * @param onEditScreenClick shows the graphs page in edit mode; null hides the shortcut (simple mode)
  * @param bottomPadding room to leave at the bottom for the bottom bar and the gesture bar. The top
  *   and the sides follow the safe drawing insets here.
  */
@@ -93,7 +95,8 @@ fun RedesignMenuScreen(
     onClose: () -> Unit,
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
-    attentionItems: List<RedesignAttentionItem> = emptyList()
+    attentionItems: List<RedesignAttentionItem> = emptyList(),
+    onEditScreenClick: (() -> Unit)? = null
 ) {
     val colors = redesignColors()
     val focusManager = LocalFocusManager.current
@@ -168,6 +171,7 @@ fun RedesignMenuScreen(
                     isTreatmentsEnabled = isTreatmentsEnabled,
                     showExit = showExit,
                     attentionItems = attentionItems,
+                    onEditScreenClick = onEditScreenClick,
                     onNavigate = onNavigate,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -186,6 +190,7 @@ private fun MenuContent(
     isTreatmentsEnabled: Boolean,
     showExit: Boolean,
     attentionItems: List<RedesignAttentionItem>,
+    onEditScreenClick: (() -> Unit)?,
     onNavigate: (NavigationRequest) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -218,22 +223,25 @@ private fun MenuContent(
             }
         }
 
-        // Large shortcuts, two per row. "Edit screen" joins them with the pager (phase 2).
+        // Large shortcuts, two per row.
         // In simple mode the gear is shown crossed, as it was in the old top bar. The action is the same.
-        val shortcuts = listOf(
-            Shortcut(ElementType.SETTINGS, if (isSimpleMode) IcSettingsOff else ElementType.SETTINGS.icon()),
-            Shortcut(ElementType.HISTORY_BROWSER, ElementType.HISTORY_BROWSER.icon()),
-            Shortcut(ElementType.STATISTICS, ElementType.STATISTICS.icon())
+        val settingsIcon = if (isSimpleMode) IcSettingsOff else ElementType.SETTINGS.icon()
+        val shortcuts = listOfNotNull(
+            Shortcut(stringResourceOrNull(ElementType.SETTINGS.label()).orEmpty(), settingsIcon) { go(ElementType.SETTINGS) },
+            // Hidden in simple mode, where the graphs are preset.
+            onEditScreenClick?.let { Shortcut(stringResource(UiStrings.redesign_edit_screen), Icons.Default.Edit, it) },
+            Shortcut(stringResourceOrNull(ElementType.HISTORY_BROWSER.label()).orEmpty(), ElementType.HISTORY_BROWSER.icon()) { go(ElementType.HISTORY_BROWSER) },
+            Shortcut(stringResourceOrNull(ElementType.STATISTICS.label()).orEmpty(), ElementType.STATISTICS.icon()) { go(ElementType.STATISTICS) }
         )
         Column(verticalArrangement = Arrangement.spacedBy(GRID_GAP)) {
             shortcuts.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(GRID_GAP)) {
                     row.forEach { shortcut ->
                         ShortcutTile(
-                            label = stringResourceOrNull(shortcut.type.label()).orEmpty(),
+                            label = shortcut.label,
                             icon = shortcut.icon,
                             colors = colors,
-                            onClick = { go(shortcut.type) },
+                            onClick = shortcut.onClick,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -304,7 +312,7 @@ private fun MenuContent(
     }
 }
 
-private class Shortcut(val type: ElementType, val icon: ImageVector)
+private class Shortcut(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
 @Composable
 private fun SectionHeading(text: String, colors: RedesignColors) {

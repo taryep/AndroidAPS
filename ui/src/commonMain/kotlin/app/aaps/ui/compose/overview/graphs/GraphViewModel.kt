@@ -75,7 +75,9 @@ class GraphViewModel(
     private val _chartConfigFlow = MutableStateFlow(
         ChartConfig(
             highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
-            lowMark = preferences.get(UnitDoubleKey.OverviewLowMark)
+            lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
+            veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark),
+            veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark)
         )
     )
     val chartConfigFlow: StateFlow<ChartConfig> = _chartConfigFlow.asStateFlow()
@@ -90,6 +92,14 @@ class GraphViewModel(
         preferences.observe(UnitDoubleKey.OverviewLowMark)
             .drop(1)
             .onEach { lowMark -> _chartConfigFlow.update { it.copy(lowMark = lowMark) } }
+            .launchIn(viewModelScope)
+        preferences.observe(UnitDoubleKey.OverviewVeryHighMark)
+            .drop(1)
+            .onEach { mark -> _chartConfigFlow.update { it.copy(veryHighMark = mark) } }
+            .launchIn(viewModelScope)
+        preferences.observe(UnitDoubleKey.OverviewVeryLowMark)
+            .drop(1)
+            .onEach { mark -> _chartConfigFlow.update { it.copy(veryLowMark = mark) } }
             .launchIn(viewModelScope)
     }
 

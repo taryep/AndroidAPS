@@ -13,7 +13,10 @@ import app.aaps.core.interfaces.overview.graph.BgInfoData
  */
 data class ChartConfig(
     val highMark: Double,
-    val lowMark: Double
+    val lowMark: Double,
+    // Redesign: the lines of the home graph, so they match the colours of the dots (`BgRange.of`).
+    val veryHighMark: Double,
+    val veryLowMark: Double
 )
 
 /** What the BG info section shows. */

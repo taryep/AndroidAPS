@@ -275,15 +275,16 @@ private fun HomeGraphPlot(
     fun label(valueInUnits: Double): String =
         if (units == GlucoseUnit.MMOL) decimalFormatter.to1Decimal(valueInUnits) else decimalFormatter.to0Decimal(valueInUnits)
 
+    // All four marks are the user's settings, the same ones that colour the dots (BgRange.of).
     val lines = listOf(
         ThresholdLine(
-            HOME_GRAPH_VERY_HIGH_MGDL, label(fromMgdl(HOME_GRAPH_VERY_HIGH_MGDL, units)),
+            toMgdl(chartConfig.veryHighMark, units), label(chartConfig.veryHighMark),
             general.bgVeryHigh, 0.75f, colors.thresholdText.veryHigh, dashed = true
         ),
         ThresholdLine(toMgdl(chartConfig.highMark, units), label(chartConfig.highMark), general.bgHigh, 0.6f, colors.thresholdText.high, dashed = false),
         ThresholdLine(toMgdl(chartConfig.lowMark, units), label(chartConfig.lowMark), general.bgLow, 0.7f, colors.thresholdText.low, dashed = false),
         ThresholdLine(
-            HOME_GRAPH_VERY_LOW_MGDL, label(fromMgdl(HOME_GRAPH_VERY_LOW_MGDL, units)),
+            toMgdl(chartConfig.veryLowMark, units), label(chartConfig.veryLowMark),
             general.bgVeryLow, 0.9f, colors.thresholdText.veryLow, dashed = true
         )
     )

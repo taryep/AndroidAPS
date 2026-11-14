@@ -148,6 +148,10 @@ internal class OverviewViewModelFixture(private val screen: AapsScreenFixture) {
         whenever(screen.preferences.get(UnitDoubleKey.OverviewLowMark)).thenReturn(72.0)
         whenever(screen.preferences.observe(UnitDoubleKey.OverviewHighMark)).thenReturn(MutableStateFlow(180.0))
         whenever(screen.preferences.observe(UnitDoubleKey.OverviewLowMark)).thenReturn(MutableStateFlow(72.0))
+        whenever(screen.preferences.get(UnitDoubleKey.OverviewVeryHighMark)).thenReturn(250.0)
+        whenever(screen.preferences.get(UnitDoubleKey.OverviewVeryLowMark)).thenReturn(54.0)
+        whenever(screen.preferences.observe(UnitDoubleKey.OverviewVeryHighMark)).thenReturn(MutableStateFlow(250.0))
+        whenever(screen.preferences.observe(UnitDoubleKey.OverviewVeryLowMark)).thenReturn(MutableStateFlow(54.0))
         whenever(graphConfigRepository.graphConfigFlow).thenReturn(MutableStateFlow(GraphConfig()))
 
         // ----- ChipsViewModel: the three chip flows evaluate as soon as a composable collects them,

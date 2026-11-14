@@ -30,27 +30,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.aaps.core.interfaces.bgQualityCheck.BgQualityCheck
-import app.aaps.core.interfaces.navigation.ElementType
 import app.aaps.core.interfaces.notifications.AapsNotification
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.pump.BolusProgressState
 import app.aaps.core.ui.CoreUiStrings
-import app.aaps.core.ui.compose.LocalDateUtil
-import app.aaps.core.ui.compose.LocalSnackbarHostState
 import app.aaps.core.ui.compose.dialogs.OkCancelDialog
-import app.aaps.core.ui.compose.dialogs.ThreeButtonDialog
 import app.aaps.core.ui.compose.metroViewModel
 import app.aaps.core.ui.compose.navigation.NavigationRequest
 import app.aaps.core.ui.compose.preference.PreferenceSubScreenDef
 import app.aaps.core.ui.compose.stringResource
-import app.aaps.ui.compose.aboutDialog.AboutAlertDialog
 import app.aaps.ui.compose.aboutDialog.AboutDialogData
-import app.aaps.ui.compose.loopSheet.LoopActionBottomSheet
 import app.aaps.ui.compose.loopSheet.LoopActionViewModel
+import app.aaps.ui.compose.main.MainScreenSheets
 import app.aaps.ui.compose.main.MainUiState
 import app.aaps.ui.compose.main.MainViewModel
 import app.aaps.ui.compose.maintenance.ImportSource
-import app.aaps.ui.compose.maintenance.MaintenanceDialogs
 import app.aaps.ui.compose.maintenance.MaintenanceViewModel
 import app.aaps.ui.compose.manageSheet.ManageSheetState
 import app.aaps.ui.compose.manageSheet.ManageViewModel
@@ -58,9 +52,7 @@ import app.aaps.ui.compose.overview.OverviewScreen
 import app.aaps.ui.compose.overview.chips.ChipsViewModel
 import app.aaps.ui.compose.overview.graphs.GraphViewModel
 import app.aaps.ui.compose.overview.statusLights.StatusViewModel
-import app.aaps.ui.compose.scenesSheet.ScenesBottomSheet
 import app.aaps.ui.compose.scenesSheet.ScenesViewModel
-import app.aaps.ui.compose.treatmentsSheet.TreatmentBottomSheet
 import app.aaps.ui.compose.treatmentsSheet.TreatmentViewModel
 import app.aaps.ui.search.SearchIndexEntry
 import app.aaps.ui.search.SearchUiState
@@ -141,12 +133,10 @@ fun RedesignMainScreen(
     onStopBolus: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LocalDateUtil.current
     var showTreatmentSheet by remember { mutableStateOf(false) }
     var showAutomationSheet by remember { mutableStateOf(false) }
     var showLoopActionSheet by remember { mutableStateOf(false) }
     val automationState by scenesViewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = LocalSnackbarHostState.current
 
     // Chosen item of the bar (home, graphs, Menu) and edit mode. A view model: kept over a rotation and while a screen
     // opened in the Menu is shown (Back comes back to the Menu), reset by a new start.
@@ -372,94 +362,32 @@ fun RedesignMainScreen(
         }
     }
 
-    // Treatment bottom sheet. Carbs entry is the Carbs tile (SPEC 3.2.4), so no carbs button here or in the gear.
-    if (showTreatmentSheet) {
-        val treatmentState by treatmentViewModel.uiState.collectAsStateWithLifecycle()
-        TreatmentBottomSheet(
-            onDismiss = { showTreatmentSheet = false },
-            showCgm = treatmentState.showCgm,
-            showCalibration = treatmentState.showCalibration,
-            showTreatment = treatmentState.showTreatment,
-            showInsulin = treatmentState.showInsulin,
-            showCarbs = false,
-            showCalculator = treatmentState.showCalculator,
-            isDexcomSource = treatmentState.isDexcomSource,
-            showSettingsIcon = treatmentState.showSettingsIcon,
-            quickWizardItems = treatmentState.quickWizardItems,
-            onNavigate = onNavigate,
-            treatmentButtonsDef = treatmentButtonsDef.withoutCarbsButton(),
-        )
-    }
-
-    // Automation bottom sheet
-    if (showAutomationSheet) {
-        ScenesBottomSheet(
-            onDismiss = { showAutomationSheet = false },
-            automationItems = automationState.items,
-            onItemClick = { item -> mainViewModel.requestAutomationConfirmation(item.eventId) },
-            sceneItems = automationState.sceneItems,
-            onSceneClick = { sceneId -> mainViewModel.requestSceneConfirmation(sceneId) },
-            onEditScenesClick = { onNavigate(NavigationRequest.Element(ElementType.SCENE_MANAGEMENT)) }
-        )
-    }
-
-    // Loop accept action bottom sheet
-    if (showLoopActionSheet) {
-        val loopState by loopActionViewModel.uiState.collectAsStateWithLifecycle()
-        LoopActionBottomSheet(
-            state = loopState,
-            onPerform = { mainViewModel.performLoopAccept() },
-            onDismiss = { showLoopActionSheet = false }
-        )
-    }
-
-    // Shared confirmation dialog (automation actions, TT presets, scene end). With a secondary action
-    // (e.g. scene chain skip) it has three buttons, otherwise OK/Cancel.
-    val actionConfirmation by mainViewModel.actionConfirmation.collectAsStateWithLifecycle()
-    actionConfirmation?.let { confirmation ->
-        val secondaryAction = confirmation.secondaryAction
-        val secondaryLabel = confirmation.secondaryLabel
-        if (secondaryAction != null && secondaryLabel != null) {
-            ThreeButtonDialog(
-                title = confirmation.title,
-                message = confirmation.message,
-                icon = confirmation.icon,
-                primaryLabel = confirmation.confirmLabel ?: stringResource(CoreUiStrings.ok),
-                onPrimary = { mainViewModel.executeConfirmableAction(confirmation.onConfirmAction) },
-                secondaryLabel = secondaryLabel,
-                onSecondary = { mainViewModel.executeConfirmableAction(secondaryAction) },
-                onDismiss = { mainViewModel.dismissActionConfirmation() }
-            )
-        } else {
-            OkCancelDialog(
-                title = confirmation.title,
-                message = confirmation.message,
-                icon = confirmation.icon,
-                onConfirm = { mainViewModel.executeConfirmableAction(confirmation.onConfirmAction) },
-                onDismiss = { mainViewModel.dismissActionConfirmation() }
-            )
-        }
-    }
-
-    // Maintenance dialogs (sheets, confirmations, export chain)
-    MaintenanceDialogs(
+    // The stock sheets and dialogs. Carbs entry is the Carbs tile (SPEC 3.2.4), so no carbs button in the
+    // treatment sheet or in its gear.
+    MainScreenSheets(
+        mainViewModel = mainViewModel,
+        uiState = uiState,
+        aboutDialogData = aboutDialogData,
+        treatmentViewModel = treatmentViewModel,
+        scenesViewModel = scenesViewModel,
+        loopActionViewModel = loopActionViewModel,
         maintenanceViewModel = maintenanceViewModel,
-        showMaintenanceSheet = uiState.showMaintenanceSheet,
+        showTreatmentSheet = showTreatmentSheet,
+        onTreatmentSheetDismiss = { showTreatmentSheet = false },
+        showAutomationSheet = showAutomationSheet,
+        onAutomationSheetDismiss = { showAutomationSheet = false },
+        showLoopActionSheet = showLoopActionSheet,
+        onLoopActionSheetDismiss = { showLoopActionSheet = false },
+        treatmentButtonsDef = treatmentButtonsDef.withoutCarbsButton(),
+        showCarbs = false,
+        onNavigate = onNavigate,
+        onAboutDialogDismiss = onAboutDialogDismiss,
+        onOpenBatteryHelp = onOpenBatteryHelp,
         onMaintenanceSheetDismiss = onMaintenanceSheetDismiss,
         onDirectoryClick = onDirectoryClick,
-        onImportSettingsNavigate = onImportSettingsNavigate,
-        onRecreateActivity = onRecreateActivity,
         onLaunchBrowser = onLaunchBrowser,
         onBringToForeground = onBringToForeground,
-        onSnackbar = { snackbarHostState.showSnackbar(it) }
+        onImportSettingsNavigate = onImportSettingsNavigate,
+        onRecreateActivity = onRecreateActivity
     )
-
-    // About dialog
-    if (uiState.showAboutDialog && aboutDialogData != null) {
-        AboutAlertDialog(
-            data = aboutDialogData,
-            onDismiss = onAboutDialogDismiss,
-            onOpenBatteryHelp = onOpenBatteryHelp
-        )
-    }
 }

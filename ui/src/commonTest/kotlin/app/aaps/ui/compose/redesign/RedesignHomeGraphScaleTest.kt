@@ -8,7 +8,6 @@ import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
 import kotlinx.datetime.toInstant
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -90,12 +89,6 @@ class RedesignHomeGraphScaleTest {
     }
 
     @Test
-    fun theVeryLowAndVeryHighLinesAreTheTirLimits() {
-        assertEquals(56, HOME_GRAPH_VERY_LOW_MGDL.roundToInt()) // 55.85
-        assertEquals(250, HOME_GRAPH_VERY_HIGH_MGDL.roundToInt()) // 250.4
-    }
-
-    @Test
     fun theAxisGrowsBelow40ByTenToo() {
         assertEquals(40.0, homeGraphMinMgdl(emptyList()))
         assertEquals(40.0, homeGraphMinMgdl(listOf(40.0, 120.0)))
@@ -108,8 +101,9 @@ class RedesignHomeGraphScaleTest {
 
     @Test
     fun greyStepsLeaveOutTheColouredLines() {
-        val lines = listOf(HOME_GRAPH_VERY_HIGH_MGDL, 170.0, 70.0, HOME_GRAPH_VERY_LOW_MGDL)
-        // 250 is on the very high line (250.4), so it is not drawn twice.
+        // The default very high, high, low and very low marks.
+        val lines = listOf(250.0, 170.0, 70.0, 54.0)
+        // 250 is on the very high line, so it is not drawn twice.
         assertEquals(listOf(50.0, 100.0, 150.0, 200.0), homeGraphGraduations(40.0, 280.0, 50.0, lines))
         assertEquals(listOf(50.0, 100.0, 150.0, 200.0, 300.0, 350.0), homeGraphGraduations(40.0, 350.0, 50.0, lines))
         // An axis that goes down gets the steps under 40 too.

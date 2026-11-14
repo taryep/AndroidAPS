@@ -445,11 +445,11 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   plot starting 6 dp after it:
   - Thresholds **56, 70, 170, 250** in their colour, semibold, with a line across the plot:
     250 dashed (very high colour), 170 solid (high colour), 70 solid (low colour), 56 dashed
-    (very low colour). 70 and 170 come from the `OverviewLowMark` / `OverviewHighMark` preferences;
-    56 / 250 are the fixed TIR limits `Constants.STATS_RANGE_VERY_LOW_MMOL` /
-    `..._VERY_HIGH_MMOL` (3.1 / 13.9 mmol/L), the same as `BgRange`. Two coloured labels never
+    (very low colour). All four come from the preferences `OverviewVeryHighMark`, `OverviewHighMark`,
+    `OverviewLowMark` and `OverviewVeryLowMark` (defaults 250 / 180 / 72 / 54 mg/dL; the numbers above
+    are an example), the same marks that colour the dots (`BgRange.of`). Two coloured labels never
     overlap: they are moved apart when close.
-  - **mmol/L users**: the same range in their unit: 2.2–15.5 mmol/L, lines at 3.1 / low mark /
+  - **mmol/L users**: the same range in their unit: 2.2–15.5 mmol/L, lines at the very low mark (3.0 by default) / low mark /
     high mark / 13.9, grey steps every 2 mmol/L, labels with one decimal.
   - Secondary graduations: very faint lines, grey labels, **label hidden if it is closer than 14 dp to a
     threshold label** (in practice 50 is hidden).

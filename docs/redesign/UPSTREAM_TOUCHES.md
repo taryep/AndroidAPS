@@ -23,6 +23,7 @@ No change. Identical to `master`.
 | `if (redesignChromeActive()) { RedesignMainScreen(...); return }` at the start of the function | The one hook. The flag is on and the layout is the phone layout; split and tablet layouts keep the stock screen below it. |
 | New parameter `bgQualityState: BgQualityCheck.State? = null` | Passed on to `RedesignMainScreen` (the BG source warning beside the glucose circle). Its caller (`main/OverviewScreen.kt`) passes it. |
 | Three imports | `BgQualityCheck`, `RedesignMainScreen`, `redesignChromeActive`. |
+| The sheets and dialogs at the end of the function are moved to `main/MainScreenSheets.kt` (new file) and replaced by one `MainScreenSheets(...)` call, `showCarbs = true`. The now unused `snackbarHostState` and five imports are removed. | The redesign screen calls the same function (`showCarbs = false`), so the two screens cannot drift apart. When upstream changes one of these dialogs, the merge conflicts here instead of leaving the redesign with an old copy: move the change into `MainScreenSheets.kt`. |
 
 The redesign screen has no drawer, no top bar, no QuickLaunch toolbar and no preview mode (the phone layout is
 upright, so the height is always above the preview limit).
@@ -178,6 +179,7 @@ same as on `master` (the `.then(if (redesignLayout == null) <stock> else <redesi
 ### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphViewModel.kt`
 
 - One new function `migrateRedesignGraphHeights()`: it calls `RedesignGraphMigration.runOnce(...)` (in `redesign/`). Only the redesign graphs page calls it, so the stock screens never run it. One import.
+- `ChartConfig` (in `GraphUiState.kt`) has two new fields, `veryHighMark` and `veryLowMark`, read and observed like `highMark` / `lowMark`. The home graph draws its dashed lines from them, so they match the dot colours (`BgRange.of`). The stock graphs do not read them. Tests that mock `preferences.observe` for the graph view model stub the two new keys too (`OverviewViewModelFixture`, `GraphViewModelTest`, `RedesignHomeGraphTest`).
 
 ### `core/keys/src/commonMain/kotlin/app/aaps/core/keys/BooleanNonKey.kt` and `app/src/testFull/resources/prefs-schema.txt`
 

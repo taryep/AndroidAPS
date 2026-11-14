@@ -44,10 +44,6 @@ private const val MAX_STEP_MGDL = 50.0
 /** The bottom of the axis goes down by this step when a reading is below [HOME_GRAPH_MIN_MGDL]. */
 private const val MIN_STEP_MGDL = 10.0
 
-/** The fixed very low and very high lines: the same limits as `BgRange` and the TIR statistics. */
-const val HOME_GRAPH_VERY_LOW_MGDL = Constants.STATS_RANGE_VERY_LOW_MMOL * Constants.MMOLL_TO_MGDL
-const val HOME_GRAPH_VERY_HIGH_MGDL = Constants.STATS_RANGE_VERY_HIGH_MMOL * Constants.MMOLL_TO_MGDL
-
 private const val HOUR_MS = 3_600_000L
 
 /** A value in the user's units, in mg/dL. */

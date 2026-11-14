@@ -127,9 +127,13 @@ class RedesignHomeGraphTest {
         whenever(screen.preferences.get(UnitDoubleKey.OverviewLowMark)).thenReturn(3.9)
         whenever(screen.preferences.observe(UnitDoubleKey.OverviewHighMark)).thenReturn(MutableStateFlow(10.0))
         whenever(screen.preferences.observe(UnitDoubleKey.OverviewLowMark)).thenReturn(MutableStateFlow(3.9))
+        whenever(screen.preferences.get(UnitDoubleKey.OverviewVeryHighMark)).thenReturn(13.9)
+        whenever(screen.preferences.get(UnitDoubleKey.OverviewVeryLowMark)).thenReturn(3.0)
+        whenever(screen.preferences.observe(UnitDoubleKey.OverviewVeryHighMark)).thenReturn(MutableStateFlow(13.9))
+        whenever(screen.preferences.observe(UnitDoubleKey.OverviewVeryLowMark)).thenReturn(MutableStateFlow(3.0))
         withDay(mmol = true)
         show(HomeGraphRange.H6)
-        // The labels are drawn, not text nodes: checked on the picture (3.1 / 3.9 / 10.0 / 13.9, steps every 2).
+        // The labels are drawn, not text nodes: checked on the picture (3.0 / 3.9 / 10.0 / 13.9, steps every 2).
         picture("mmol")
         // The spoken value is in mmol/L.
         compose.onNode(hasContentDescription("mmol/L", substring = true)).assertExists()
@@ -188,7 +192,7 @@ class RedesignHomeGraphTest {
             val range = when {
                 mgdl > 250 -> BgRange.VERY_HIGH
                 mgdl > 180 -> BgRange.HIGH
-                mgdl < 56  -> BgRange.VERY_LOW
+                mgdl < 54  -> BgRange.VERY_LOW
                 mgdl < 72  -> BgRange.LOW
                 else       -> BgRange.IN_RANGE
             }

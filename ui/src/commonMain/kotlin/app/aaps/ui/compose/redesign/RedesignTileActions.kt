@@ -17,10 +17,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -224,7 +224,7 @@ internal fun RedesignTbrLineContent(data: RedesignHomeData, showCancel: Boolean,
     val colors = redesignColors()
     val basal = colors.tempBasal.accent
     val rate = SpanStyle(color = basal, fontWeight = FontWeight.SemiBold)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         when {
             // As in the mockup (sheet-basal.png): badge "TBR", the rate in the basal colour, the rest plain.
             data.tempBasalRunning && data.tempBasalLine.isNotEmpty() ->
@@ -234,14 +234,13 @@ internal fun RedesignTbrLineContent(data: RedesignHomeData, showCancel: Boolean,
                 RedesignInfoLine(stringResource(CoreUiStrings.basal), basal, stringResource(UiStrings.redesign_profile_basal, data.basalRate), listOf(data.basalRate to rate))
         }
         if (showCancel) {
-            // Outlined in the danger colour, with a cross, as in the mockup.
+            // A filled red pill as wide as its text, with a cross. The text is in the page colour: white cannot be
+            // read on the light red of the dark theme.
             val description = stringResource(UiStrings.redesign_cancel_temp_basal_description)
-            OutlinedButton(
+            Button(
                 onClick = onCancelClick,
-                border = BorderStroke(1.dp, colors.danger),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.danger),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.danger, contentColor = colors.pageBackground),
                 modifier = Modifier
-                    .fillMaxWidth()
                     .heightIn(min = 48.dp)
                     .semantics { contentDescription = description }
             ) {
@@ -255,7 +254,7 @@ internal fun RedesignTbrLineContent(data: RedesignHomeData, showCancel: Boolean,
 
 /**
  * A single line in a rounded card with a border, as in the mockups (sheet-insulin.png, sheet-basal.png):
- * a small [badge] ("IOB", "TBR") in the [accent] colour, then the [text], left-aligned, with the [values]
+ * a small [badge] ("IOB", "TBR") in the [accent] colour, then the [text], both centred (phone test D1, D2), with the [values]
  * in their style. It gets smaller down to 11 sp, then ends with "…" (SPEC 3.2.2).
  *
  * [text] is the whole translated line. The values are only found in it to style them; the text is
@@ -273,8 +272,8 @@ private fun RedesignInfoLine(badge: String, accent: Color, text: String, values:
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Text(
                 text = badge,
@@ -289,7 +288,8 @@ private fun RedesignInfoLine(badge: String, accent: Color, text: String, values:
             )
             BasicText(
                 text = styledValues(text, values),
-                modifier = Modifier.weight(1f),
+                // fill = false: the badge and the text stay together in the middle; a long text still ends with "…".
+                modifier = Modifier.weight(1f, fill = false),
                 style = style,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

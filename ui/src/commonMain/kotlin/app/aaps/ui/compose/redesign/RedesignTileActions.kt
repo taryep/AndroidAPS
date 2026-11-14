@@ -58,6 +58,7 @@ import app.aaps.core.ui.compose.stringResource
 import app.aaps.ui.UiStrings
 import app.aaps.ui.compose.manageSheet.ManageUiState
 import app.aaps.ui.compose.manageSheet.ManageViewModel
+import kotlinx.coroutines.flow.Flow
 
 /** What a tap on the Active insulin and Basal tiles does (SPEC 3.2.2 and 3.2.3). */
 @Immutable
@@ -151,15 +152,55 @@ fun RedesignTbrLine(
 ) {
     val data by homeViewModel.data.collectAsStateWithLifecycle()
     val manage by manageViewModel.uiState.collectAsStateWithLifecycle()
+
+    RedesignTbrCancel(
+        tempBasalRunning = data.tempBasalRunning,
+        sideEffects = manageViewModel.sideEffect,
+        onCommit = { c -> manageViewModel.commitCancel(c.bolusId, c.elementType, c.label) },
+        onCancelled = onCancelled,
+        onError = onError
+    )
+
+    RedesignTbrLineContent(
+        data = data,
+        showCancel = data.tempBasalRunning && manage.showCancelTempBasal,
+        onCancelClick = { manageViewModel.cancelTempBasal() }
+    )
+}
+
+/**
+ * The confirmation of a temp basal cancel, and when the screen closes. The screen stays open after the
+ * user confirms, until the temp basal has really ended: the cancel goes to the pump later, and a failure
+ * comes back as a [ManageViewModel.SideEffect.ShowError] that only this screen listens to. If the screen
+ * closed first, that error would be lost and a failed cancel would show nothing.
+ */
+@Composable
+internal fun RedesignTbrCancel(
+    tempBasalRunning: Boolean,
+    sideEffects: Flow<ManageViewModel.SideEffect>,
+    onCommit: (ManageViewModel.SideEffect.ShowConfirmation) -> Unit,
+    onCancelled: () -> Unit,
+    onError: (String) -> Unit
+) {
     var confirmation by remember { mutableStateOf<ManageViewModel.SideEffect.ShowConfirmation?>(null) }
+    var committed by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        manageViewModel.sideEffect.collect { effect ->
+        sideEffects.collect { effect ->
             when (effect) {
                 is ManageViewModel.SideEffect.ShowConfirmation -> confirmation = effect
-                is ManageViewModel.SideEffect.ShowError        -> onError(effect.comment)
+
+                is ManageViewModel.SideEffect.ShowError        -> {
+                    // The cancel failed: stay on the screen, the temp basal still runs.
+                    committed = false
+                    onError(effect.comment)
+                }
             }
         }
+    }
+
+    LaunchedEffect(committed, tempBasalRunning) {
+        if (committed && !tempBasalRunning) onCancelled()
     }
 
     confirmation?.let { c ->
@@ -167,19 +208,13 @@ fun RedesignTbrLine(
             elementType = c.elementType,
             lines = c.lines,
             onConfirm = {
-                manageViewModel.commitCancel(c.bolusId, c.elementType, c.label)
+                onCommit(c)
                 confirmation = null
-                onCancelled()
+                committed = true
             },
             onDismiss = { confirmation = null }
         )
     }
-
-    RedesignTbrLineContent(
-        data = data,
-        showCancel = data.tempBasalRunning && manage.showCancelTempBasal,
-        onCancelClick = { manageViewModel.cancelTempBasal() }
-    )
 }
 
 @Composable

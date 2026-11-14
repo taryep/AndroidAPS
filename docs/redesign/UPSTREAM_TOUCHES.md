@@ -160,7 +160,7 @@ the same rounding as `ChipsViewModel.showIobInfo`) and `tempBasalLine` (the data
 | Hook | Why |
 |---|---|
 | `InsulinDialogScreen(topInfo = if (LocalRedesignEnabled.current) { { RedesignIobLine() } } else null)` | The IOB line. Passed in the route, not by the tile, so it is there from every entry point (Traitements too, on purpose) and survives Back and the death of the process. |
-| `TempBasalDialogScreen(topInfo = if (LocalRedesignEnabled.current) { { RedesignTbrLine(...) } } else null)` | The basal line and the Cancel button. After a confirmed cancel the screen closes; a failed cancel shows the stock "temp basal delivery error". |
+| `TempBasalDialogScreen(topInfo = if (LocalRedesignEnabled.current) { { RedesignTbrLine(...) } } else null)` | The basal line and the Cancel button. After a confirmed cancel the screen closes once the temp basal has really ended; a failed cancel keeps the screen open and shows the stock "temp basal delivery error". |
 | Imports | `LocalRedesignEnabled`, `RedesignIobLine`, `RedesignTbrLine`. |
 
 Each line reads its own `RedesignHomeViewModel` (a new, light instance in the route). The Cancel

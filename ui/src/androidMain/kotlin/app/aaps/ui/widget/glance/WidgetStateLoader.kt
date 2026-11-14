@@ -16,7 +16,6 @@ import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
 import app.aaps.core.interfaces.overview.IsfStep
 import app.aaps.core.interfaces.overview.LastBgData
 import app.aaps.core.interfaces.overview.SensitivityOverview
-import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.TextResolver
@@ -26,7 +25,6 @@ import app.aaps.core.interfaces.utils.TrendCalculator
 import app.aaps.core.keys.BooleanComposedKey
 import app.aaps.core.keys.IntComposedKey
 import app.aaps.core.keys.StringKey
-import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.apsAdjustedTargetMgdl
 import app.aaps.core.objects.extensions.round
@@ -39,6 +37,7 @@ import app.aaps.core.ui.extensions.directionToDescription
 import app.aaps.core.ui.extensions.displayText
 import app.aaps.ui.R
 import app.aaps.ui.UiStrings
+import app.aaps.ui.compose.redesign.bgRangeOf
 import app.aaps.ui.widget.directionToDrawableRes
 import dev.zacsweers.metro.Inject
 import kotlin.math.abs
@@ -50,14 +49,7 @@ import kotlin.math.abs
 internal fun widgetBgColor(lastBg: InMemoryGlucoseValue?, profileUtil: ProfileUtil, preferences: Preferences): Int {
     val colors = BgGraphColors.forWidget(preferences.get(StringKey.GeneralColorblindMode))
     lastBg ?: return colors.inRange
-    val range = BgRange.of(
-        valueInUnits = profileUtil.fromMgdlToUnits(lastBg.recalculated),
-        veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
-        lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
-        highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
-        veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
-    )
-    return colors.forRange(range)
+    return colors.forRange(bgRangeOf(profileUtil.fromMgdlToUnits(lastBg.recalculated), preferences))
 }
 
 @Inject

@@ -3,6 +3,9 @@ package app.aaps.ui.compose.redesign
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -22,6 +25,7 @@ import app.aaps.ui.R
 import app.aaps.ui.UiStringIds
 import app.aaps.ui.compose.insulinDialog.InsulinDialogContent
 import app.aaps.ui.compose.insulinDialog.InsulinDialogUiState
+import app.aaps.ui.compose.manageSheet.ManageViewModel
 import app.aaps.ui.compose.overview.chips.CobUiState
 import app.aaps.ui.compose.overview.chips.IobUiState
 import app.aaps.ui.compose.overview.graphs.BgInfoUiState
@@ -29,6 +33,7 @@ import app.aaps.ui.compose.tempBasalDialog.TempBasalDialogContent
 import app.aaps.ui.compose.tempBasalDialog.TempBasalDialogUiState
 import app.aaps.ui.compose.treatmentsSheet.TreatmentSelectionContent
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -145,6 +150,55 @@ class RedesignTileActionsTest {
         compose.setContent { MaterialTheme { RedesignTbrLineContent(data, showCancel = false, onCancelClick = {}) } }
         compose.onNodeWithText("Basale du profil 0,85 U/h").assertIsDisplayed()
         compose.onNodeWithContentDescription(string(R.string.redesign_cancel_temp_basal_description)).assertDoesNotExist()
+    }
+
+    @Test
+    fun aConfirmedCancelClosesOnlyWhenTheTempBasalHasEnded() {
+        val sideEffects = MutableSharedFlow<ManageViewModel.SideEffect>(extraBufferCapacity = 1)
+        var running by mutableStateOf(true)
+        var commits = 0
+        var closes = 0
+        val errors = mutableListOf<String>()
+        compose.setContent {
+            MaterialTheme {
+                RedesignTbrCancel(running, sideEffects, onCommit = { commits++ }, onCancelled = { closes++ }, onError = { errors += it })
+            }
+        }
+        compose.waitForIdle() // the collector must listen before anything is sent
+        sideEffects.tryEmit(ManageViewModel.SideEffect.ShowConfirmation(ElementType.TEMP_BASAL, bolusId = 1L, lines = emptyList(), label = "TBR"))
+        compose.onNodeWithText(string(CoreUiR.string.ok)).performClick()
+        compose.waitForIdle()
+        assertThat(commits).isEqualTo(1)
+        // The pump has not answered yet: the screen must stay, so a failure can still be shown.
+        assertThat(closes).isEqualTo(0)
+
+        sideEffects.tryEmit(ManageViewModel.SideEffect.ShowError(ElementType.TEMP_BASAL, "pump not reached"))
+        compose.waitForIdle()
+        assertThat(errors).containsExactly("pump not reached")
+        running = false
+        compose.waitForIdle()
+        // A failed cancel never closes the screen, even if the temp basal ends later on its own.
+        assertThat(closes).isEqualTo(0)
+    }
+
+    @Test
+    fun aConfirmedCancelClosesTheScreenWhenTheTempBasalEnds() {
+        val sideEffects = MutableSharedFlow<ManageViewModel.SideEffect>(extraBufferCapacity = 1)
+        var running by mutableStateOf(true)
+        var closes = 0
+        compose.setContent {
+            MaterialTheme {
+                RedesignTbrCancel(running, sideEffects, onCommit = {}, onCancelled = { closes++ }, onError = {})
+            }
+        }
+        compose.waitForIdle() // the collector must listen before anything is sent
+        sideEffects.tryEmit(ManageViewModel.SideEffect.ShowConfirmation(ElementType.TEMP_BASAL, bolusId = 1L, lines = emptyList(), label = "TBR"))
+        compose.onNodeWithText(string(CoreUiR.string.ok)).performClick()
+        compose.waitForIdle()
+        assertThat(closes).isEqualTo(0)
+        running = false
+        compose.waitForIdle()
+        assertThat(closes).isEqualTo(1)
     }
 
     @Test

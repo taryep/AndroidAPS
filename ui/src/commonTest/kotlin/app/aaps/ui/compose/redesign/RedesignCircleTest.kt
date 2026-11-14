@@ -20,7 +20,7 @@ class RedesignCircleTest {
     @Test
     fun aNewerReadingGivesItsValueColourAndTimeButKeepsTheStockDeltaAndTrend() {
         val newest = CircleReading(timestamp = 13 * MIN, valueInUnits = 190.0, text = "190", range = BgRange.HIGH)
-        val shown = circleBgInfo(bucket, newest, now = 14 * MIN)
+        val shown = circleBgInfo(bucket, newest, now = 14 * MIN, stockIsSmoothed = false)
 
         assertEquals("190", shown.bgText)
         assertEquals(BgRange.HIGH, shown.bgRange)
@@ -33,14 +33,21 @@ class RedesignCircleTest {
     @Test
     fun anOlderOrEqualReadingChangesNothing() {
         val same = CircleReading(timestamp = 10 * MIN, valueInUnits = 118.0, text = "118", range = BgRange.IN_RANGE)
-        assertEquals(bucket, circleBgInfo(bucket, same, now = 11 * MIN))
-        assertEquals(bucket, circleBgInfo(bucket, null, now = 11 * MIN))
+        assertEquals(bucket, circleBgInfo(bucket, same, now = 11 * MIN, stockIsSmoothed = false))
+        assertEquals(bucket, circleBgInfo(bucket, null, now = 11 * MIN, stockIsSmoothed = false))
     }
 
     @Test
     fun theValueIsCrossedOutWhenTooOld() {
         // The stock limit is 9 minutes (Constants.OLD_BG_MINUTES).
-        assertTrue(circleBgInfo(bucket, null, now = 30 * MIN).isOutdated)
+        assertTrue(circleBgInfo(bucket, null, now = 30 * MIN, stockIsSmoothed = false).isOutdated)
+    }
+
+    @Test
+    fun withSmoothingTheNewerRawReadingIsNotShown() {
+        // The raw 190 would replace the smoothed 120 for 4 minutes, then jump back at the next bucket.
+        val newest = CircleReading(timestamp = 13 * MIN, valueInUnits = 190.0, text = "190", range = BgRange.HIGH)
+        assertEquals(bucket, circleBgInfo(bucket, newest, now = 14 * MIN, stockIsSmoothed = true))
     }
 
     private companion object {

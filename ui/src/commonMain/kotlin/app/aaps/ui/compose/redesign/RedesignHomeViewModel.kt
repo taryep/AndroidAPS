@@ -11,6 +11,7 @@ import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.iob.IobCobCalculator
+import app.aaps.core.interfaces.overview.LastBgData
 import app.aaps.core.interfaces.overview.graph.BgInfoData
 import app.aaps.core.interfaces.overview.graph.BgRange
 import app.aaps.core.interfaces.overview.graph.OverviewDataCache
@@ -106,7 +107,8 @@ class RedesignHomeViewModel(
     private val config: Config,
     private val decimalFormatter: DecimalFormatter,
     private val preferences: Preferences,
-    private val profileUtil: ProfileUtil
+    private val profileUtil: ProfileUtil,
+    private val lastBgData: LastBgData
 ) : ViewModel() {
 
     // The same 30 s tick as the chips, so the time left moves at the same moment.
@@ -150,16 +152,12 @@ class RedesignHomeViewModel(
                 timestamp = gv.timestamp,
                 valueInUnits = valueInUnits,
                 text = profileUtil.fromMgdlToStringInUnits(gv.value),
-                range = BgRange.of(
-                    valueInUnits = valueInUnits,
-                    veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
-                    lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
-                    highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
-                    veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
-                )
+                range = bgRangeOf(valueInUnits, preferences)
             )
         }
-        val shown = circleBgInfo(info, newest, now)
+        // A smoothing plugin only sets `smoothed` on the bucketed data; the raw reading has no such value.
+        val stockIsSmoothed = lastBgData.lastBg()?.smoothed != null
+        val shown = circleBgInfo(info, newest, now, stockIsSmoothed)
         BgInfoUiState(bgInfo = shown, timeAgoText = dateUtil.minAgo(rh, shown.timestamp))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -245,6 +243,15 @@ internal fun redesignCob(cobText: String, cobValue: Double, carbsReq: Int, lastA
         cobValue = cobValue
     )
 
+/** The range of a BG value in the user's units, with the user's four marks. Used by the glucose circle and the widgets. */
+internal fun bgRangeOf(valueInUnits: Double, preferences: Preferences): BgRange = BgRange.of(
+    valueInUnits = valueInUnits,
+    veryLowMark = preferences.get(UnitDoubleKey.OverviewVeryLowMark),
+    lowMark = preferences.get(UnitDoubleKey.OverviewLowMark),
+    highMark = preferences.get(UnitDoubleKey.OverviewHighMark),
+    veryHighMark = preferences.get(UnitDoubleKey.OverviewVeryHighMark)
+)
+
 /** The newest reading of the BG source, ready to show: value and text in the user's units, and its range. */
 class CircleReading(val timestamp: Long, val valueInUnits: Double, val text: String, val range: BgRange)
 
@@ -253,10 +260,14 @@ class CircleReading(val timestamp: Long, val valueInUnits: Double, val text: Str
  * sends a reading every minute only moves every 5 minutes. So when the source has a newer reading than
  * [info], the circle shows that reading's value, colour and time. The delta and the trend stay the stock
  * ones (they need the bucketed data). [BgInfoData.isOutdated] is computed again with [now].
+ *
+ * When [stockIsSmoothed] is true (a smoothing plugin is on), the circle keeps the stock value: the newer
+ * reading is raw, so the circle would jump between the raw and the smoothed value, and differ from the
+ * value the loop and the widget use.
  */
-internal fun circleBgInfo(info: BgInfoData, newest: CircleReading?, now: Long): BgInfoData {
+internal fun circleBgInfo(info: BgInfoData, newest: CircleReading?, now: Long, stockIsSmoothed: Boolean): BgInfoData {
     val shown =
-        if (newest != null && newest.timestamp > info.timestamp)
+        if (!stockIsSmoothed && newest != null && newest.timestamp > info.timestamp)
             info.copy(bgValue = newest.valueInUnits, bgText = newest.text, bgRange = newest.range, timestamp = newest.timestamp)
         else info
     return shown.copy(isOutdated = shown.timestamp < now - T.mins(Constants.OLD_BG_MINUTES).msecs())

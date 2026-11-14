@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -56,7 +57,7 @@ import app.aaps.ui.compose.overview.chips.toIcon
 
 /**
  * One round slot (84 dp) of the circle row (SPEC 3.3): an icon, a bold caption and, under it, a small
- * second line. With no caption and no second line, only the icon is shown (the Loop slot, step 7).
+ * second line. With no caption and no second line, only the icon is shown, without the circle (the Loop slot, step 7).
  * [badge] is a small count at the top right (an open loop suggestion waits).
  *
  * The text never overflows: it gets smaller, down to 10 sp, before it ends with "...".
@@ -104,13 +105,17 @@ fun RedesignRoundSlot(
             }
         }
     }
+    // Icon only (the Loop slot): no circle, the big icon takes its place (phone test C1).
+    val iconOnly = caption.isEmpty() && secondLine.isEmpty()
+    val background = if (iconOnly) Color.Transparent else tint.background
+    val border = if (iconOnly) null else BorderStroke(1.dp, tint.border)
     Box(modifier.size(ROUND_SLOT_SIZE)) {
         if (onClick != null && onLongClick != null) {
             // A tap and a long press: a plain Surface with combinedClickable, clipped to the circle.
             Surface(
                 shape = CircleShape,
-                color = tint.background,
-                border = BorderStroke(1.dp, tint.border),
+                color = background,
+                border = border,
                 modifier = Modifier
                     .size(ROUND_SLOT_SIZE)
                     .clip(CircleShape)
@@ -129,16 +134,16 @@ fun RedesignRoundSlot(
                 onClick = onClick,
                 enabled = enabled,
                 shape = CircleShape,
-                color = tint.background,
-                border = BorderStroke(1.dp, tint.border),
+                color = background,
+                border = border,
                 modifier = Modifier.size(ROUND_SLOT_SIZE).then(semantics),
                 content = content
             )
         } else {
             Surface(
                 shape = CircleShape,
-                color = tint.background,
-                border = BorderStroke(1.dp, tint.border),
+                color = background,
+                border = border,
                 modifier = Modifier.size(ROUND_SLOT_SIZE).then(semantics),
                 content = content
             )
@@ -309,7 +314,7 @@ private fun TT.Reason?.toIcon(): ImageVector = when (this) {
 
 /** Size of the round Loop and Target slots. */
 val ROUND_SLOT_SIZE = 84.dp
-private val LOOP_ICON_SIZE = 36.dp
+private val LOOP_ICON_SIZE = 72.dp
 private val TARGET_ICON_SIZE = 32.dp
 private val BADGE_SIZE = 18.dp
 private val BADGE_RING = 2.dp

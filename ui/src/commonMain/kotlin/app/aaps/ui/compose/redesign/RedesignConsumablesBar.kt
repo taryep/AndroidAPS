@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -61,25 +62,34 @@ fun RedesignConsumablesBar(
     isPatchPump: Boolean = false,
     pumpHasMenu: Boolean = false
 ) {
+    val items = listOfNotNull(cannulaStatus, insulinStatus, sensorStatus, batteryStatus)
+        .filter { it.compactAge || (it.compactLevel && it.level != null) }
+    // Same rule as the stock bar: with nothing to show (and nothing to expand), no bar.
+    val nothing = listOfNotNull(cannulaStatus, insulinStatus, sensorStatus, batteryStatus).isEmpty()
+    val colors = redesignColors()
+    // Patch pump: one card, the closed bar on top and our own rows (SPEC 3.5.1) opening under it, as the stock card.
+    if (isPatchPump) {
+        if (nothing) return
+        RedesignPatchPumpPanel(
+            cannulaStatus = cannulaStatus,
+            insulinStatus = insulinStatus,
+            sensorStatus = sensorStatus,
+            batteryStatus = batteryStatus,
+            showFill = showFill,
+            showPumpBatteryChange = showPumpBatteryChange,
+            commandsAllowed = commandsAllowed,
+            onNavigate = onNavigate,
+            statusLightsDef = statusLightsDef,
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+            pumpHasMenu = pumpHasMenu,
+            closedBar = { ClosedBarRow(items, colors) },
+            modifier = modifier
+        )
+        return
+    }
     if (expanded) {
-        // Patch pump: our own card, one value per row (SPEC 3.5.1). Other pumps: the stock panel.
-        if (isPatchPump) {
-            RedesignPatchPumpPanel(
-                cannulaStatus = cannulaStatus,
-                insulinStatus = insulinStatus,
-                sensorStatus = sensorStatus,
-                batteryStatus = batteryStatus,
-                showFill = showFill,
-                showPumpBatteryChange = showPumpBatteryChange,
-                commandsAllowed = commandsAllowed,
-                onNavigate = onNavigate,
-                statusLightsDef = statusLightsDef,
-                onCollapse = { onExpandedChange(false) },
-                pumpHasMenu = pumpHasMenu,
-                modifier = modifier
-            )
-            return
-        }
+        // Other pumps: the stock panel.
         OverviewStatusSection(
             sensorStatus = sensorStatus,
             insulinStatus = insulinStatus,
@@ -96,11 +106,7 @@ fun RedesignConsumablesBar(
         )
         return
     }
-    val items = listOfNotNull(cannulaStatus, insulinStatus, sensorStatus, batteryStatus)
-        .filter { it.compactAge || (it.compactLevel && it.level != null) }
-    // Same rule as the stock bar: with nothing to show (and nothing to expand), no bar.
-    if (listOfNotNull(cannulaStatus, insulinStatus, sensorStatus, batteryStatus).isEmpty()) return
-    val colors = redesignColors()
+    if (nothing) return
     Surface(
         shape = RoundedCornerShape(BAR_RADIUS),
         color = colors.surface,
@@ -110,9 +116,16 @@ fun RedesignConsumablesBar(
             .height(BAR_HEIGHT)
             .clickable { onExpandedChange(true) }
     ) {
-        // The bar is 32 dp high: its text does not grow with the system font (the open panel does).
-        RedesignFontScaleCap(1f) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp)) {
+        ClosedBarRow(items, colors)
+    }
+}
+
+/** The content of the closed bar: the consumables, then the ∨ at the right edge. */
+@Composable
+internal fun ClosedBarRow(items: List<StatusItem>, colors: RedesignColors) {
+    // The bar is 32 dp high: its text does not grow with the system font (the open panel does).
+    RedesignFontScaleCap(1f) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxHeight().padding(start = 8.dp)) {
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
@@ -128,7 +141,6 @@ fun RedesignConsumablesBar(
                     modifier = Modifier.size(CHEVRON_ICON_SIZE)
                 )
             }
-        }
         }
     }
 }

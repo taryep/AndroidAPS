@@ -1,5 +1,12 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -90,10 +98,11 @@ internal data class PanelActions(
 )
 
 /**
- * The open consumables panel for a patch pump (SPEC 3.5.1). Our own card, no title: the settings icon and the
- * collapse arrow are on the top right. Each row shows one thing: patch = time in use, insulin = reservoir left,
- * sensor = time in use ("time / longest time"). The pump battery keeps its row when the pump has one.
- * A tap on the patch row opens the pump's own screen, if it has one. The buttons follow the stock rules.
+ * The consumables card of a patch pump (SPEC 3.5.1), one card as the stock one: the 32 dp top row is the closed
+ * bar ([closedBar]); the rows open under it (fade and grow, as the stock card), and the top row then shows the
+ * settings icon on the left and the collapse arrow on the right. Each row shows one thing: patch = time in use,
+ * insulin = reservoir left, sensor = time in use ("time / longest time"). The pump battery keeps its row when the
+ * pump has one. A tap on the patch row opens the pump's own screen, if it has one. The buttons follow the stock rules.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,8 +116,10 @@ internal fun RedesignPatchPumpPanel(
     commandsAllowed: Boolean,
     onNavigate: (NavigationRequest) -> Unit,
     statusLightsDef: PreferenceSubScreenDef,
-    onCollapse: () -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     pumpHasMenu: Boolean,
+    closedBar: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = redesignColors()
@@ -139,75 +150,98 @@ internal fun RedesignPatchPumpPanel(
         border = BorderStroke(1.dp, colors.border),
         modifier = modifier.fillMaxWidth()
     ) {
-        Column {
-            // The ∧ sits exactly where the ∨ of the closed bar is, so it does not jump when the panel opens.
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Box {
+            Column {
+                // The top row keeps the height of the closed bar: the card grows only by the rows, nothing jumps.
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(BAR_HEIGHT)
+                        .clickable(enabled = !expanded) { onExpandedChange(true) }
+                ) {
+                    // The closed bar fades out (a fade, not AnimatedVisibility: that one would bind to the Column).
+                    // It is not composed once hidden, so its values are not on the open card twice.
+                    val closedAlpha by animateFloatAsState(if (expanded) 0f else 1f, tween(REDESIGN_DRAWER_MS))
+                    if (closedAlpha > 0f) Box(Modifier.graphicsLayer { alpha = closedAlpha }) { closedBar() }
+                }
+                AnimatedVisibility(
+                    visible = expanded,
+                    enter = fadeIn(tween(REDESIGN_DRAWER_MS)) + expandVertically(tween(REDESIGN_DRAWER_MS)),
+                    exit = fadeOut(tween(REDESIGN_DRAWER_MS)) + shrinkVertically(tween(REDESIGN_DRAWER_MS))
+                ) {
+                    Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp)) {
+                        val rows = buildList<@Composable () -> Unit> {
+                            cannulaStatus?.let {
+                                add {
+                                    PanelRow(
+                                        item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
+                                        severity = it.ageStatus, colors = colors,
+                                        actionLabel = stringResource(CoreUiStrings.btn_status_cannula_change), onActionClick = actions.onFill,
+                                        onRowClick = onPumpClick,
+                                        modifier = Modifier.testTag(TAG_PATCH_ROW)
+                                    )
+                                }
+                            }
+                            insulinStatus?.let {
+                                add {
+                                    PanelRow(
+                                        item = it, value = it.level ?: "-", valueColor = statusLevelToColor(it.levelStatus),
+                                        progress = it.levelValue?.let { u -> reservoirFraction(u, it.reservoirReadingLimit) } ?: -1f,
+                                        severity = it.levelStatus, colors = colors,
+                                        actionLabel = stringResource(CoreUiStrings.btn_status_insulin_fill), onActionClick = actions.onInsulinChange,
+                                        modifier = Modifier.testTag(TAG_INSULIN_ROW)
+                                    )
+                                }
+                            }
+                            sensorStatus?.let {
+                                add {
+                                    PanelRow(
+                                        item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
+                                        severity = it.ageStatus, colors = colors,
+                                        onAddClick = actions.onSensorInsert,
+                                        modifier = Modifier.testTag(TAG_SENSOR_ROW)
+                                    )
+                                }
+                            }
+                            batteryStatus?.let {
+                                val showLevel = it.level != null && it.expandedLevel
+                                add {
+                                    PanelRow(
+                                        item = it,
+                                        value = if (showLevel) it.level.orEmpty() else it.age,
+                                        valueColor = statusLevelToColor(if (showLevel) it.levelStatus else it.ageStatus),
+                                        progress = if (showLevel) it.levelPercent else it.agePercent,
+                                        severity = if (showLevel) it.levelStatus else it.ageStatus, colors = colors,
+                                        actionLabel = stringResource(CoreUiStrings.add), onActionClick = actions.onBatteryChange
+                                    )
+                                }
+                            }
+                        }
+                        rows.forEachIndexed { index, row ->
+                            if (index > 0) HorizontalDivider(color = colors.border)
+                            row()
+                        }
+                    }
+                }
+            }
+            if (expanded) {
+                // 48 dp touch areas drawn over the corners of the card, so the 32 dp top row leaves no empty band.
+                // The settings icon on the left (phone test A11); the ∧ exactly where the ∨ of the closed bar is.
                 PanelHeaderButton(
                     icon = Icons.Filled.Settings,
                     description = stringResource(CoreUiStrings.settings),
                     color = colors.textSecondary,
-                    onClick = { showSettings = true }
+                    onClick = { showSettings = true },
+                    alignment = Alignment.TopStart,
+                    modifier = Modifier.align(Alignment.TopStart)
                 )
                 PanelHeaderButton(
                     icon = Icons.Filled.ExpandLess,
                     description = stringResource(CoreUiStrings.collapse),
                     color = colors.textSecondary,
-                    onClick = onCollapse,
-                    modifier = Modifier.testTag(TAG_COLLAPSE)
+                    onClick = { onExpandedChange(false) },
+                    modifier = Modifier.align(Alignment.TopEnd).testTag(TAG_COLLAPSE)
                 )
-            }
-            Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp)) {
-                val rows = buildList<@Composable () -> Unit> {
-                    cannulaStatus?.let {
-                        add {
-                            PanelRow(
-                                item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
-                                severity = it.ageStatus, colors = colors,
-                                actionLabel = stringResource(CoreUiStrings.btn_status_cannula_change), onActionClick = actions.onFill,
-                                onRowClick = onPumpClick,
-                                modifier = Modifier.testTag(TAG_PATCH_ROW)
-                            )
-                        }
-                    }
-                    insulinStatus?.let {
-                        add {
-                            PanelRow(
-                                item = it, value = it.level ?: "-", valueColor = statusLevelToColor(it.levelStatus),
-                                progress = it.levelValue?.let { u -> reservoirFraction(u, it.reservoirReadingLimit) } ?: -1f,
-                                severity = it.levelStatus, colors = colors,
-                                actionLabel = stringResource(CoreUiStrings.btn_status_insulin_fill), onActionClick = actions.onInsulinChange,
-                                modifier = Modifier.testTag(TAG_INSULIN_ROW)
-                            )
-                        }
-                    }
-                    sensorStatus?.let {
-                        add {
-                            PanelRow(
-                                item = it, value = ageText(it), valueColor = statusLevelToColor(it.ageStatus), progress = it.agePercent,
-                                severity = it.ageStatus, colors = colors,
-                                onAddClick = actions.onSensorInsert,
-                                modifier = Modifier.testTag(TAG_SENSOR_ROW)
-                            )
-                        }
-                    }
-                    batteryStatus?.let {
-                        val showLevel = it.level != null && it.expandedLevel
-                        add {
-                            PanelRow(
-                                item = it,
-                                value = if (showLevel) it.level.orEmpty() else it.age,
-                                valueColor = statusLevelToColor(if (showLevel) it.levelStatus else it.ageStatus),
-                                progress = if (showLevel) it.levelPercent else it.agePercent,
-                                severity = if (showLevel) it.levelStatus else it.ageStatus, colors = colors,
-                                actionLabel = stringResource(CoreUiStrings.add), onActionClick = actions.onBatteryChange
-                            )
-                        }
-                    }
-                }
-                rows.forEachIndexed { index, row ->
-                    if (index > 0) HorizontalDivider(color = colors.border)
-                    row()
-                }
             }
         }
     }
@@ -367,14 +401,21 @@ private val VALUE_WIDTH = 88.dp
 private val ADD_BUTTON_SIZE = 28.dp
 
 /**
- * A header button of the open panel: a 48 dp touch area in the top right corner, with the icon drawn as on the
+ * A header button of the open panel: a 48 dp touch area in a top corner ([alignment]), with the icon drawn as on the
  * closed bar (a [CHEVRON_BOX_WIDTH] × [CHEVRON_BOX_HEIGHT] box at the right edge, centred on the height of
  * the bar). So the ∧ of the open panel is exactly where the ∨ of the closed bar is.
  */
 @Composable
-private fun PanelHeaderButton(icon: ImageVector, description: String, color: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun PanelHeaderButton(
+    icon: ImageVector,
+    description: String,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.TopEnd
+) {
     Box(
-        contentAlignment = Alignment.TopEnd,
+        contentAlignment = alignment,
         modifier = modifier
             .size(HEADER_TOUCH_SIZE)
             .clickable(role = Role.Button, onClick = onClick)

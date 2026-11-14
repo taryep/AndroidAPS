@@ -217,11 +217,12 @@ fun RedesignHomePage(
             FlexibleGap()
 
             // B. Consumables bar, 6 dp from each screen edge.
-            // Step 11: it opens and closes like a drawer (the height moves, the content is clipped while it does).
+            // Step 11: it opens and closes like a drawer. A patch pump card animates its own rows, as the stock card
+            // (phone test A11); the stock panel of the other pumps replaces the bar, so the height moves here.
             Box(
                 Modifier
                     .padding(horizontal = CONSUMABLES_SIDE)
-                    .animateContentSize(animationSpec = tween(REDESIGN_DRAWER_MS))
+                    .then(if (status.isPatchPump) Modifier else Modifier.animateContentSize(animationSpec = tween(REDESIGN_DRAWER_MS)))
                     .onSizeChanged { consumablesHeightPx = it.height }
             ) {
                 RedesignConsumablesBar(

@@ -169,6 +169,15 @@ class RedesignPatchPumpPanelTest {
     }
 
     @Test
+    fun openCard_rows_start_right_under_the_32dp_top_row() {
+        show(expanded = true)
+        // Phone test A11: no empty band under the top row (the 48 dp touch areas lie over the card corners).
+        val collapse = composeRule.onNodeWithTag(TAG_COLLAPSE).fetchSemanticsNode().boundsInRoot
+        val patchRow = composeRule.onNodeWithTag(TAG_PATCH_ROW).fetchSemanticsNode().boundsInRoot
+        assertThat(patchRow.top - collapse.top).isWithin(2f).of(32f * 3)   // 3 px per dp
+    }
+
+    @Test
     fun chevron_and_plus_sit_right_after_the_name() {
         show(expanded = true)
         val label = composeRule.onAllNodes(hasText("Pompe Patch"), useUnmergedTree = true).fetchSemanticsNodes().single().boundsInRoot

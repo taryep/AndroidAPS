@@ -134,7 +134,7 @@ fun BoxScope.RedesignGraphEditOverlay(block: GraphBlock, config: GraphConfig, co
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.align(Alignment.TopEnd).padding(top = CONTROLS_TOP, end = 4.dp)
     ) {
-        Surface(shape = RoundedCornerShape(24.dp), color = EDIT_SURFACE, border = BorderStroke(1.dp, EDIT_BORDER)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = colors.editButton, border = BorderStroke(1.dp, colors.editButtonBorder)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EditIconButton(Icons.Filled.Remove, stringResource(UiStrings.redesign_size_smaller), enabled = size != GraphSize.SMALL, framed = false) {
                     onChange(RedesignGraphEdit.resize(config, block.kind, block.index, bigger = false))
@@ -152,13 +152,13 @@ fun BoxScope.RedesignGraphEditOverlay(block: GraphBlock, config: GraphConfig, co
                 }
             }
         }
-        EditIconButton(Icons.Filled.Edit, stringResource(UiStrings.redesign_graph_options), tint = DONE_COLOR, onClick = block.openMenu)
+        EditIconButton(Icons.Filled.Edit, stringResource(UiStrings.redesign_graph_options), tint = colors.shortcutIcon, onClick = block.openMenu)
     }
     if (block.kind == GraphBlock.Kind.OTHER) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = EDIT_SURFACE,
-            border = BorderStroke(1.dp, EDIT_BORDER),
+            color = colors.editButton,
+            border = BorderStroke(1.dp, colors.editButtonBorder),
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -170,7 +170,7 @@ fun BoxScope.RedesignGraphEditOverlay(block: GraphBlock, config: GraphConfig, co
                     onChange(RedesignGraphEdit.move(config, block.index, up = false))
                 }
                 // No confirmation: (✕) undoes it.
-                EditIconButton(Icons.Filled.Delete, stringResource(UiStrings.redesign_graph_delete), tint = DELETE_COLOR, framed = false) {
+                EditIconButton(Icons.Filled.Delete, stringResource(UiStrings.redesign_graph_delete), tint = colors.danger, framed = false) {
                     onChange(RedesignGraphEdit.remove(config, block.index))
                 }
             }
@@ -184,10 +184,11 @@ fun BoxScope.RedesignGraphEditOverlay(block: GraphBlock, config: GraphConfig, co
  */
 @Composable
 fun RedesignEditPill(canAdd: Boolean, onCancel: () -> Unit, onAdd: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = redesignColors()
     Surface(
         shape = RoundedCornerShape(26.dp),
-        color = EDIT_SURFACE,
-        border = BorderStroke(1.dp, EDIT_BORDER),
+        color = colors.editButton,
+        border = BorderStroke(1.dp, colors.editButtonBorder),
         shadowElevation = 6.dp,
         modifier = modifier
     ) {
@@ -196,16 +197,16 @@ fun RedesignEditPill(canAdd: Boolean, onCancel: () -> Unit, onAdd: () -> Unit, o
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(horizontal = 4.dp).size(width = PILL_WIDTH, height = 52.dp)
         ) {
-            EditIconButton(Icons.Filled.Close, stringResource(CoreUiStrings.cancel), background = PILL_BUTTON, onClick = onCancel)
+            EditIconButton(Icons.Filled.Close, stringResource(CoreUiStrings.cancel), background = colors.border, onClick = onCancel)
             Text(
                 text = stringResource(UiStrings.redesign_edit_mode),
                 fontSize = 14.sp,
-                color = PILL_TEXT,
+                color = colors.textPrimary,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier.weight(1f)
             )
-            EditIconButton(Icons.Filled.Add, stringResource(CoreUiStrings.graph_add), background = PILL_BUTTON, enabled = canAdd, onClick = onAdd)
+            EditIconButton(Icons.Filled.Add, stringResource(CoreUiStrings.graph_add), background = colors.border, enabled = canAdd, onClick = onAdd)
             EditIconButton(Icons.Filled.Check, stringResource(UiStrings.redesign_edit_done), background = DONE_COLOR, tint = DONE_ICON, onClick = onDone)
         }
     }
@@ -218,8 +219,8 @@ private fun EditIconButton(
     description: String,
     enabled: Boolean = true,
     framed: Boolean = true,
-    background: Color = EDIT_SURFACE,
-    tint: Color = PILL_TEXT,
+    background: Color = redesignColors().editButton,
+    tint: Color = redesignColors().textPrimary,
     onClick: () -> Unit
 ) {
     IconButton(
@@ -229,7 +230,8 @@ private fun EditIconButton(
             containerColor = if (framed) background else Color.Transparent,
             contentColor = tint,
             disabledContainerColor = if (framed) background else Color.Transparent,
-            disabledContentColor = tint.copy(alpha = 0.3f)
+            // Greyed but still visible on the pill (phone test J4).
+            disabledContentColor = tint.copy(alpha = 0.45f)
         ),
         modifier = Modifier
             .size(48.dp)
@@ -240,14 +242,10 @@ private fun EditIconButton(
     }
 }
 
-// Colours of the edit mode, from SPEC 4.3. The edit pill and the controls are dark in both themes, as in the mockup.
-private val EDIT_SURFACE = Color(0xFF1E2128)
-private val EDIT_BORDER = Color(0xFF3A4660)
-private val PILL_BUTTON = Color(0xFF2A2E38)
-private val PILL_TEXT = Color(0xFFC9CED8)
+// The ✓ button of the edit pill, from SPEC 4.3 (dark icon on light blue: readable in both themes). The other colours
+// follow the theme (phone test J4: dark pills made the size words unreadable in the light theme).
 private val DONE_COLOR = Color(0xFF56B4E9)
 private val DONE_ICON = Color(0xFF06121B)
-private val DELETE_COLOR = Color(0xFFE0603A)
 
 private val PILL_WIDTH = 300.dp
 

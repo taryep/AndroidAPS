@@ -462,7 +462,7 @@ target line). The maths is in `RedesignHomeGraphScale.kt`.
   6 h, one in 3 on 12 h, one in 6 on 18 h and 24 h, counted back from the newest. Dot radius ≈
   min(2.8 dp, 0.42 × spacing). Last reading: hollow circle (r 4.5 dp, stroke 2 dp, filled with the page
   colour), always drawn.
-- **Treatment values (decided 10 Nov, step 2):** on 3 h and 6 h only, the bolus dose in units is written
+- **Treatment values (decided 10 Nov, step 2; all ranges since 14 Nov):** on every range, the bolus dose in units is written
   above the bolus triangle and the carbs in grams below the carbs triangle. No value for an SMB.
 - **Treatment markers**: as on the stock BG graph, same colours. A manual bolus is a triangle pointing
   down at the reading from above; carbs a triangle pointing up at it from below; an SMB a small triangle

@@ -92,7 +92,7 @@ import kotlinx.datetime.toLocalDateTime
 /**
  * The simplified glucose graph of the home page (SPEC 3.6): range buttons, one dot per reading on a
  * fixed scale, the coloured lines of the ranges, the running-mode band, and the stock inspect pill on
- * a long press, the treatment markers (with their values on 3 h and 6 h). No zoom, no predictions. A
+ * a long press, the treatment markers with their values. No zoom, no predictions. A
  * tap does nothing (decided 10 Nov: the graphs page opens only from the bottom bar).
  *
  * It fills the height it is given; the plot gets what is left after the buttons and the hour labels.
@@ -495,9 +495,8 @@ private fun HomeGraphPlot(
             shown.minByOrNull { abs(it.timestamp - time) }?.takeIf { abs(it.timestamp - time) <= MARKER_MATCH_MS }
                 ?.let { y(toMgdl(it.value, units)) } ?: between
         val gap = MARKER_GAP.toPx()
-        // On 3 h and 6 h the dose is written above a bolus triangle and the grams under a carbs triangle
-        // (step 2, decided 10 Nov). No value for an SMB. The labels come formatted from the stock data.
-        val showValues = range.hours <= TREATMENT_VALUE_MAX_HOURS
+        // On every range the dose is written above a bolus triangle and the grams under a carbs triangle
+        // (step 2; all ranges since phone test A8). No value for an SMB. The labels come formatted from the stock data.
         val markerHeight = MARKER_WIDTH.toPx() * 1.1f
         val valueGap = TREATMENT_VALUE_GAP.toPx()
         treatments.boluses.filter { it.isValid && it.timestamp in start..end }.forEach { bolus ->
@@ -507,20 +506,16 @@ private fun HomeGraphPlot(
             } else {
                 val tipY = readingY(bolus.timestamp) - gap
                 drawTriangle(Offset(x, tipY), up = false, width = MARKER_WIDTH.toPx(), color = elementColors.insulin)
-                if (showValues) {
-                    val layout = textMeasurer.measure(bolus.label, treatmentValueStyle.copy(color = elementColors.insulin))
-                    drawTreatmentValue(layout, x, top = tipY - markerHeight - valueGap - layout.size.height)
-                }
+                val layout = textMeasurer.measure(bolus.label, treatmentValueStyle.copy(color = elementColors.insulin))
+                drawTreatmentValue(layout, x, top = tipY - markerHeight - valueGap - layout.size.height)
             }
         }
         treatments.carbs.filter { it.isValid && it.timestamp in start..end }.forEach { carbs ->
             val x = g.x(carbs.timestamp)
             val tipY = readingY(carbs.timestamp) + gap
             drawTriangle(Offset(x, tipY), up = true, width = MARKER_WIDTH.toPx(), color = elementColors.carbs)
-            if (showValues) {
-                val layout = textMeasurer.measure(carbs.label, treatmentValueStyle.copy(color = elementColors.carbs))
-                drawTreatmentValue(layout, x, top = tipY + markerHeight + valueGap)
-            }
+            val layout = textMeasurer.measure(carbs.label, treatmentValueStyle.copy(color = elementColors.carbs))
+            drawTreatmentValue(layout, x, top = tipY + markerHeight + valueGap)
         }
 
         // Inspect: dashed line at the shown reading, and a ring on it.
@@ -639,9 +634,6 @@ private const val MARKER_MATCH_MS = 15 * 60_000L
 
 /** SMBs are too many beyond this range, so they are left out (manual boluses and carbs stay). */
 private const val SMB_MAX_HOURS = 12
-
-/** Treatment values are written on the 3 h and 6 h ranges only. */
-private const val TREATMENT_VALUE_MAX_HOURS = 6
 
 /** Space between a treatment triangle and its value. */
 private val TREATMENT_VALUE_GAP = 2.dp

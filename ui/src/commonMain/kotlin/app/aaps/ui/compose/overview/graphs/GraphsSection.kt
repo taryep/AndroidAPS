@@ -72,6 +72,7 @@ import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.ui.compose.redesign.GraphHeights
 import app.aaps.ui.compose.redesign.GraphBlock
 import app.aaps.ui.compose.redesign.GraphLegendItem
+import app.aaps.ui.compose.redesign.GraphSize
 import app.aaps.ui.compose.redesign.GraphsRedesignLayout
 import app.aaps.ui.compose.redesign.RedesignGraphLegend
 import com.patrykandpatrick.vico.compose.cartesian.Scroll
@@ -251,7 +252,10 @@ fun GraphsSection(
     val dateUtil = LocalDateUtil.current
     val savedGraphConfig by graphViewModel.graphConfigFlow.collectAsStateWithLifecycle()
     // In simple mode: fixed layout (BG, IOB+BAS, COB — no overlays, no editing)
-    val graphConfig = if (isSimpleMode) SIMPLE_MODE_CONFIG else savedGraphConfig
+    // The redesign reads the stock height 100 as Small; its simple mode has a Grand BG graph, as its default.
+    val graphConfig = if (isSimpleMode) {
+        if (redesignLayout != null) SIMPLE_MODE_CONFIG.copy(bgHeight = GraphSize.GRAND.code) else SIMPLE_MODE_CONFIG
+    } else savedGraphConfig
 
     // Zoom.x(...) allocates a fresh (non-equal, unmemoized) lambda instance on every call.
     // rememberVicoZoomState's underlying rememberSaveable is keyed on initialZoom/minZoom/maxZoom

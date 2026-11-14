@@ -2,7 +2,8 @@ package app.aaps.ui.compose.redesign
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -161,13 +162,15 @@ internal fun RedesignPatchPumpPanel(
                 ) {
                     // The closed bar fades out (a fade, not AnimatedVisibility: that one would bind to the Column).
                     // It is not composed once hidden, so its values are not on the open card twice.
-                    val closedAlpha by animateFloatAsState(if (expanded) 0f else 1f, tween(REDESIGN_DRAWER_MS))
+                    // Same spring as the default fadeIn()/fadeOut() of the rows, so all of it is one move.
+                    val closedAlpha by animateFloatAsState(if (expanded) 0f else 1f, spring(stiffness = Spring.StiffnessMediumLow))
                     if (closedAlpha > 0f) Box(Modifier.graphicsLayer { alpha = closedAlpha }) { closedBar() }
                 }
+                // As the stock status card: the default specs, no tween (phone test A11, "one move").
                 AnimatedVisibility(
                     visible = expanded,
-                    enter = fadeIn(tween(REDESIGN_DRAWER_MS)) + expandVertically(tween(REDESIGN_DRAWER_MS)),
-                    exit = fadeOut(tween(REDESIGN_DRAWER_MS)) + shrinkVertically(tween(REDESIGN_DRAWER_MS))
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
                     Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp)) {
                         val rows = buildList<@Composable () -> Unit> {
@@ -224,24 +227,29 @@ internal fun RedesignPatchPumpPanel(
                     }
                 }
             }
-            if (expanded) {
-                // 48 dp touch areas drawn over the corners of the card, so the 32 dp top row leaves no empty band.
-                // The settings icon on the left (phone test A11); the ∧ exactly where the ∨ of the closed bar is.
-                PanelHeaderButton(
-                    icon = Icons.Filled.Settings,
-                    description = stringResource(CoreUiStrings.settings),
-                    color = colors.textSecondary,
-                    onClick = { showSettings = true },
-                    alignment = Alignment.TopStart,
-                    modifier = Modifier.align(Alignment.TopStart)
-                )
-                PanelHeaderButton(
-                    icon = Icons.Filled.ExpandLess,
-                    description = stringResource(CoreUiStrings.collapse),
-                    color = colors.textSecondary,
-                    onClick = { onExpandedChange(false) },
-                    modifier = Modifier.align(Alignment.TopEnd).testTag(TAG_COLLAPSE)
-                )
+            // 48 dp touch areas drawn over the corners of the card, so the 32 dp top row leaves no empty band.
+            // The settings icon on the left (phone test A11); the ∧ exactly where the ∨ of the closed bar is.
+            // They fade with the same default fadeIn()/fadeOut() as the rows. matchParentSize: while they fade out
+            // they must not hold the closed card at their 48 dp, or it jumps to 32 dp at the end (phone test A11b).
+            Box(Modifier.matchParentSize()) {
+                AnimatedVisibility(visible = expanded, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.TopStart)) {
+                    PanelHeaderButton(
+                        icon = Icons.Filled.Settings,
+                        description = stringResource(CoreUiStrings.settings),
+                        color = colors.textSecondary,
+                        onClick = { showSettings = true },
+                        alignment = Alignment.TopStart
+                    )
+                }
+                AnimatedVisibility(visible = expanded, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.TopEnd)) {
+                    PanelHeaderButton(
+                        icon = Icons.Filled.ExpandLess,
+                        description = stringResource(CoreUiStrings.collapse),
+                        color = colors.textSecondary,
+                        onClick = { onExpandedChange(false) },
+                        modifier = Modifier.testTag(TAG_COLLAPSE)
+                    )
+                }
             }
         }
     }

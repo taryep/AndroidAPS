@@ -1,5 +1,6 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.ui.geometry.Rect
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
 import kotlinx.datetime.LocalDateTime
@@ -268,6 +269,21 @@ class RedesignHomeGraphScaleTest {
         // No adjusted target, or no time (client): unchanged.
         assertEquals(stored, homeGraphTargetPoints(stored, null, 9 * HOUR))
         assertEquals(stored, homeGraphTargetPoints(stored, 144.0, null))
+    }
+
+    @Test
+    fun visibleValues_hide_a_value_that_overlaps_the_last_drawn_one() {
+        // Phone test A8 (6 h, near 16 h): "7,05 U" then "2,05 U" on top of it, then one far away.
+        val first = Rect(100f, 50f, 140f, 62f)
+        val onTop = Rect(110f, 52f, 150f, 64f)
+        // Overlaps the hidden one only: the check is against the last value drawn, so it is shown.
+        val next = Rect(145f, 52f, 185f, 64f)
+        val far = Rect(300f, 50f, 340f, 62f)
+        assertEquals(listOf(true, false, true, true), homeGraphVisibleValues(listOf(first, onTop, next, far)))
+        assertEquals(emptyList(), homeGraphVisibleValues(emptyList()))
+        // Phone retest: a carb value (below the triangles) between two bolus values does not let the second through.
+        val carbs = Rect(105f, 200f, 135f, 212f)
+        assertEquals(listOf(true, true, false), homeGraphVisibleValues(listOf(first, carbs, onTop)))
     }
 
     private companion object {

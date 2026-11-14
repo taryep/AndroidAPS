@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -507,6 +508,7 @@ private fun HomeGraphPlot(
         // (step 2; all ranges since phone test A8). No value for an SMB. The labels come formatted from the stock data.
         val markerHeight = MARKER_WIDTH.toPx() * 1.1f
         val valueGap = TREATMENT_VALUE_GAP.toPx()
+        val values = mutableListOf<Pair<TextLayoutResult, Rect>>()
         treatments.boluses.filter { it.isValid && it.timestamp in start..end }.forEach { bolus ->
             val x = g.x(bolus.timestamp)
             if (bolus.bolusType == BolusType.SMB) {
@@ -515,7 +517,7 @@ private fun HomeGraphPlot(
                 val tipY = readingY(bolus.timestamp) - gap
                 drawTriangle(Offset(x, tipY), up = false, width = MARKER_WIDTH.toPx(), color = elementColors.insulin)
                 val layout = textMeasurer.measure(bolus.label, treatmentValueStyle.copy(color = elementColors.insulin))
-                drawTreatmentValue(layout, x, top = tipY - markerHeight - valueGap - layout.size.height)
+                values += layout to treatmentValueBox(layout, x, top = tipY - markerHeight - valueGap - layout.size.height)
             }
         }
         treatments.carbs.filter { it.isValid && it.timestamp in start..end }.forEach { carbs ->
@@ -523,7 +525,12 @@ private fun HomeGraphPlot(
             val tipY = readingY(carbs.timestamp) + gap
             drawTriangle(Offset(x, tipY), up = true, width = MARKER_WIDTH.toPx(), color = elementColors.carbs)
             val layout = textMeasurer.measure(carbs.label, treatmentValueStyle.copy(color = elementColors.carbs))
-            drawTreatmentValue(layout, x, top = tipY + markerHeight + valueGap)
+            values += layout to treatmentValueBox(layout, x, top = tipY + markerHeight + valueGap)
+        }
+        // From left to right, a value that would overlap any value already drawn is left out, on every range.
+        values.sortBy { it.second.left }
+        homeGraphVisibleValues(values.map { it.second }).forEachIndexed { i, visible ->
+            if (visible) drawText(values[i].first, topLeft = values[i].second.topLeft)
         }
 
         // Inspect: dashed line at the shown reading, and a ring on it.
@@ -593,11 +600,11 @@ private fun DrawScope.drawTriangle(tip: Offset, up: Boolean, width: Float, color
     )
 }
 
-/** The value of a treatment, centred on [centreX] with its top at [top], kept inside the canvas. */
-private fun DrawScope.drawTreatmentValue(layout: TextLayoutResult, centreX: Float, top: Float) {
+/** Where the value of a treatment goes: centred on [centreX] with its top at [top], kept inside the canvas. */
+private fun DrawScope.treatmentValueBox(layout: TextLayoutResult, centreX: Float, top: Float): Rect {
     val x = (centreX - layout.size.width / 2f).coerceIn(0f, (size.width - layout.size.width).coerceAtLeast(0f))
     val y = top.coerceIn(0f, (size.height - layout.size.height).coerceAtLeast(0f))
-    drawText(layout, topLeft = Offset(x, y))
+    return Rect(Offset(x, y), Size(layout.size.width.toFloat(), layout.size.height.toFloat()))
 }
 
 /** A label right-aligned on [right], centred on [centreY]. */

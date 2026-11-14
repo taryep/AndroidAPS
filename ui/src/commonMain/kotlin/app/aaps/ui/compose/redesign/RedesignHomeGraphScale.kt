@@ -1,5 +1,6 @@
 package app.aaps.ui.compose.redesign
 
+import androidx.compose.ui.geometry.Rect
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
 import kotlinx.datetime.LocalDateTime
@@ -261,4 +262,13 @@ fun homeGraphScrolledTicks(nowEnd: Long, end: Long, range: HomeGraphRange): List
     val newest = ceil((nowEnd - end).toDouble() / step).toLong()
     val oldest = floor((nowEnd - start).toDouble() / step).toLong()
     return (oldest downTo newest).map { nowEnd - it * step }
+}
+
+/**
+ * Which treatment values are drawn, in drawing order: a value that overlaps any value already drawn is hidden,
+ * its triangle stays (phone test A8: "7,05 U" and "2,05 U" on top of each other, a carb value between them).
+ */
+fun homeGraphVisibleValues(boxes: List<Rect>): List<Boolean> {
+    val drawn = mutableListOf<Rect>()
+    return boxes.map { box -> drawn.none { it.overlaps(box) }.also { if (it) drawn += box } }
 }

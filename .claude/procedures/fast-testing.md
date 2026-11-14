@@ -43,7 +43,18 @@ grep -n "BUILD \|Location:\| FAILED" "$TEMP/t.log"
 
 ## Before a commit or a push
 
-Run the full suite, with `--continue`:
+**Check the encoding first.** A UTF-8 file read as Windows-1252 and saved again turns "—" into three
+garbage characters, or into six when it happens twice. It compiles and the tests can still pass, so
+only this check finds it. It must print nothing (this file is left out: it holds the pattern):
+
+```
+git diff --cached -- . ':!.claude/procedures/fast-testing.md' | grep -n "^+.*\(Ã\|â€\|â‡\|â†\|Â\)"
+```
+
+If it prints a line, fix the characters in that file before you commit. This happened twice on the
+`redesign` branch: once in a comment of an upstream file, once in a text the user sees.
+
+Then run the full suite, with `--continue`:
 
 ```
 ./gradlew.bat --console=plain --no-daemon --continue -PfirebaseDisable testFullDebugUnitTest testDebugUnitTest jvmTest testAndroidHostTest :desktop:shell:test

@@ -95,7 +95,7 @@ class RedesignHomeStock(
 /**
  * Page 1 of the redesign overview (SPEC 3.1 to 3.6), from top to bottom: the scene banner, the circle
  * row (glucose circle with two slots on each side), the consumables bar, on a client the status of
- * the master, the full-width graph card, the sensitivity line (when shown) and the 2 Ã— 2 tiles.
+ * the master, the full-width graph card, the sensitivity line (when shown) and the 2 × 2 tiles.
  *
  * The page is a column at least as high as the screen. The two flexible gaps (circle row to
  * consumables, graph to tiles) share what is left, each 12 dp at least. The plot height is what
@@ -317,7 +317,7 @@ private fun ColumnScope.FlexibleGap() {
 fun redesignShowsSensitivity(state: SensitivityUiState): Boolean = state.asText.isNotEmpty() || state.isfFrom.isNotEmpty()
 
 /**
- * One line between the graph and the tiles (SPEC 3.4): "â‡… Sensitivity 80 % Â· ISF 36 â†’ 45". Shown only when the stock
+ * One line between the graph and the tiles (SPEC 3.4): "⇅ Sensitivity 80 % · ISF 36 → 45". Shown only when the stock
  * sensitivity chip would show something; a tap opens the same dialog.
  */
 @Composable

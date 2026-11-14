@@ -94,7 +94,7 @@ class RedesignOverviewContentTest {
                     Box(Modifier.requiredSize(412.dp, 891.dp).testTag(SCREEN)) {
                         OverviewScreen(
                             profileName = "Normal", isProfileModified = false, profileProgress = 0f,
-                            tempTargetText = "120â€“130", tempTargetState = TempTargetChipState.None,
+                            tempTargetText = "120–130", tempTargetState = TempTargetChipState.None,
                             tempTargetProgress = 0f, tempTargetReason = null,
                             runningMode = RM.Mode.CLOSED_LOOP, runningModeText = "Closed loop",
                             runningModeRemaining = "", runningModeProgress = 0f,

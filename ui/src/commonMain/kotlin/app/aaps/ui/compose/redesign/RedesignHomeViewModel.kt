@@ -183,7 +183,7 @@ class RedesignHomeViewModel(
 
     /**
      * Goes back to the classic AAPS interface (Menu of the new interface). `ComposeMainActivity` sees the
-     * setting change and starts again; the way back is Settings â€º Appearance.
+     * setting change and starts again; the way back is Settings › Appearance.
      */
     fun useClassicInterface() = preferences.put(BooleanKey.GeneralRedesign, false)
 

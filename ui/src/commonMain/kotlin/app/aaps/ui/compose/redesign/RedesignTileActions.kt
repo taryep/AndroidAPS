@@ -82,8 +82,8 @@ internal fun redesignTileTaps(
 )
 
 /**
- * The same rules as the stock sheets: Treatments â€º Insulin needs a master or a paired client and the
- * role for insulin. Manage â€º Temp basal (or its Cancel item while one runs) also needs a pump that can
+ * The same rules as the stock sheets: Treatments › Insulin needs a master or a paired client and the
+ * role for insulin. Manage › Temp basal (or its Cancel item while one runs) also needs a pump that can
  * set a temp basal now: [tempBasalOffered], from [ManageUiState].
  */
 internal fun redesignTileRules(masterOrPairedClient: Boolean, role: ClientRole, tempBasalOffered: Boolean): Pair<Boolean, Boolean> =
@@ -256,7 +256,7 @@ internal fun RedesignTbrLineContent(data: RedesignHomeData, showCancel: Boolean,
 /**
  * A single line in a rounded card with a border, as in the mockups (sheet-insulin.png, sheet-basal.png):
  * a small [badge] ("IOB", "TBR") in the [accent] colour, then the [text], left-aligned, with the [values]
- * in their style. It gets smaller down to 11 sp, then ends with "â€¦" (SPEC 3.2.2).
+ * in their style. It gets smaller down to 11 sp, then ends with "…" (SPEC 3.2.2).
  *
  * [text] is the whole translated line. The values are only found in it to style them; the text is
  * never cut or joined, so a translation may put them in any order.

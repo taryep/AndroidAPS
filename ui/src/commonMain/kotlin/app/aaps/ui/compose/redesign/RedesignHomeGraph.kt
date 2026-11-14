@@ -575,7 +575,7 @@ private fun DrawScope.drawTargetLine(points: List<Pair<Long, Double>>, g: PlotGe
     }
 }
 
-/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 Ãƒâ€” as high. */
+/** A triangle whose tip is [tip], pointing [up] or down, with a base [width] wide and 1.1 × as high. */
 private fun DrawScope.drawTriangle(tip: Offset, up: Boolean, width: Float, color: Color) {
     val height = width * 1.1f
     val baseY = if (up) tip.y + height else tip.y - height

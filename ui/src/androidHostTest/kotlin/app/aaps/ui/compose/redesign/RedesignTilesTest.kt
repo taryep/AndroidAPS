@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
@@ -33,6 +34,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
@@ -62,7 +64,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Phase 3: the six home tiles. Each tap does what the stock chip does, every state of SPEC 3.2 has a
- * picture in `ui/build/reports/redesign/tiles/`, and the longest French values fit without "â€¦".
+ * picture in `ui/build/reports/redesign/tiles/`, and the longest French values fit without "…".
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -87,12 +89,13 @@ class RedesignTilesTest {
         tbrState: TbrState = TbrState.NONE,
         iob: IobUiState = IobUiState(text = "0,00 U", iobTotal = 0.0),
         cob: CobUiState = CobUiState(text = "0 g"),
-        data: RedesignHomeData = RedesignHomeData(profileName = "Normal", targetText = "120â€“130", basalRate = "0,85 U/h"),
-        loopSuggestion: Boolean = false
+        data: RedesignHomeData = RedesignHomeData(profileName = "Normal", targetText = "120–130", basalRate = "0,85 U/h"),
+        loopSuggestion: Boolean = false,
+        tempTargetText: String = "120–130"
     ) = RedesignTilesState(
         profileName = "Normal", isProfileModified = isProfileModified,
-        tempTargetText = "120â€“130", tempTargetState = tempTargetState, tempTargetReason = TT.Reason.EATING_SOON,
-        runningMode = runningMode, runningModeText = "Boucle fermÃ©e", runningModeRemaining = runningModeRemaining,
+        tempTargetText = tempTargetText, tempTargetState = tempTargetState, tempTargetReason = TT.Reason.EATING_SOON,
+        runningMode = runningMode, runningModeText = "Boucle fermée", runningModeRemaining = runningModeRemaining,
         tbrState = tbrState, iob = iob, cob = cob, data = data, loopSuggestion = loopSuggestion
     )
 
@@ -168,10 +171,18 @@ class RedesignTilesTest {
     }
 
     @Test
+    fun withoutAnyTargetTheTargetSlotShowsADash() {
+        // Before the profile loads both target texts are empty. The dash was once saved in the wrong
+        // encoding, and the slot showed garbage instead.
+        show(tiles(data = RedesignHomeData(profileName = "Normal", basalRate = "0,85 U/h"), tempTargetText = ""))
+        compose.onNodeWithText("—", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun eachTileDoesWhatItsChipDoes() {
         show(tiles())
         tap(string(R.string.redesign_tile_profile))
-        tap("120â€“130")
+        tap("120–130")
         compose.onNode(hasContentDescription(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).performClick()
         tap(string(R.string.redesign_tile_active_insulin))
         tap(string(R.string.redesign_tile_basal))
@@ -212,7 +223,7 @@ class RedesignTilesTest {
     @Test
     fun onAnUnpairedClientTheCommandTilesAreOff() {
         show(tiles(), commandsAllowed = false)
-        compose.onNode(hasText("120â€“130", substring = true) and hasClickAction()).assertIsNotEnabled()
+        compose.onNode(hasText("120–130", substring = true) and hasClickAction()).assertIsNotEnabled()
         compose.onNode(hasContentDescription(string(R.string.redesign_mode_closed), substring = true) and hasClickAction()).assertIsNotEnabled()
         // Carbs entry is blocked like the Treatments item: the tile has no action at all.
         assertThat(compose.onAllNodes(hasText(string(R.string.redesign_tile_carbs), substring = true) and hasClickAction()).fetchSemanticsNodes()).isEmpty()
@@ -279,7 +290,7 @@ class RedesignTilesTest {
 
     @Test
     fun withTheLargestFontNothingOverlapsAndTheTilesShrink() {
-        // At 200 % some text may end with "â€¦" (the SPEC allows it), but nothing may spill out of a tile.
+        // At 200 % some text may end with "…" (the SPEC allows it), but nothing may spill out of a tile.
         show(worstCase(), fontScale = 2f)
         picture("worst_case_font200")
         val report = File("build/reports/redesign/tiles").apply { mkdirs() }
@@ -295,7 +306,7 @@ class RedesignTilesTest {
         cob = CobUiState(text = "0 g", carbsReq = 13),
         data = RedesignHomeData(
             profileName = "Normal (90%)", profileTimeLeft = "9 min",
-            targetText = "120â€“130", basalRate = "0,85 U/h",
+            targetText = "120–130", basalRate = "0,85 U/h",
             tempBasalRunning = true, tempBasalRate = "1,02 U/h", tempBasalPercent = "120%", tempBasalTimeLeft = "25 min"
         )
     )

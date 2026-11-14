@@ -283,7 +283,7 @@ fun RedesignTargetSlot(
         TempTargetChipState.Adjusted -> AapsTheme.generalColors.adjusted.let { RedesignTint(it.copy(alpha = 0.2f).compositeOver(colors.surface), it.copy(alpha = 0.5f), it) }
         TempTargetChipState.None     -> colors.neutral
     }
-    val value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "Ã¢â‚¬â€" }
+    val value = data.targetText.ifEmpty { state.tempTargetText }.ifEmpty { "—" }
     val timeLeft = if (active) data.targetTimeLeft else ""
     RedesignRoundSlot(
         tint = tint,

@@ -65,6 +65,7 @@ class NotificationPacketTest : MedtrumTestBase() {
         // Inputs
         val data = byteArrayOf(32, 34, 16, 0, 3, 0, -58, 12, 0, 0, 0, 0, 0)
         bolusProgressData.start(insulin = 1.0, isSMB = false)
+        medtrumPump.bolusDone = false // as MedtrumService.setBolus does before it sends the bolus
 
         // Call
         NotificationPacket(packetInjector).handleNotification(data)
@@ -79,6 +80,7 @@ class NotificationPacketTest : MedtrumTestBase() {
         // Inputs
         val data = byteArrayOf(32, 34, 17, -128, 33, 0, -89, 12, -80, 0, 14, 0, 0, 0, 0, 0, 0)
         bolusProgressData.start(insulin = 1.0, isSMB = false)
+        medtrumPump.bolusDone = false // as MedtrumService.setBolus does before it sends the bolus
 
         // Call
         NotificationPacket(packetInjector).handleNotification(data)
@@ -87,6 +89,17 @@ class NotificationPacketTest : MedtrumTestBase() {
         assertThat(medtrumPump.bolusDone).isTrue()
         assertThat(bolusProgressData.state.value?.delivered?.cU ?: 0.0).isWithin(0.01).of(1.65)
         assertThat(medtrumPump.reservoir).isWithin(0.01).of(161.95)
+    }
+
+    @Test fun handleNotificationGivenLastBolusAtConnectionThenProgressNotChanged() {
+        // The pump reports its last (finished) bolus while a new one is about to start: the new dialog keeps 0.
+        val data = byteArrayOf(32, 34, 17, -128, 33, 0, -89, 12, -80, 0, 14, 0, 0, 0, 0, 0, 0)
+        bolusProgressData.start(insulin = 1.0, isSMB = false)
+        medtrumPump.bolusDone = true
+
+        NotificationPacket(packetInjector).handleNotification(data)
+
+        assertThat(bolusProgressData.state.value?.delivered?.cU ?: 0.0).isWithin(0.01).of(0.0)
     }
 
     @Test fun handleNotificationGivenFieldMaskButMessageTooShortThenNothingSaved() {

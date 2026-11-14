@@ -262,6 +262,20 @@ redesign switch: they are readability fixes, the same in both interfaces.
 | `core/ui/.../navigation/ElementColors.kt` | `LightElementColors.tempBasal` `#00FFFF` → `#0B6A70` (the teal of the Basale tile). |
 | `ui/.../overview/graphs/SecondaryGraphCompose.kt` | `rememberSeriesColors`: in the light theme, darker tones for BGI and deviations (legend dot) `#00838F`, dev slope `#9A7B00`, heart rate `#8A6D00`, steps `#00875A`, activity `#5F7F00`. `SeriesColors` gets `light: Boolean = false`; `deviationColor(type, light)` gives darker positive (green `#2E9D3A`) and UAM (`#8A7A12`) bars in the light theme. Import `luminance`. |
 
+## Phone test fixes (14 Nov)
+
+### `ui/src/commonMain/kotlin/app/aaps/ui/compose/overview/graphs/GraphsSection.kt`
+
+- Simple mode: with `redesignLayout` set, the fixed `SIMPLE_MODE_CONFIG` gets a Grand BG graph
+  (`bgHeight = GraphSize.GRAND.code`). The stock simple mode (no `redesignLayout`) is unchanged.
+
+### `pump/medtrum/src/main/kotlin/app/aaps/pump/medtrum/MedtrumPump.kt`
+
+- `handleBolusStatusUpdate` updates `BolusProgressData` only while a bolus runs (`!bolusDone`). At connection the
+  pump reports its last bolus, and the dialog of a new bolus showed that old amount. Not behind the redesign
+  switch: a stock bug, the same in both interfaces. The delivered amount for the verdict (`bolusAmountDelivered`)
+  is unchanged. Test: `NotificationPacketTest`. To propose upstream.
+
 ## Resources
 
 - `ui/src/androidMain/res/values/strings_redesign.xml` and `values-fr-rFR/strings_redesign.xml` are

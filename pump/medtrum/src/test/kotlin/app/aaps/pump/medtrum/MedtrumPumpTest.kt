@@ -121,6 +121,7 @@ class MedtrumPumpTest : MedtrumTestBase() {
         val bolusCompleted = false
         val amount = 1.4
         bolusProgressData.start(insulin = 2.0, isSMB = false)
+        medtrumPump.bolusDone = false // as MedtrumService.setBolus does before it sends the bolus
 
         // Call
         medtrumPump.handleBolusStatusUpdate(bolusType, bolusCompleted, amount)

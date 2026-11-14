@@ -477,7 +477,9 @@ class MedtrumPump(
         aapsLogger.debug(LTag.PUMP, "handleBolusStatusUpdate: bolusType: $bolusType bolusCompleted: $bolusCompleted amountDelivered: $amountDelivered")
         bolusProgressLastTimeStamp = dateUtil.now()
         _bolusAmountDelivered.value = amountDelivered
-        bolusProgressData.updateProgress(PumpInsulin(amountDelivered))
+        // At connection the pump reports its LAST bolus; only a running bolus may update the progress line, else the
+        // dialog of a new bolus shows the previous amount (phone test D3). bolusDone is still the old value here.
+        if (!bolusDone) bolusProgressData.updateProgress(PumpInsulin(amountDelivered))
         bolusDone = bolusCompleted
     }
 

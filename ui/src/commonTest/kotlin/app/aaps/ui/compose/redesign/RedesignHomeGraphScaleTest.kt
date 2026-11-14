@@ -260,6 +260,16 @@ class RedesignHomeGraphScaleTest {
         assertEquals("0 g", redesignCob("0 g", 0.0, carbsReq = 13, lastApsRun = 2_000L, newestCarbsTime = 1_000L).text)
     }
 
+    @Test
+    fun targetPoints_step_to_the_adjusted_target_at_the_last_loop_run() {
+        val stored = listOf(0L to 125.0, 10 * HOUR to 125.0)
+        // Phone test A10: profile 125, the loop runs 144 since 9 h.
+        assertEquals(listOf(0L to 125.0, 9 * HOUR to 144.0, 10 * HOUR to 144.0), homeGraphTargetPoints(stored, 144.0, 9 * HOUR))
+        // No adjusted target, or no time (client): unchanged.
+        assertEquals(stored, homeGraphTargetPoints(stored, null, 9 * HOUR))
+        assertEquals(stored, homeGraphTargetPoints(stored, 144.0, null))
+    }
+
     private companion object {
 
         const val HOUR = 3_600_000L

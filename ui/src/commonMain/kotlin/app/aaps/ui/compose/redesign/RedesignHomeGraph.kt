@@ -103,6 +103,8 @@ fun RedesignHomeGraph(
     range: HomeGraphRange,
     onRangeChange: (HomeGraphRange) -> Unit,
     targetAccent: Color? = null,
+    adjustedTargetMgdl: Double? = null,
+    adjustedTargetSince: Long? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = redesignColors()
@@ -130,6 +132,8 @@ fun RedesignHomeGraph(
                 // The plot is 17 dp in from the card edge: the pill is placed in card coordinates.
                 onPill = { data, x -> pill = data; pillX = x + sidePx },
                 targetAccent = targetAccent,
+                adjustedTargetMgdl = adjustedTargetMgdl,
+                adjustedTargetSince = adjustedTargetSince,
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = PLOT_SIDE)
             )
         }
@@ -209,6 +213,8 @@ private fun HomeGraphPlot(
     pill: InspectData?,
     onPill: (InspectData?, Float) -> Unit,
     targetAccent: Color?,
+    adjustedTargetMgdl: Double?,
+    adjustedTargetSince: Long?,
     modifier: Modifier
 ) {
     val readings by graphViewModel.bgReadingsFlow.collectAsStateWithLifecycle()
@@ -290,8 +296,10 @@ private fun HomeGraphPlot(
     )
     // The target now, labelled like the lines. It is one value: the stock target line has one value at a time.
     // The target now: read with the real time, so a new temporary target shows at once, not at the next minute.
-    val targetValue = targetLine.targets.lastOrNull { it.timestamp <= dateUtil.now() }?.value
-    val targetMgdl = targetValue?.let { toMgdl(it, units) }
+    // A target the loop adjusted for the sensitivity wins, so the graph says what the Target slot says (phone test A10).
+    val targetPoints = homeGraphTargetPoints(targetLine.targets.map { it.timestamp to toMgdl(it.value, units) }, adjustedTargetMgdl, adjustedTargetSince)
+    val targetMgdl = adjustedTargetMgdl ?: targetPoints.lastOrNull { it.first <= dateUtil.now() }?.second
+    val targetValue = targetMgdl?.let { fromMgdl(it, units) }
     // The grey step follows the height of the plot and the span of the axis, as when the stock graph is zoomed out.
     val plotHeightPx = with(density) { size.height - (HOUR_LABELS + PLOT_BOTTOM + PLOT_TOP).toPx() }
     val stepMgdl = homeGraphStepMgdl(units, minMgdl, maxMgdl, plotHeightPx.coerceAtLeast(1f), with(density) { GRADUATION_SPACING.toPx() })
@@ -441,7 +449,7 @@ private fun HomeGraphPlot(
                 pathEffect = if (line.dashed) dash else null
             )
         }
-        drawTargetLine(targetLine.targets.map { it.timestamp to toMgdl(it.value, units) }, g, now, y, colors.textPrimary.copy(alpha = 0.16f), targetAccent?.copy(alpha = 0.7f), hair)
+        drawTargetLine(targetPoints, g, now, y, colors.textPrimary.copy(alpha = 0.16f), targetAccent?.copy(alpha = 0.7f), hair)
 
         // Labels: the coloured ones moved apart so they never overlap, then the grey ones unless too close to one.
         val labelRight = labelColumn

@@ -266,6 +266,8 @@ fun RedesignHomePage(
                     range = graphRange,
                     onRangeChange = onGraphRangeChange,
                     targetAccent = targetAccent,
+                    adjustedTargetMgdl = inputs.data.adjustedTargetMgdl,
+                    adjustedTargetSince = inputs.data.adjustedTargetSince,
                     modifier = Modifier.fillMaxWidth().height(plotHeight + GRAPH_CHROME_HEIGHT)
                 )
             }

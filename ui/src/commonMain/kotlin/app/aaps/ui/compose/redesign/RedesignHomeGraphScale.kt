@@ -99,6 +99,18 @@ fun homeGraphGraduations(minMgdl: Double, maxMgdl: Double, stepMgdl: Double, lin
         .filter { step -> linesMgdl.none { abs(it - step) < 1.0 } }
         .toList()
 
+/**
+ * The target steps (time to mg/dL, each value holds from its time) with the target the loop adjusted for the
+ * sensitivity: from [since] (the last loop run) to the end, the line is at [adjustedMgdl], as the Target slot
+ * (phone test A10). Earlier steps keep the stored target: the app does not keep the older adjusted values.
+ * Without an adjusted target or its time, the steps are unchanged.
+ */
+fun homeGraphTargetPoints(points: List<Pair<Long, Double>>, adjustedMgdl: Double?, since: Long?): List<Pair<Long, Double>> {
+    val end = points.lastOrNull()?.first ?: return points
+    if (adjustedMgdl == null || since == null || since >= end) return points
+    return points.filter { it.first < since } + (since to adjustedMgdl) + (end to adjustedMgdl)
+}
+
 /** Vertical position of [mgdl] between [top] and [bottom], in pixels. Values outside the axis stay on its edge. */
 fun homeGraphY(mgdl: Double, minMgdl: Double, maxMgdl: Double, top: Float, bottom: Float): Float {
     val share = (mgdl.coerceIn(minMgdl, maxMgdl) - minMgdl) / (maxMgdl - minMgdl)

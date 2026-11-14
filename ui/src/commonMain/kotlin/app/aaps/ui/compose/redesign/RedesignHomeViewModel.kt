@@ -11,6 +11,7 @@ import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.iob.IobCobCalculator
+import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
 import app.aaps.core.interfaces.overview.LastBgData
 import app.aaps.core.interfaces.overview.graph.BgInfoData
 import app.aaps.core.interfaces.overview.graph.BgRange
@@ -19,6 +20,7 @@ import app.aaps.core.interfaces.overview.graph.ProfileDisplayData
 import app.aaps.core.interfaces.overview.graph.TbrDisplayData
 import app.aaps.core.interfaces.overview.graph.TbrState
 import app.aaps.core.interfaces.overview.graph.TempTargetDisplayData
+import app.aaps.core.interfaces.overview.graph.TempTargetState
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.TextResolver
@@ -27,6 +29,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.core.objects.extensions.apsAdjustedTargetMgdl
 import app.aaps.core.objects.extensions.convertedToAbsolute
 import app.aaps.core.objects.extensions.convertedToPercent
 import app.aaps.core.objects.extensions.round
@@ -75,7 +78,11 @@ data class RedesignHomeData(
     /** Time left of the temporary basal. */
     val tempBasalTimeLeft: String = "",
     /** The data of the stock "Temp basal" dialog on one line (SPEC 3.2.3), e.g. "0.00 U/h @15:58 5/60 min". */
-    val tempBasalLine: String = ""
+    val tempBasalLine: String = "",
+    /** The target the loop uses now when it differs from the stored one (sensitivity adjustment), in mg/dL, else null. */
+    val adjustedTargetMgdl: Double? = null,
+    /** When the loop calculated [adjustedTargetMgdl] (last loop run); null on a client, where it is not known. */
+    val adjustedTargetSince: Long? = null
 )
 
 /**
@@ -108,7 +115,8 @@ class RedesignHomeViewModel(
     private val decimalFormatter: DecimalFormatter,
     private val preferences: Preferences,
     private val profileUtil: ProfileUtil,
-    private val lastBgData: LastBgData
+    private val lastBgData: LastBgData,
+    private val processedDeviceStatusData: ProcessedDeviceStatusData
 ) : ViewModel() {
 
     // The same 30 s tick as the chips, so the time left moves at the same moment.
@@ -191,7 +199,11 @@ class RedesignHomeViewModel(
         val profile = profileFunction.getProfile()
         val tempBasal = if (tbrData != null && tbrData.state != TbrState.NONE) persistenceLayer.getTemporaryBasalActiveAt(now) else null
         val running = if (tempBasal != null && profile != null) tempBasal to profile else null
+        // The same value as the Target slot (stock chip): the target the loop runs, after the sensitivity adjustment.
+        val adjustedTarget = if (targetData?.state == TempTargetState.ADJUSTED) profile?.apsAdjustedTargetMgdl(loop, config, processedDeviceStatusData) else null
         return RedesignHomeData(
+            adjustedTargetMgdl = adjustedTarget,
+            adjustedTargetSince = if (adjustedTarget != null && config.APS) loop.lastRun?.lastAPSRun else null,
             profileName = profileData?.profileName.orEmpty(),
             profileTimeLeft = profileData?.let { timeLeft(it.timestamp, it.duration, now) }.orEmpty(),
             targetText = targetData?.targetRangeText.orEmpty(),

@@ -48,8 +48,13 @@ garbage characters, or into six when it happens twice. It compiles and the tests
 only this check finds it. It must print nothing (this file is left out: it holds the pattern):
 
 ```
-git diff --cached -- . ':!.claude/procedures/fast-testing.md' | grep -n "^+.*\(Ã\|â€\|â‡\|â†\|Â\)"
+git diff --cached -- . ':!.claude/procedures/fast-testing.md' | grep -nP '^\+.*[ÂÃâ][\x{80}-\x{BF}\x{152}\x{153}\x{160}\x{161}\x{178}\x{17D}\x{17E}\x{192}\x{2C6}\x{2DC}\x{2013}-\x{203A}\x{20AC}\x{2122}]'
 ```
+
+Every garbled character starts with `Â`, `Ã` or `â` (the first byte of the UTF-8 character), followed by
+one of the characters Windows-1252 gives to the bytes 0x80 to 0xBF. A list of known forms is not
+enough: the first version of this check knew five forms and missed "✕" and "✓". Normal French text
+(pâte, à côté) does not match.
 
 If it prints a line, fix the characters in that file before you commit. This happened twice on the
 `redesign` branch: once in a comment of an upstream file, once in a text the user sees.

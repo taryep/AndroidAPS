@@ -34,15 +34,15 @@ class RedesignOverviewState : ViewModel() {
     var homeGraphRange by mutableStateOf(HomeGraphRange.DEFAULT)
 
     /**
-     * Step 9: the graph settings when the edit mode started. The changes apply at once; (âœ•) and Back put
-     * these back, (âœ“) and leaving the page keep the changes. Set by the graphs page.
+     * Step 9: the graph settings when the edit mode started. The changes apply at once; (✕) and Back put
+     * these back, (✓) and leaving the page keep the changes. Set by the graphs page.
      */
     var editSnapshot by mutableStateOf<GraphConfig?>(null)
 
-    /** Set by (âœ•) and Back: the graphs page writes these settings back, then clears it. */
+    /** Set by (✕) and Back: the graphs page writes these settings back, then clears it. */
     var restoreGraphs by mutableStateOf<GraphConfig?>(null)
 
-    /** (âœ•) and Back in edit mode: leave it and put the graphs back as they were. */
+    /** (✕) and Back in edit mode: leave it and put the graphs back as they were. */
     fun cancelEdit() {
         restoreGraphs = editSnapshot
         editMode = false
@@ -74,7 +74,7 @@ class RedesignOverviewState : ViewModel() {
         page = GRAPHS_PAGE
     }
 
-    /** Back on the graphs page: first leave the edit mode (as (âœ•): the changes are undone), then go back to the home page. */
+    /** Back on the graphs page: first leave the edit mode (as (✕): the changes are undone), then go back to the home page. */
     fun back() {
         if (editMode) cancelEdit() else page = HOME_PAGE
     }

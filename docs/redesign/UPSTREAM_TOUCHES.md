@@ -2,7 +2,7 @@
 
 Every change in a file that also exists on `master`, and why. All of them check the switch (step 1b):
 `LocalRedesignEnabled` or `redesignEnabled(preferences)` (in `ui/.../compose/redesign/RedesignFlags.kt`), so with
-the setting "New interface" off, or the build constant `RedesignFlags.ENABLED` set to `false`, the app behaves
+the setting "New interface" off (and on iOS and desktop, which do not provide `LocalRedesignEnabled`), the app behaves
 like stock 4.0. New files in `redesign/` and new resource files are not
 listed here.
 

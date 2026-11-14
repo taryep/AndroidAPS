@@ -43,8 +43,10 @@ divergence and the decision taken.
 2. **Minimal footprint in upstream files.** This fork must keep rebasing cleanly on `master`.
    - Put all new code in a new package: `ui/src/commonMain/kotlin/app/aaps/ui/compose/redesign/`.
    - Touch existing files only at hook points, a few lines each, behind one switch:
-     `RedesignFlags.ENABLED` (a `const val` in the new package, `true`).
-     With the switch set to `false`, the app must behave exactly like stock 4.0.
+      the setting `BooleanKey.GeneralRedesign` ("New interface"), read through `redesignEnabled()` /
+      `LocalRedesignEnabled` in the new package. (Until 14 Nov there was also a build constant
+      `RedesignFlags.ENABLED`; it did the same as the setting off, so it was removed.)
+     With the setting off, the app must behave exactly like stock 4.0.
    - When an existing composable needs a new behaviour, add a parameter **with a default value
      that keeps today's behaviour**, rather than editing its body.
    - Keep a running list of every upstream file you touched and why, in
@@ -53,7 +55,7 @@ divergence and the decision taken.
    use `./gradlew.bat`, etc.).
 4. **Phone, portrait only, locked** (`OverviewScreenStacked` path). There is no landscape design.
    Tablet (`OverviewScreenTablet`) and split (`OverviewScreenSplit`) layouts stay untouched.
-   **The lock**: with `RedesignFlags.ENABLED`, on a phone, the whole activity is locked to
+   **The lock**: with the new interface on, on a phone, the whole activity is locked to
    `SCREEN_ORIENTATION_USER_PORTRAIT` (every screen, settings included), set in
    `ComposeMainActivity.onCreate` before any content, so nothing is drawn in landscape first
    (`RedesignOrientation.lock`, one upstream line). The manifest is not changed, so with the flag off
@@ -140,7 +142,7 @@ Bottom bar: Traitements | [Scènes] | Gestion | Graphiques | Menu
 ## 3. Page 1 – Home (v2 layout)
 
 New file(s) in `redesign/`. Hook: in `overview/OverviewScreen.kt`, on the stacked/phone path,
-render the redesign pager instead of `OverviewScreenStacked` when `RedesignFlags.ENABLED`.
+render the redesign pager instead of `OverviewScreenStacked` when `LocalRedesignEnabled` is true.
 Phase 5 **replaces the arrangement** of the blocks built in phases 3 and 4 but **reuses their data
 plumbing, state objects, dialogs and composables** wherever possible (tiles' content, BG circle,
 consumables, graph canvas). Do not rewrite what works; re-parent and resize it.
@@ -237,7 +239,7 @@ A tap opens **one écran** (the stock full-screen insulin screen) with two parts
 
 Implementation: reuse the existing insulin dialog composable and add **one defaulted parameter**
 (`topInfo: (@Composable () -> Unit)? = null`, rendered under its BG/IOB/COB strip). `AppNavGraph`
-passes the IOB line as `topInfo` when `RedesignFlags.ENABLED`, so the line is there from every entry
+passes the IOB line as `topInfo` when `LocalRedesignEnabled` is true, so the line is there from every entry
 point, Traitements included (on purpose). Do not copy the dialog.
 
 Permission: apply the **same block as the Treatments item on a client that is not paired**
@@ -392,7 +394,7 @@ row showed **2j16h and 96 U**, the "Insuline" row showed **2j16h and 86 U**, and
 2j16h / **86 U** / 2h. The same reservoir appeared with two different values and the elapsed time was
 shown twice (it can differ by a tick between the rows).
 
-1. **Diagnose first**: reproduce with `RedesignFlags.ENABLED = false` (stock 4.0). Find where each row
+1. **Diagnose first**: reproduce with the new interface off (stock 4.0). Find where each row
    gets its reservoir level and its age (probably the pump driver's reported level vs the level from
    the last insulin change, and two timestamps). Tell me which one is stock and which one is ours, and
    which reservoir value is the right one (the "Insuline" row must use the value the collapsed bar uses,
@@ -700,7 +702,7 @@ contradiction, le suivi l'emporte sur cette spec.
 
 Each phase: plan → my approval → code → `./gradlew.bat :app:assembleFullDebug` (or the variant
 I use) → existing `ui` tests (`OverviewScreenVariantsTest`, `OverviewSizeSweepTest`, chips tests…)
-must still pass with `RedesignFlags.ENABLED = false`; adapt or add tests for the redesign only in
+must still pass with the new interface off; adapt or add tests for the redesign only in
 new test files → update `UPSTREAM_TOUCHES.md` → stop so I can test on the phone → commit.
 
 0. **Palette daltonienne** (branche `colorblind-colors`) – faite, ainsi que le réglage dans les Paramètres à 3 choix (hors redesign,

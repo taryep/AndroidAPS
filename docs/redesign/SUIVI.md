@@ -37,7 +37,7 @@ Les étapes sont dans l'ordre où on les fait : on prend la première `À faire`
 - [ ] Réglage « Nouvelle interface » (activé par défaut, inclus dans l'export) dans Paramètres › Apparence
 - [ ] Dans le Menu de la nouvelle interface : ligne « Nouvelle interface » ; l'appui demande une confirmation et dit comment revenir
 - [ ] L'écran redémarre au changement ; interface classique = AAPS d'origine (écran principal, lignes des feuilles Insuline et Basale, pas de verrouillage portrait)
-- [ ] La constante `RedesignFlags.ENABLED` reste l'interrupteur du build (false = jamais de nouvelle interface)
+- [x] ~~La constante `RedesignFlags.ENABLED` reste l'interrupteur du build~~ : retirée le 14 nov. (elle faisait la même chose que le réglage éteint). Sans `ComposeMainActivity` (iOS, bureau), l'interface classique reste.
 
 ### 2. Accueil : affichage
 - [x] Diagnostic : le cercle lit les données regroupées par 5 min (comme AAPS d'origine) ; avec une source à 1 min la valeur ne bougeait que toutes les 5 min. Le texte d'âge se mettait déjà à jour toutes les 30 s

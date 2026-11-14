@@ -104,7 +104,7 @@ fun RedesignOverview(
  *
  * Edit mode (step 9, SPEC 4.3): the edit pill floats over the title, which turns grey. The graphs are dimmed and
  * locked, each with its controls (see [RedesignGraphEditOverlay]). The changes apply at once; the settings of the
- * start are kept in [RedesignOverviewState.editSnapshot] so (âœ•) and Back can put them back.
+ * start are kept in [RedesignOverviewState.editSnapshot] so (✕) and Back can put them back.
  */
 @Composable
 private fun RedesignGraphsPage(
@@ -122,7 +122,7 @@ private fun RedesignGraphsPage(
     val scrollState = rememberScrollState()
     // Once per install: the stock default BG height 100 becomes Grand (SPEC 4.2).
     LaunchedEffect(Unit) { graphViewModel.migrateRedesignGraphHeights() }
-    // The settings when the edit mode starts, for (âœ•) and Back.
+    // The settings when the edit mode starts, for (✕) and Back.
     LaunchedEffect(editMode) { if (editMode) redesign.editSnapshot = graphViewModel.graphConfigFlow.value }
     LaunchedEffect(redesign.restoreGraphs) {
         redesign.restoreGraphs?.let {

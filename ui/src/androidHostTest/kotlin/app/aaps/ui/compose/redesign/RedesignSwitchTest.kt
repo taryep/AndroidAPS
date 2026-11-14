@@ -35,7 +35,7 @@ class RedesignSwitchTest {
 
     @Test
     fun theSettingDecidesWhichInterfaceIsShown() {
-        assertThat(redesignEnabled(preferences(redesign = true))).isEqualTo(RedesignFlags.ENABLED)
+        assertThat(redesignEnabled(preferences(redesign = true))).isTrue()
         assertThat(redesignEnabled(preferences(redesign = false))).isFalse()
     }
 
@@ -48,6 +48,17 @@ class RedesignSwitchTest {
         }
         compose.waitForIdle()
 
-        assertThat(active.take(2)).containsExactly(false, RedesignFlags.ENABLED).inOrder()
+        assertThat(active.take(2)).containsExactly(false, true).inOrder()
+    }
+
+    @Test
+    fun withoutAProviderTheClassicMainScreenStays() {
+        // iOS and desktop render the same screens without ComposeMainActivity: they must not get the
+        // new interface, which they cannot switch off.
+        var active: Boolean? = null
+        compose.setContent { active = redesignChromeActive() }
+        compose.waitForIdle()
+
+        assertThat(active).isFalse()
     }
 }

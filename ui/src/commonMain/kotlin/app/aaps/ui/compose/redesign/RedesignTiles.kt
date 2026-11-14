@@ -231,7 +231,8 @@ fun RedesignTile(
                     withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(value) }
                     if (small.isNotEmpty()) {
                         append(" ")
-                        withStyle(SpanStyle(fontSize = 0.8.em, color = colors.textSecondary)) { append(small) }
+                        // "13g requis" (the only strong border) in the tile colour, else grey.
+                        withStyle(SpanStyle(fontSize = 0.8.em, color = if (strongBorder) tint.accent else colors.textSecondary)) { append(small) }
                     }
                 }
                 BasicText(

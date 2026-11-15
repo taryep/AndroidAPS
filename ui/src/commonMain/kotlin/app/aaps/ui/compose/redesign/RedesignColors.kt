@@ -2,9 +2,15 @@ package app.aaps.ui.compose.redesign
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import app.aaps.core.keys.BooleanKey
+import app.aaps.core.ui.compose.LocalPreferences
 
 /**
  * Surface colours of the redesign screens (SPEC section 7). They are kept here and not in the
@@ -134,5 +140,59 @@ val LightRedesignColors = RedesignColors(
  * setting cannot be used; the theme's surface colour tells which scheme `AapsTheme` chose.
  */
 @Composable
-fun redesignColors(): RedesignColors =
-    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) DarkRedesignColors else LightRedesignColors
+fun redesignColors(): RedesignColors = when {
+    MaterialTheme.colorScheme.surface.luminance() >= 0.5f -> LightRedesignColors
+    LocalRedesignPureBlack.current                       -> PureBlackRedesignColors
+    else                                                 -> DarkRedesignColors
+}
+
+/**
+ * Step 13, "Pure black" (dark theme only): the page and what cannot be tapped (graph, sensitivity line) are
+ * black; what can be tapped (tiles, consumables bar, range chooser, bottom bar, sheets) gets a lighter
+ * surface than [DarkRedesignColors]. Tinted tiles keep their hue, a little lighter. Accents do not change.
+ */
+val PureBlackRedesignColors = DarkRedesignColors.copy(
+    pageBackground = Color.Black,
+    surface = Color(0xFF1F222A),
+    border = Color(0xFF343945),
+    closedLoop = DarkRedesignColors.closedLoop.copy(background = Color(0xFF1A2E22)),
+    openLoop = DarkRedesignColors.openLoop.copy(background = Color(0xFF1B2B4D)),
+    lgs = DarkRedesignColors.lgs.copy(background = Color(0xFF2A2345)),
+    suspended = DarkRedesignColors.suspended.copy(background = Color(0xFF383118)),
+    disconnected = DarkRedesignColors.disconnected.copy(background = Color(0xFF272A32)),
+    disabled = DarkRedesignColors.disabled.copy(background = Color(0xFF3B1D1D)),
+    superBolus = DarkRedesignColors.superBolus.copy(background = Color(0xFF382815)),
+    profileTemp = DarkRedesignColors.profileTemp.copy(background = Color(0xFF383118)),
+    targetTemp = DarkRedesignColors.targetTemp.copy(background = Color(0xFF382815)),
+    insulin = DarkRedesignColors.insulin.copy(background = Color(0xFF143240)),
+    carbsActive = DarkRedesignColors.carbsActive.copy(background = Color(0xFF322415)),
+    carbsRequired = DarkRedesignColors.carbsRequired.copy(background = Color(0xFF442B13)),
+    tempBasal = DarkRedesignColors.tempBasal.copy(background = Color(0xFF16373B)),
+    graphCard = Color.Black,
+    selectedRange = Color(0xFF2E323C)
+)
+
+/** True inside [RedesignPureBlackTheme] when "Pure black" is on and the theme is dark. False everywhere else (tests too). */
+val LocalRedesignPureBlack = compositionLocalOf { false }
+
+/**
+ * Wraps the new interface main screen. With "Pure black" on and a dark theme, the Material page and surface are
+ * black and the sheets lighter; the stock screens outside the new interface do not change. Same tree in both
+ * cases, so turning the setting on or off keeps the screen state.
+ */
+@Composable
+fun RedesignPureBlackTheme(content: @Composable () -> Unit) {
+    val base = MaterialTheme.colorScheme
+    val setting by LocalPreferences.current.observe(BooleanKey.GeneralRedesignPureBlack).collectAsState()
+    val pureBlack = setting && base.surface.luminance() < 0.5f
+    MaterialTheme(
+        colorScheme = if (pureBlack) base.copy(background = Color.Black, surface = Color.Black, surfaceContainerLow = PURE_BLACK_SHEET) else base,
+        typography = MaterialTheme.typography,
+        shapes = MaterialTheme.shapes
+    ) {
+        CompositionLocalProvider(LocalRedesignPureBlack provides pureBlack, content = content)
+    }
+}
+
+/** Sheets: lighter than the stock dark sheet, since they can be tapped. */
+private val PURE_BLACK_SHEET = Color(0xFF26282F)

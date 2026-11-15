@@ -3,4 +3,6 @@
 <resources>
     <string name="pref_title_redesign">Nouvelle interface</string>
     <string name="pref_summary_redesign">Le nouvel écran d\'accueil avec la barre du bas. Désactivée : l\'interface classique d\'AAPS. L\'écran redémarre quand vous la changez.</string>
+    <string name="pref_title_redesign_pure_black">Noir pur</string>
+    <string name="pref_summary_redesign_pure_black">Nouvelle interface, thème sombre seulement : fond noir, surfaces plus claires pour ce qu\'on peut appuyer. Adapté aux écrans OLED.</string>
 </resources>

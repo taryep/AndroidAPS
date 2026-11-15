@@ -3,4 +3,6 @@
 <resources>
     <string name="pref_title_redesign">New interface</string>
     <string name="pref_summary_redesign">The new home screen with the bottom bar. Off: the classic AAPS interface. The screen restarts when you change it.</string>
+    <string name="pref_title_redesign_pure_black">Pure black</string>
+    <string name="pref_summary_redesign_pure_black">New interface, dark theme only: black background, lighter surfaces for what you can tap. Good for OLED screens.</string>
 </resources>

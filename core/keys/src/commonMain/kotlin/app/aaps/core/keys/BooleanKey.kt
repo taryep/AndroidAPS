@@ -63,6 +63,9 @@ enum class BooleanKey(
 
     /** Fork (docs/redesign/SPEC.md): the new phone interface. Off gives the stock AAPS interface. */
     GeneralRedesign(key = "redesign_enabled", defaultValue = true, title = KeysStrings.pref_title_redesign, summary = KeysStrings.pref_summary_redesign),
+
+    /** Fork (docs/redesign/SUIVI.md, step 13): black page in the dark theme of the new interface, lighter surfaces for what can be tapped. */
+    GeneralRedesignPureBlack(key = "redesign_pure_black", defaultValue = false, title = KeysStrings.pref_title_redesign_pure_black, summary = KeysStrings.pref_summary_redesign_pure_black),
     OverviewUseBolusAdvisor("use_bolus_advisor", true, KeysStrings.pref_title_use_bolus_advisor, KeysStrings.pref_summary_use_bolus_advisor, defaultedBySM = true, sync = SyncSpec(SyncChannel.Cold, SyncDirection.Bidirectional)),
     OverviewUseBolusReminder("use_bolus_reminder", true, KeysStrings.pref_title_use_bolus_reminder, KeysStrings.pref_summary_use_bolus_reminder, defaultedBySM = true, sync = SyncSpec(SyncChannel.Cold, SyncDirection.Bidirectional)),
 

@@ -31,7 +31,8 @@ fun RedesignBottomBarStyle(enabled: Boolean, content: @Composable () -> Unit) {
     }
     val base = MaterialTheme.colorScheme
     val colors = redesignColors()
-    val dark = base.surface.luminance() < 0.5f
+    // "Pure black" (step 13): the bar can be tapped, so it takes the lighter surface of the redesign, like the light theme.
+    val dark = base.surface.luminance() < 0.5f && !LocalRedesignPureBlack.current
     // The in-range glucose colour is the accent of the selected item.
     val accent = AapsTheme.generalColors.bgInRange
     val scheme = base.copy(

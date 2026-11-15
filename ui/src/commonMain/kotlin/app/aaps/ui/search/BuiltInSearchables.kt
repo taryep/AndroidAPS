@@ -109,7 +109,8 @@ class BuiltInSearchables(
             StringKey.GeneralDarkMode,
             StringKey.GeneralColorblindMode,
             // Fork (docs/redesign/SPEC.md): switch between the new and the classic interface.
-            BooleanKey.GeneralRedesign
+            BooleanKey.GeneralRedesign,
+            BooleanKey.GeneralRedesignPureBlack
         ),
         icon = Icons.Outlined.Palette
     )

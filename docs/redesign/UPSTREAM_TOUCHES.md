@@ -200,6 +200,18 @@ reads the setting once in `onCreate` and starts again when it changes, so no scr
 | `app/.../ComposeMainActivity.kt` | Field `redesignOn = redesignEnabled(preferences)` set in `onCreate`; `CompositionLocalProvider(LocalRedesignEnabled provides redesignOn)` around `MainContent()`; in `observePreferences`, a collector of the key that calls `recreate()` (with `rebuildingForRestart`, so the view models are new) when the value differs from `redesignOn`. Imports. | One value for the whole life of the activity, the same for every screen (main screen, sheets, portrait lock). |
 | `appshell/.../AppNavGraph.kt` | `RedesignFlags.ENABLED` became `LocalRedesignEnabled.current` in the two `topInfo` hooks. | The insulin and basal lines follow the setting. |
 
+## Step 13 - "Pure black" option
+
+The setting "Pure black" (`BooleanKey.GeneralRedesignPureBlack`, key `redesign_pure_black`, off by default,
+exported with the settings). It acts in the dark theme of the new interface only: `RedesignPureBlackTheme`
+wraps `RedesignMainScreen` (a fork file), so the stock screens do not change and the activity is not touched.
+
+| File | Hook | Why |
+|---|---|---|
+| `core/keys/.../BooleanKey.kt` | New key `GeneralRedesignPureBlack`, under `GeneralRedesign`. | The setting. Strings in the fork files `core/keys/.../strings_redesign.xml` (English and French). |
+| `app/src/testFull/resources/prefs-schema.txt` | One line `redesign_pure_black\|BooleanKey\|true`. | The golden list of keys. |
+| `ui/.../search/BuiltInSearchables.kt` | `BooleanKey.GeneralRedesignPureBlack` after `GeneralRedesign` in the Appearance screen. | Settings › Appearance. |
+
 ## Step 5 - Medtrum and progress bars
 
 Display only, no pump logic. Not behind the redesign switch: these are fixes of the look, the same in both

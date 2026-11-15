@@ -23,7 +23,7 @@ Un seul document de suivi, mis à jour le 15 novembre 2026. Il vit dans `docs/re
 | 10 | Thème clair | Fait |
 | 11 | Animations | Fait |
 | 12 | Accueil : état de la boucle sur l'anneau | Code fait, à tester |
-| 13 | Option « Noir pur » (nouvelle interface) | À faire |
+| 13 | Option « Noir pur » (nouvelle interface) | Code fait, à tester |
 | 14 | Widget 4x2 : cercle et 6 infos | À faire |
 
 Les 11 étapes sont validées sur le téléphone (15 nov.). Prochaine étape : 12 (choisie dans « Idées pour plus tard » le 15 nov.).
@@ -147,12 +147,12 @@ Règle des traductions : on ne modifie jamais les chaînes d'origine (Crowdin le
 - [x] Le nom accessible du cercle dit le mode de la boucle (« …. Boucle : Fermée »)
 
 ### 13. Option « Noir pur » (nouvelle interface)
-- [ ] Diagnostic : où sont les couleurs sombres du redesign, quelles surfaces sont appuyables, et comment le réglage « Nouvelle interface » (étape 1b) est branché dans Paramètres › Apparence
-- [ ] Réglage « Noir pur » dans Paramètres › Apparence (éteint par défaut, inclus dans l'export), thème sombre seulement
-- [ ] Nouvelle interface seulement : les écrans d'origine ne changent pas
-- [ ] Fond de page `#000000` ; ce qu'on ne peut pas appuyer reste noir (zone du graphique, ligne de sensibilité)
-- [ ] Règle : surface plus claire = appuyable. Tuiles, barre des consommables, choix d'échelle, barre du bas et feuilles prennent une surface plus claire qu'aujourd'hui ; les tuiles teintées gardent leur teinte, en plus clair
-- [ ] Vérifier la lisibilité du texte coloré sur les surfaces plus claires, aussi en mode daltonien
+- [x] Diagnostic : où sont les couleurs sombres du redesign, quelles surfaces sont appuyables, et comment le réglage « Nouvelle interface » (étape 1b) est branché dans Paramètres › Apparence. Trouvé : couleurs sombres dans `RedesignColors.kt` ; le fond de l'accueil est la surface Material (transparent partout) ; la barre du bas a sa propre couleur (`RedesignBottomBarStyle`). Fait : `PureBlackRedesignColors` et `RedesignPureBlackTheme` autour de `RedesignMainScreen` (fichier du fork, l'activité n'est pas touchée). Le réglage s'applique sans redémarrer
+- [x] Réglage « Noir pur » dans Paramètres › Apparence (éteint par défaut, inclus dans l'export), thème sombre seulement
+- [x] Nouvelle interface seulement : les écrans d'origine ne changent pas
+- [x] Fond de page `#000000` ; ce qu'on ne peut pas appuyer reste noir (zone du graphique, ligne de sensibilité)
+- [x] Règle : surface plus claire = appuyable. Tuiles, barre des consommables, choix d'échelle, barre du bas et feuilles prennent une surface plus claire qu'aujourd'hui ; les tuiles teintées gardent leur teinte, en plus clair. Le choix d'échelle : seule la case choisie a un fond (plus clair)
+- [x] Vérifier la lisibilité du texte coloré sur les surfaces plus claires, aussi en mode daltonien. Test `RedesignPureBlackTest` : contraste ≥ 4,5 pour chaque teinte. Le mode daltonien ne change que les couleurs de la glycémie, pas les tuiles
 - [ ] Sur le téléphone : traînées au défilement du graphique (OLED)
 
 ### 14. Widget 4x2 : cercle et 6 infos

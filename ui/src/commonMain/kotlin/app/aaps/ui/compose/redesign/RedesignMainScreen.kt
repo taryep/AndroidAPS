@@ -176,218 +176,221 @@ fun RedesignMainScreen(
 
     // The bars are drawn over the content, not in the Scaffold slots: the scrims below read the raw system bar
     // insets, which a filled Scaffold slot would consume.
-    Scaffold(modifier = modifier) { scaffoldPadding ->
-        val contentPadding = PaddingValues(
-            top = scaffoldPadding.calculateTopPadding(),
-            bottom = scaffoldPadding.calculateBottomPadding() + with(density) { bottomBarHeightPx.toDp() }
-        )
-        val eatReminderState by mainViewModel.eatReminderState.collectAsStateWithLifecycle()
-        val activeSceneState by mainViewModel.activeSceneState.collectAsStateWithLifecycle()
-        val sceneExpired by mainViewModel.sceneExpired.collectAsStateWithLifecycle()
-        val activeSceneChainTargetName by mainViewModel.activeSceneChainTargetName.collectAsStateWithLifecycle()
-        val masterReachable by mainViewModel.masterReachable.collectAsStateWithLifecycle()
-        // Stable pairing signal: hides the mutating nav buttons on an unpaired client.
-        val masterOrPairedClient by mainViewModel.masterOrPairedClient.collectAsStateWithLifecycle()
-        // The Active insulin and Basal tiles open the insulin and temp basal screens (SPEC 3.2.2, 3.2.3).
-        val tileTaps = rememberRedesignTileTaps(manageViewModel, masterOrPairedClient, onNavigate, chipsViewModel::showIobInfo, mainViewModel::showTbrInfo)
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Home and Graphs. While the Menu is the chosen item this is composed but not placed.
-            Box(Modifier.fillMaxSize().hiddenWhen(menuOpen)) {
-                OverviewScreen(
-                    profileName = uiState.profileName,
-                    profilePsId = uiState.profilePsId,
-                    isProfileModified = uiState.isProfileModified,
-                    profileProgress = uiState.profileProgress,
-                    tempTargetText = uiState.tempTargetText,
-                    tempTargetState = uiState.tempTargetState,
-                    tempTargetProgress = uiState.tempTargetProgress,
-                    tempTargetReason = uiState.tempTargetReason,
-                    tempTargetRecordId = uiState.tempTargetRecordId,
-                    runningMode = uiState.runningMode,
-                    runningModeText = uiState.runningModeText,
-                    runningModeRemaining = uiState.runningModeRemaining,
-                    runningModeProgress = uiState.runningModeProgress,
-                    runningModeRecordId = uiState.runningModeRecordId,
-                    tbrState = uiState.tbrState,
-                    smbEnabled = uiState.smbEnabled,
-                    isSimpleMode = uiState.isSimpleMode,
-                    calcProgress = calcProgress,
-                    graphViewModel = graphViewModel,
-                    chipsViewModel = chipsViewModel,
-                    manageViewModel = manageViewModel,
-                    statusViewModel = statusViewModel,
-                    statusLightsDef = statusLightsDef,
-                    onNavigate = onNavigate,
-                    onTbrChipClick = tileTaps.onBasalClick,
-                    onIobChipClick = tileTaps.onIobClick,
-                    notifications = notifications,
-                    onDismissNotification = onDismissNotification,
-                    onNotificationActionClick = onNotificationActionClick,
-                    autoShowNotificationSheet = autoShowNotificationSheet,
-                    onAutoShowConsumed = onAutoShowConsumed,
-                    activeSceneState = activeSceneState,
-                    sceneExpired = sceneExpired,
-                    activeSceneChainTargetName = activeSceneChainTargetName,
-                    onEndScene = { mainViewModel.requestSceneDeactivation() },
-                    onDismissScene = { mainViewModel.dismissExpiredScene() },
-                    endSceneEnabled = masterReachable,
-                    commandsAllowed = masterOrPairedClient,
-                    formatDuration = mainViewModel::formatDuration,
-                    paddingValues = contentPadding,
-                    redesign = overview,
-                    redesignHome = RedesignHomeInputs(
-                        data = homeData,
-                        cob = homeCob,
-                        circle = homeCircle,
-                        bgSourceName = bgSetupPlugin?.let { plugin -> plugin.pluginDescription.pluginName?.let { stringResource(it) } ?: plugin.name },
-                        bgQualityState = bgQualityState,
-                        onBgSourceClick = { bgSetupPlugin?.let { onNavigate(NavigationRequest.Plugin(it::class.simpleName.orEmpty())) } },
-                        eatReminder = eatReminderState,
-                        onEatReminderStop = mainViewModel::stopEatReminder,
-                        onEatReminderExtend = mainViewModel::extendEatReminder,
-                        eatReminderControlsEnabled = masterReachable,
-                        loopSuggestion = loopActionAvailable,
-                        onLoopSuggestionClick = { showLoopActionSheet = true }
-                    ),
-                    bolusState = bolusState,
-                    pumpStatusText = pumpStatusText,
-                    queueStatusText = queueStatusText,
-                    isPumpCommunicating = isPumpCommunicating,
-                    onStopBolus = onStopBolus
-                )
-            }
-
-            // Plugin enable/disable confirmations raised from search results (same dialogs as Config Builder)
-            searchUiState.pluginSwitchConfirmation?.let { confirmation ->
-                OkCancelDialog(
-                    title = stringResource(CoreUiStrings.configbuilder_switch_confirmation_title),
-                    message = stringResource(
-                        CoreUiStrings.configbuilder_switch_confirmation,
-                        confirmation.fromName,
-                        confirmation.toName
-                    ),
-                    onConfirm = onConfirmSearchPluginSwitch,
-                    onDismiss = onDismissSearchPluginSwitch
-                )
-            }
-            searchUiState.hardwarePumpConfirmation?.let { confirmation ->
-                OkCancelDialog(
-                    title = stringResource(CoreUiStrings.confirmation),
-                    message = confirmation.message,
-                    onConfirm = onConfirmSearchHardwarePump,
-                    onDismiss = onDismissSearchHardwarePump
-                )
-            }
-
-            // Status bar protection scrim: keeps the system icons legible
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .windowInsetsTopHeight(WindowInsets.statusBars)
-                    .background(MaterialTheme.colorScheme.surface)
+    // "Pure black" (step 13): the new interface only, so the wrapper is here and not in the activity.
+    RedesignPureBlackTheme {
+        Scaffold(modifier = modifier) { scaffoldPadding ->
+            val contentPadding = PaddingValues(
+                top = scaffoldPadding.calculateTopPadding(),
+                bottom = scaffoldPadding.calculateBottomPadding() + with(density) { bottomBarHeightPx.toDp() }
             )
+            val eatReminderState by mainViewModel.eatReminderState.collectAsStateWithLifecycle()
+            val activeSceneState by mainViewModel.activeSceneState.collectAsStateWithLifecycle()
+            val sceneExpired by mainViewModel.sceneExpired.collectAsStateWithLifecycle()
+            val activeSceneChainTargetName by mainViewModel.activeSceneChainTargetName.collectAsStateWithLifecycle()
+            val masterReachable by mainViewModel.masterReachable.collectAsStateWithLifecycle()
+            // Stable pairing signal: hides the mutating nav buttons on an unpaired client.
+            val masterOrPairedClient by mainViewModel.masterOrPairedClient.collectAsStateWithLifecycle()
+            // The Active insulin and Basal tiles open the insulin and temp basal screens (SPEC 3.2.2, 3.2.3).
+            val tileTaps = rememberRedesignTileTaps(manageViewModel, masterOrPairedClient, onNavigate, chipsViewModel::showIobInfo, mainViewModel::showTbrInfo)
 
-            // Navigation bar protection scrim
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
-                    .background(MaterialTheme.colorScheme.surface)
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Home and Graphs. While the Menu is the chosen item this is composed but not placed.
+                Box(Modifier.fillMaxSize().hiddenWhen(menuOpen)) {
+                    OverviewScreen(
+                        profileName = uiState.profileName,
+                        profilePsId = uiState.profilePsId,
+                        isProfileModified = uiState.isProfileModified,
+                        profileProgress = uiState.profileProgress,
+                        tempTargetText = uiState.tempTargetText,
+                        tempTargetState = uiState.tempTargetState,
+                        tempTargetProgress = uiState.tempTargetProgress,
+                        tempTargetReason = uiState.tempTargetReason,
+                        tempTargetRecordId = uiState.tempTargetRecordId,
+                        runningMode = uiState.runningMode,
+                        runningModeText = uiState.runningModeText,
+                        runningModeRemaining = uiState.runningModeRemaining,
+                        runningModeProgress = uiState.runningModeProgress,
+                        runningModeRecordId = uiState.runningModeRecordId,
+                        tbrState = uiState.tbrState,
+                        smbEnabled = uiState.smbEnabled,
+                        isSimpleMode = uiState.isSimpleMode,
+                        calcProgress = calcProgress,
+                        graphViewModel = graphViewModel,
+                        chipsViewModel = chipsViewModel,
+                        manageViewModel = manageViewModel,
+                        statusViewModel = statusViewModel,
+                        statusLightsDef = statusLightsDef,
+                        onNavigate = onNavigate,
+                        onTbrChipClick = tileTaps.onBasalClick,
+                        onIobChipClick = tileTaps.onIobClick,
+                        notifications = notifications,
+                        onDismissNotification = onDismissNotification,
+                        onNotificationActionClick = onNotificationActionClick,
+                        autoShowNotificationSheet = autoShowNotificationSheet,
+                        onAutoShowConsumed = onAutoShowConsumed,
+                        activeSceneState = activeSceneState,
+                        sceneExpired = sceneExpired,
+                        activeSceneChainTargetName = activeSceneChainTargetName,
+                        onEndScene = { mainViewModel.requestSceneDeactivation() },
+                        onDismissScene = { mainViewModel.dismissExpiredScene() },
+                        endSceneEnabled = masterReachable,
+                        commandsAllowed = masterOrPairedClient,
+                        formatDuration = mainViewModel::formatDuration,
+                        paddingValues = contentPadding,
+                        redesign = overview,
+                        redesignHome = RedesignHomeInputs(
+                            data = homeData,
+                            cob = homeCob,
+                            circle = homeCircle,
+                            bgSourceName = bgSetupPlugin?.let { plugin -> plugin.pluginDescription.pluginName?.let { stringResource(it) } ?: plugin.name },
+                            bgQualityState = bgQualityState,
+                            onBgSourceClick = { bgSetupPlugin?.let { onNavigate(NavigationRequest.Plugin(it::class.simpleName.orEmpty())) } },
+                            eatReminder = eatReminderState,
+                            onEatReminderStop = mainViewModel::stopEatReminder,
+                            onEatReminderExtend = mainViewModel::extendEatReminder,
+                            eatReminderControlsEnabled = masterReachable,
+                            loopSuggestion = loopActionAvailable,
+                            onLoopSuggestionClick = { showLoopActionSheet = true }
+                        ),
+                        bolusState = bolusState,
+                        pumpStatusText = pumpStatusText,
+                        queueStatusText = queueStatusText,
+                        isPumpCommunicating = isPumpCommunicating,
+                        onStopBolus = onStopBolus
+                    )
+                }
 
-            // Menu: the third item of the bar. Search results are shown inside it.
-            if (menuOpen) {
-                RedesignMenuScreen(
-                    versionName = mainViewModel.versionName,
-                    isSimpleMode = uiState.isSimpleMode,
-                    isTreatmentsEnabled = uiState.isProfileLoaded,
-                    showExit = mainViewModel.showExit,
-                    searchUiState = searchUiState,
-                    onSearchQueryChange = onSearchQueryChange,
-                    onSearchClear = onSearchClear,
-                    onSearchActiveChange = onSearchActiveChange,
-                    onSearchResultClick = onSearchResultClick,
-                    onSearchPluginToggle = onSearchPluginToggle,
-                    onNavigate = onNavigate,
-                    onClose = closeMenu,
-                    bottomPadding = contentPadding.calculateBottomPadding(),
-                    attentionItems = attentionItems,
-                    onClassicInterface = homeViewModel::useClassicInterface
+                // Plugin enable/disable confirmations raised from search results (same dialogs as Config Builder)
+                searchUiState.pluginSwitchConfirmation?.let { confirmation ->
+                    OkCancelDialog(
+                        title = stringResource(CoreUiStrings.configbuilder_switch_confirmation_title),
+                        message = stringResource(
+                            CoreUiStrings.configbuilder_switch_confirmation,
+                            confirmation.fromName,
+                            confirmation.toName
+                        ),
+                        onConfirm = onConfirmSearchPluginSwitch,
+                        onDismiss = onDismissSearchPluginSwitch
+                    )
+                }
+                searchUiState.hardwarePumpConfirmation?.let { confirmation ->
+                    OkCancelDialog(
+                        title = stringResource(CoreUiStrings.confirmation),
+                        message = confirmation.message,
+                        onConfirm = onConfirmSearchHardwarePump,
+                        onDismiss = onDismissSearchHardwarePump
+                    )
+                }
+
+                // Status bar protection scrim: keeps the system icons legible
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .windowInsetsTopHeight(WindowInsets.statusBars)
+                        .background(MaterialTheme.colorScheme.surface)
                 )
-            }
 
-            // Bottom bar: the colours and the top line come through the theme (RedesignBottomBarStyle)
-            RedesignBottomBarArea(
-                bottomInset = scaffoldPadding.calculateBottomPadding(),
-                onHeightChange = { if (it != bottomBarHeightPx) bottomBarHeightPx = it }
-            ) {
-                RedesignBottomBar(
-                    onTreatmentClick = {
-                        treatmentViewModel.refreshState()
-                        showTreatmentSheet = true
-                    },
-                    onAutomationClick = {
-                        scenesViewModel.refreshState()
-                        showAutomationSheet = true
-                    },
-                    onManageClick = { manageSheetState.show() },
-                    masterOrPairedClient = masterOrPairedClient,
-                    quickWizardCount = uiState.quickWizardItems.size,
-                    // Total drives the visibility of the item, the count drives the badge (only what the user can start now).
-                    automationTotal = automationState.items.size + automationState.sceneItems.size,
-                    automationCount = automationState.items.count { it.activationReason == null } +
-                        automationState.sceneItems.count { it.activationReason == null },
-                    graphsSelected = overview.page == RedesignOverviewState.GRAPHS_PAGE && !menuOpen,
-                    onGraphsClick = {
-                        // Read before closing the Menu: a re-tap on Graphs (Menu closed) goes home.
-                        val menuWasOpen = menuOpen
-                        closeMenu()
-                        if (menuWasOpen) overview.page = RedesignOverviewState.GRAPHS_PAGE else overview.toggleGraphs()
-                    },
-                    menuSelected = menuOpen,
-                    // Only what needs the user lights the dot: Objectives is a progress and does not.
-                    menuBadge = attentionItems.any { it.needsAction },
-                    onMenuClick = {
-                        // A re-tap on the open Menu goes home. Menu and page change in one state: no flash.
-                        if (menuOpen) {
+                // Navigation bar protection scrim
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                        .background(MaterialTheme.colorScheme.surface)
+                )
+
+                // Menu: the third item of the bar. Search results are shown inside it.
+                if (menuOpen) {
+                    RedesignMenuScreen(
+                        versionName = mainViewModel.versionName,
+                        isSimpleMode = uiState.isSimpleMode,
+                        isTreatmentsEnabled = uiState.isProfileLoaded,
+                        showExit = mainViewModel.showExit,
+                        searchUiState = searchUiState,
+                        onSearchQueryChange = onSearchQueryChange,
+                        onSearchClear = onSearchClear,
+                        onSearchActiveChange = onSearchActiveChange,
+                        onSearchResultClick = onSearchResultClick,
+                        onSearchPluginToggle = onSearchPluginToggle,
+                        onNavigate = onNavigate,
+                        onClose = closeMenu,
+                        bottomPadding = contentPadding.calculateBottomPadding(),
+                        attentionItems = attentionItems,
+                        onClassicInterface = homeViewModel::useClassicInterface
+                    )
+                }
+
+                // Bottom bar: the colours and the top line come through the theme (RedesignBottomBarStyle)
+                RedesignBottomBarArea(
+                    bottomInset = scaffoldPadding.calculateBottomPadding(),
+                    onHeightChange = { if (it != bottomBarHeightPx) bottomBarHeightPx = it }
+                ) {
+                    RedesignBottomBar(
+                        onTreatmentClick = {
+                            treatmentViewModel.refreshState()
+                            showTreatmentSheet = true
+                        },
+                        onAutomationClick = {
+                            scenesViewModel.refreshState()
+                            showAutomationSheet = true
+                        },
+                        onManageClick = { manageSheetState.show() },
+                        masterOrPairedClient = masterOrPairedClient,
+                        quickWizardCount = uiState.quickWizardItems.size,
+                        // Total drives the visibility of the item, the count drives the badge (only what the user can start now).
+                        automationTotal = automationState.items.size + automationState.sceneItems.size,
+                        automationCount = automationState.items.count { it.activationReason == null } +
+                            automationState.sceneItems.count { it.activationReason == null },
+                        graphsSelected = overview.page == RedesignOverviewState.GRAPHS_PAGE && !menuOpen,
+                        onGraphsClick = {
+                            // Read before closing the Menu: a re-tap on Graphs (Menu closed) goes home.
+                            val menuWasOpen = menuOpen
                             closeMenu()
-                            overview.showHome()
-                        } else overview.toggleMenu()
-                    },
-                )
+                            if (menuWasOpen) overview.page = RedesignOverviewState.GRAPHS_PAGE else overview.toggleGraphs()
+                        },
+                        menuSelected = menuOpen,
+                        // Only what needs the user lights the dot: Objectives is a progress and does not.
+                        menuBadge = attentionItems.any { it.needsAction },
+                        onMenuClick = {
+                            // A re-tap on the open Menu goes home. Menu and page change in one state: no flash.
+                            if (menuOpen) {
+                                closeMenu()
+                                overview.showHome()
+                            } else overview.toggleMenu()
+                        },
+                    )
+                }
             }
         }
-    }
 
-    // The stock sheets and dialogs. Carbs entry is the Carbs tile (SPEC 3.2.4), so no carbs button in the
-    // treatment sheet or in its gear.
-    MainScreenSheets(
-        mainViewModel = mainViewModel,
-        uiState = uiState,
-        aboutDialogData = aboutDialogData,
-        treatmentViewModel = treatmentViewModel,
-        scenesViewModel = scenesViewModel,
-        loopActionViewModel = loopActionViewModel,
-        maintenanceViewModel = maintenanceViewModel,
-        showTreatmentSheet = showTreatmentSheet,
-        onTreatmentSheetDismiss = { showTreatmentSheet = false },
-        showAutomationSheet = showAutomationSheet,
-        onAutomationSheetDismiss = { showAutomationSheet = false },
-        showLoopActionSheet = showLoopActionSheet,
-        onLoopActionSheetDismiss = { showLoopActionSheet = false },
-        treatmentButtonsDef = treatmentButtonsDef.withoutCarbsButton(),
-        showCarbs = false,
-        onNavigate = onNavigate,
-        onAboutDialogDismiss = onAboutDialogDismiss,
-        onOpenBatteryHelp = onOpenBatteryHelp,
-        onMaintenanceSheetDismiss = onMaintenanceSheetDismiss,
-        onDirectoryClick = onDirectoryClick,
-        onLaunchBrowser = onLaunchBrowser,
-        onBringToForeground = onBringToForeground,
-        onImportSettingsNavigate = onImportSettingsNavigate,
-        onRecreateActivity = onRecreateActivity
-    )
+        // The stock sheets and dialogs. Carbs entry is the Carbs tile (SPEC 3.2.4), so no carbs button in the
+        // treatment sheet or in its gear.
+        MainScreenSheets(
+            mainViewModel = mainViewModel,
+            uiState = uiState,
+            aboutDialogData = aboutDialogData,
+            treatmentViewModel = treatmentViewModel,
+            scenesViewModel = scenesViewModel,
+            loopActionViewModel = loopActionViewModel,
+            maintenanceViewModel = maintenanceViewModel,
+            showTreatmentSheet = showTreatmentSheet,
+            onTreatmentSheetDismiss = { showTreatmentSheet = false },
+            showAutomationSheet = showAutomationSheet,
+            onAutomationSheetDismiss = { showAutomationSheet = false },
+            showLoopActionSheet = showLoopActionSheet,
+            onLoopActionSheetDismiss = { showLoopActionSheet = false },
+            treatmentButtonsDef = treatmentButtonsDef.withoutCarbsButton(),
+            showCarbs = false,
+            onNavigate = onNavigate,
+            onAboutDialogDismiss = onAboutDialogDismiss,
+            onOpenBatteryHelp = onOpenBatteryHelp,
+            onMaintenanceSheetDismiss = onMaintenanceSheetDismiss,
+            onDirectoryClick = onDirectoryClick,
+            onLaunchBrowser = onLaunchBrowser,
+            onBringToForeground = onBringToForeground,
+            onImportSettingsNavigate = onImportSettingsNavigate,
+            onRecreateActivity = onRecreateActivity
+        )
+    }
 }

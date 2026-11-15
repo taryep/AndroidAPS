@@ -201,7 +201,12 @@ fun RedesignHomePage(
                     }
                 }
                 val circle = inputs.circle ?: bgInfoState
-                RedesignBgCircle(bgInfo = circle.bgInfo, timeAgoText = circle.timeAgoText)
+                RedesignBgCircle(
+                    bgInfo = circle.bgInfo,
+                    timeAgoText = circle.timeAgoText,
+                    loopMode = tilesState.runningMode,
+                    loopModeText = if (tilesState.runningMode == null) "" else redesignLoopModeText(tilesState)
+                )
                 Column(Modifier.weight(1f)) {
                     SlotCell {
                         RedesignBellButton(

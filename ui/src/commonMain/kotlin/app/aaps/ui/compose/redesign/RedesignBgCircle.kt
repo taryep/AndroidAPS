@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -32,7 +33,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.aaps.core.data.model.RM
 import app.aaps.core.interfaces.overview.graph.BgInfoData
+import app.aaps.core.ui.compose.stringResource
+import app.aaps.ui.UiStrings
 import app.aaps.ui.compose.components.bgSpokenDescription
 import app.aaps.ui.compose.overview.ArcIndicator
 import app.aaps.ui.compose.overview.toArcIndicator
@@ -49,11 +53,17 @@ const val REDESIGN_BG_CIRCLE_TAG = "redesign_bg_circle"
  * `BgInfoSection`, drawn larger. No tap action (decided 10 Nov): the graphs page opens only from the
  * bottom bar. No trend arrow beside the delta: the triangles on the ring show the trend, and the spoken
  * description still says it.
+ *
+ * Step 12: the ring shows the running mode, with the colour and the pattern of the loop icon
+ * ([redesignLoopTint], [redesignLoopRing]), dimmed. It never shows the glucose range: the value and the
+ * trend arc do. [loopModeText] is the mode in words for the screen reader, empty when unknown.
  */
 @Composable
 fun RedesignBgCircle(
     bgInfo: BgInfoData?,
     timeAgoText: String,
+    loopMode: RM.Mode?,
+    loopModeText: String,
     modifier: Modifier = Modifier,
     size: Dp = BG_CIRCLE_SIZE
 ) {
@@ -69,7 +79,9 @@ fun RedesignBgCircle(
     val bgColor by animateColorAsState(bgInfo.bgRange.toColor(), tween(REDESIGN_READING_MS), label = "bgColor")
     val arc = bgInfo.trendArrow?.toArcIndicator()
     val arcAngle by animateFloatAsState(arc?.centerAngle ?: 0f, tween(REDESIGN_READING_MS), label = "trendArc")
-    val description = bgSpokenDescription(
+    val loopTint = loopMode.redesignLoopTint(colors).accent
+    val loopRing = loopMode.redesignLoopRing()
+    val bgDescription = bgSpokenDescription(
         bgText = bgInfo.bgText,
         range = bgInfo.bgRange,
         trend = bgInfo.trendDescription,
@@ -77,6 +89,7 @@ fun RedesignBgCircle(
         timeAgo = timeAgoText,
         isOutdated = bgInfo.isOutdated
     )
+    val description = if (loopModeText.isEmpty()) bgDescription else stringResource(UiStrings.redesign_bg_circle_loop, bgDescription, loopModeText)
     // Not clipped: the trend triangles stand out of the ring.
     // The padding keeps room for them above and below, so the gaps around the row are measured from
     // the tip of a triangle, and the row has the same height whatever the trend.
@@ -95,13 +108,17 @@ fun RedesignBgCircle(
             val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
             val topLeft = Offset(stroke / 2, stroke / 2)
             drawArc(
-                color = bgColor.copy(alpha = RING_ALPHA),
+                color = loopTint.copy(alpha = REDESIGN_LOOP_RING_ALPHA),
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
                 topLeft = topLeft,
                 size = arcSize,
-                style = Stroke(width = stroke)
+                style = Stroke(
+                    width = stroke,
+                    cap = if (loopRing.roundCap) StrokeCap.Round else StrokeCap.Butt,
+                    pathEffect = loopRing.intervals(arcSize.width / 2, stroke)?.let { PathEffect.dashPathEffect(it) }
+                )
             )
             arc?.copy(centerAngle = arcAngle)?.let { moving ->
                 drawArc(
@@ -185,7 +202,6 @@ private fun DrawScope.drawTrendTriangles(indicator: ArcIndicator, color: Color, 
 
 val BG_CIRCLE_SIZE = 184.dp
 private val RING_STROKE = 7.4.dp
-private const val RING_ALPHA = 0.22f
 
 /**
  * How far a trend triangle stands out of the circle. From [drawTrendTriangles]: the ring radius is

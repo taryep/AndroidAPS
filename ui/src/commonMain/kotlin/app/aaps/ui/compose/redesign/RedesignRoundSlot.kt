@@ -201,47 +201,10 @@ fun RedesignLoopSlot(
     val colors = redesignColors()
     val role = LocalClientRole.current
     val mode = state.runningMode
-    val remaining = state.runningModeRemaining
-    val caption: String
-    var secondLine = ""
-    val tint: RedesignTint
-    when {
-        state.loopSuggestion                      -> {
-            caption = stringResource(UiStrings.redesign_mode_open); tint = colors.openLoop
-        }
-
-        mode == RM.Mode.CLOSED_LOOP || mode == RM.Mode.RESUME -> {
-            caption = stringResource(UiStrings.redesign_mode_closed); tint = colors.closedLoop
-        }
-
-        mode == RM.Mode.OPEN_LOOP                 -> {
-            caption = stringResource(UiStrings.redesign_mode_open); tint = colors.openLoop
-        }
-
-        mode == RM.Mode.CLOSED_LOOP_LGS           -> {
-            caption = stringResource(UiStrings.redesign_mode_lgs); tint = colors.lgs
-        }
-
-        mode == RM.Mode.SUSPENDED_BY_USER || mode == RM.Mode.SUSPENDED_BY_PUMP || mode == RM.Mode.SUSPENDED_BY_DST -> {
-            caption = stringResource(UiStrings.redesign_mode_paused_no_time); secondLine = remaining; tint = colors.suspended
-        }
-
-        mode == RM.Mode.DISCONNECTED_PUMP         -> {
-            caption = stringResource(UiStrings.redesign_mode_disconnected); secondLine = remaining; tint = colors.disconnected
-        }
-
-        mode == RM.Mode.DISABLED_LOOP             -> {
-            caption = stringResource(UiStrings.redesign_mode_disabled); tint = colors.disabled
-        }
-
-        // Superbolus, or no mode known yet: the stock text.
-        else                                      -> {
-            caption = state.runningModeText; tint = if (mode == RM.Mode.SUPER_BOLUS) colors.superBolus else colors.neutral
-        }
-    }
+    val tint = if (state.loopSuggestion) colors.openLoop else mode.redesignLoopTint(colors)
     // Step 7 (decided 9 Nov): the icon only, the colour tells the mode. The words stay for the screen reader:
     // "Loop: Paused, 25 min", and "a suggestion waits" with the badge.
-    val modeText = if (secondLine.isNotEmpty()) stringResource(UiStrings.redesign_loop_mode_time, caption, secondLine) else caption
+    val modeText = redesignLoopModeText(state)
     val description =
         if (state.loopSuggestion) stringResource(UiStrings.redesign_loop_slot_suggestion, modeText)
         else stringResource(UiStrings.redesign_loop_slot, modeText)
@@ -264,6 +227,33 @@ fun RedesignLoopSlot(
         onLongClickLabel = stringResource(UiStrings.redesign_loop_change_mode),
         modifier = modifier
     )
+}
+
+/** The running mode in words, with the time left when it has one ("Paused, 25 min"). For screen readers. */
+@Composable
+internal fun redesignLoopModeText(state: RedesignTilesState): String {
+    val mode = state.runningMode
+    val remaining = state.runningModeRemaining
+    var secondLine = ""
+    val caption = when {
+        state.loopSuggestion                                  -> stringResource(UiStrings.redesign_mode_open)
+        mode == RM.Mode.CLOSED_LOOP || mode == RM.Mode.RESUME -> stringResource(UiStrings.redesign_mode_closed)
+        mode == RM.Mode.OPEN_LOOP                             -> stringResource(UiStrings.redesign_mode_open)
+        mode == RM.Mode.CLOSED_LOOP_LGS                       -> stringResource(UiStrings.redesign_mode_lgs)
+
+        mode == RM.Mode.SUSPENDED_BY_USER || mode == RM.Mode.SUSPENDED_BY_PUMP || mode == RM.Mode.SUSPENDED_BY_DST -> {
+            secondLine = remaining; stringResource(UiStrings.redesign_mode_paused_no_time)
+        }
+
+        mode == RM.Mode.DISCONNECTED_PUMP                     -> {
+            secondLine = remaining; stringResource(UiStrings.redesign_mode_disconnected)
+        }
+
+        mode == RM.Mode.DISABLED_LOOP                         -> stringResource(UiStrings.redesign_mode_disabled)
+        // Superbolus, or no mode known yet: the stock text.
+        else                                                  -> state.runningModeText
+    }
+    return if (secondLine.isNotEmpty()) stringResource(UiStrings.redesign_loop_mode_time, caption, secondLine) else caption
 }
 
 /**

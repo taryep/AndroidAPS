@@ -32,6 +32,7 @@
     <string name="redesign_mode_disabled" comment="Loop tile value: the loop is disabled">Disabled</string>
     <string name="redesign_loop_mode_time" comment="Screen reader: loop mode with the time left. %1$s=mode word (Paused), %2$s=time left (25 min). Example: Paused, 25 min">%1$s, %2$s</string>
     <string name="redesign_loop_slot" comment="Screen reader name of the round loop button on the home page (it shows only an icon). %1$s=mode, maybe with time. Example: Loop: Closed">Loop: %1$s</string>
+    <string name="redesign_bg_circle_loop" comment="Screen reader name of the glucose circle: its ring shows the loop mode. %1$s=glucose description, %2$s=loop mode, maybe with time. Example: 174 mg/dL, high, falling. Loop: Closed">%1$s. Loop: %2$s</string>
     <string name="redesign_loop_slot_suggestion" comment="Screen reader name of the loop button while an open loop suggestion waits. %1$s=mode. Example: Loop: Open. A suggestion is waiting">Loop: %1$s. A suggestion is waiting</string>
     <string name="redesign_loop_change_mode" comment="Screen reader name of the long press on the loop button: it opens the running mode dialog">Change the mode</string>
     <string name="redesign_carbs_required" comment="Small text after the carbs on board when the loop says more carbs are needed. %1$d=grams. Example: 13g required">%1$dg required</string>
